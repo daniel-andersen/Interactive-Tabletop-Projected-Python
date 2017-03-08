@@ -11,37 +11,20 @@ class Detector(object):
     """
     Class capable of detecting board.
     """
-
-    lock = RLock()
-
-    state = State.NOT_DETECTED
-
-    corners = None
-
-    board_image = None
-    board_size = None
-
-    sift = None
-    flann = None
-    kp1, des1 = None, None
-
-    min_matches = 20
-
     def __init__(self, board_image_filename, board_size=[1280, 800], min_matches=20):
 
         self.board_size = board_size
         self.min_matches = min_matches
+
+        self.lock = RLock()
+
+        self.corners = None
 
         # Load board calibrator image
         self.board_image = cv2.imread(board_image_filename)
 
         if self.board_image is None:
             raise Exception('Could not load board calibrator image: %s' % board_image_filename)
-
-        # Initialize
-        self.initialize()
-
-    def initialize(self):
 
         # Initialize SIFT detector
         self.sift = cv2.xfeatures2d.SIFT_create()

@@ -1,5 +1,4 @@
-import cv2
-from board.board_descriptor import BoardDescriptor
+from tracking.board.snapshot import SnapshotSize
 
 
 class Detector(object):
@@ -14,15 +13,15 @@ class Detector(object):
         """
         Returns the preferred input resolution for this detector. Defaults to medium.
 
-        :return: Input resolution (of type BoardDescriptor.SnapshotSize)
+        :return: Input resolution (of type SnapshotSize enum)
         """
-        return BoardDescriptor.SnapshotSize.MEDIUM
+        return SnapshotSize.MEDIUM
 
     def detect(self, image):
         """
         Run detector in image.
 
         :param image: Image
-        :return: List of detected features each in form {"detectorId", "centerX", "centerY", "width", "height", "angle", ...}
+        :return: List of detected features each containing at least {"detectorId", "centerX", "centerY", "width", "height", "angle"}
         """
         return []

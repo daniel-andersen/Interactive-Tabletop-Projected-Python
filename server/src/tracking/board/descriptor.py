@@ -12,22 +12,14 @@ class Descriptor(object):
     """
     Class representing a description of a board.
     """
-    state = State.INITIALIZING
-
-    board_detector = None
-    board_calibrator = None
-
-    board_corners = None
-
-    snapshot = None
-
-    lock = RLock()
-
     def __init__(self):
-        self.initialize()
+        self.lock = RLock()
 
-    def initialize(self):
+        self.state = State.INITIALIZING
+
         self.snapshot = Snapshot()
+
+        self.board_corners = None
 
         self.board_detector = Detector(board_image_filename='resources/board_detection.png')
         self.board_calibrator = Detector(board_image_filename='resources/board_calibration.png')
