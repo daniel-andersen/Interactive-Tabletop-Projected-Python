@@ -20,6 +20,8 @@ class Detector(object):
         self.state = State.NOT_DETECTED
         self.corners = None
 
+        self.accept_distance_ratio = 1.0
+
         # Load board calibrator image
         self.board_image = cv2.imread(board_image_filename)
 
@@ -80,27 +82,30 @@ class Detector(object):
             # Find matches
             matches = self.flann.knnMatch(self.des1, des2, k=2)
 
-        # Sort out bad matches
+        # Find homography between matches
+        src_pts = np.float32([self.kp1[m.queryIdx].pt for m, n in matches]).reshape(-1, 1, 2)
+        dst_pts = np.float32([kp2[m.trainIdx].pt for m, n in matches]).reshape(-1, 1, 2)
+
+        M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
+        matches_mask = mask.ravel().tolist()
+
+        # Sort out outliers and bad matches
         good_matches = []
-        for m, n in matches:
-            if m.distance < 0.65 * n.distance:
+        for i, (m, n) in enumerate(matches):
+            if matches_mask[i] == 1 and m.distance < self.accept_distance_ratio * n.distance:
                 good_matches.append(m)
 
-        matchesMask = [[0, 0] for i in range(0, len(matches))]
+        if True:
 
-        # ratio test as per Lowe's paper
-        for i, (m, n) in enumerate(matches):
-            if m.distance < 0.65 * n.distance:
-                matchesMask[i] = [1, 0]
+            print("Matches: %i" % len(good_matches))
+            draw_mask = [[0, 0] for i in range(0, len(matches))]
+            for i, (m, n) in enumerate(matches):
+                if matches_mask[i] == 1 and m.distance < self.accept_distance_ratio * n.distance:
+                    draw_mask[i] = [1, 0]
 
-        draw_params = dict(matchColor=(0, 255, 0),
-                           singlePointColor=(255, 0, 0),
-                           matchesMask=matchesMask,
-                           flags=0)
-
-        print("Matches: %i" % len(good_matches))
-        img3 = cv2.drawMatchesKnn(self.board_image, self.kp1, image, kp2, matches, None, **draw_params)
-        cv2.imshow('frame', img3)
+            draw_params = dict(matchColor=(0, 255, 0), singlePointColor=(255, 0, 0), matchesMask=draw_mask, flags=0)
+            img = cv2.drawMatchesKnn(self.board_image, self.kp1, image, kp2, matches, None, **draw_params)
+            cv2.imshow('All matches', img)
 
         # Check number of matches
         if len(good_matches) < self.min_matches:
@@ -127,11 +132,12 @@ class Detector(object):
             with self.lock:
                 self.corners = [[int(p[0][0]), int(p[0][1])] for p in dst_points]
 
-            print("Corners: %s" % self.corners)
-            img4 = image.copy()
-            cv2.drawContours(img4, [np.int32(self.corners).reshape(-1, 1, 2)], -1, (255, 0, 255), 2)
-            cv2.imshow('frame 2', img4)
-            cv2.waitKey(0)
+            if True:
+                print("Corners: %s" % self.corners)
+                img = image.copy()
+                cv2.drawContours(img, [np.int32(self.corners).reshape(-1, 1, 2)], -1, (255, 0, 255), 2)
+                cv2.imshow('Corners', img)
+                cv2.waitKey(0)
 
             return State.DETECTED
 
