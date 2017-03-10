@@ -1,4 +1,9 @@
+import sys
+
+
 class BaseTest(object):
+    subtest_str = None
+
     def run(self):
         print('Test class: %s' % type(self).__name__)
 
@@ -7,6 +12,9 @@ class BaseTest(object):
 
         for f in self.get_tests():
             print('Running test: %s... ' % f.__name__, end='')
+            sys.stdout.flush()
+
+            self.subtest_str = None
 
             success_count, failed_count = f()
 
@@ -24,3 +32,12 @@ class BaseTest(object):
 
     def get_tests(self):
         return []
+
+    def print_number(self, current, total):
+        if self.subtest_str is not None:
+            print(('\b' * len(self.subtest_str)), end='')
+
+        self.subtest_str = '%i/%i ' % (current, total)
+
+        print(self.subtest_str, end='')
+        sys.stdout.flush()

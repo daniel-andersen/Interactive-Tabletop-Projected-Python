@@ -58,7 +58,7 @@ class Detector(object):
             self.state = new_state
             return self.state
 
-    def detect(self, image):
+    def detect(self, image, debug=False):
         """
         Performs a single detection with the given image.
 
@@ -91,8 +91,8 @@ class Detector(object):
             if matches_mask[i] == 1 and m.distance < self.accept_distance_ratio * n.distance:
                 good_matches.append(m)
 
-        if True:
-
+        # Debug output
+        if debug:
             draw_mask = [[0, 0] for i in range(0, len(matches))]
             for i, (m, n) in enumerate(matches):
                 if matches_mask[i] == 1 and m.distance < self.accept_distance_ratio * n.distance:
@@ -124,10 +124,12 @@ class Detector(object):
                                      [image_width - 1, 0]]).reshape(-1, 1, 2)
             dst_points = cv2.perspectiveTransform(src_points, M)
 
+            # Get corners
             with self.lock:
                 self.corners = [[int(p[0][0]), int(p[0][1])] for p in dst_points]
 
-            if True:
+            # Debug output
+            if debug:
                 img = image.copy()
                 cv2.drawContours(img, [np.int32(self.corners).reshape(-1, 1, 2)], -1, (255, 0, 255), 2)
                 cv2.imshow('Corners', img)

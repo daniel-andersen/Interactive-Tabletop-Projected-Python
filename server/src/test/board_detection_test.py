@@ -1,3 +1,4 @@
+import sys
 import cv2
 from test.base_test import BaseTest
 from tracking.board import detector
@@ -23,10 +24,11 @@ class BoardDetectionTest(BaseTest):
         success_count = 0
         failed_count = 0
 
-        for image_filename, expected_state in test_images:
-            image = cv2.imread(image_filename)
+        for i, (image_filename, expected_state) in enumerate(test_images):
+            self.print_number(current=i + 1, total=len(test_images))
 
-            state = board_detector.detect(image)
+            image = cv2.imread(image_filename)
+            state = board_detector.detect(image, debug=False)
 
             if state == expected_state:
                 success_count += 1
