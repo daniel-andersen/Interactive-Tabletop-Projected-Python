@@ -14,11 +14,13 @@ class BoardDetectionTest(BaseTest):
 
         test_images = [
             ['test/resources/board_detection_source.png', detector.State.DETECTED],
-            ['test/resources/board_detection_black.png', detector.State.NOT_DETECTED]
+            ['test/resources/board_detection_black.png', detector.State.NOT_DETECTED],
+            ['test/resources/board_detection_1.jpg', detector.State.DETECTED],
+            ['test/resources/board_detection_2.jpg', detector.State.DETECTED]
         ]
 
-        success = 0
-        failed = 0
+        success_count = 0
+        failed_count = 0
 
         for image_filename, expected_state in test_images:
             image = cv2.imread(image_filename)
@@ -26,8 +28,9 @@ class BoardDetectionTest(BaseTest):
             state = board_detector.detect(image)
 
             if state == expected_state:
-                success += 1
+                success_count += 1
             else:
-                failed += 1
+                failed_count += 1
+                print('%s FAILED. Should be %s but was %s!' % (image_filename, 'DETECTED' if expected_state == detector.State.DETECTED else 'NOT DETECTED', 'NOT DETECTED' if expected_state == detector.State.DETECTED else 'DETECTED'))
 
-        return success, failed
+        return success_count, failed_count

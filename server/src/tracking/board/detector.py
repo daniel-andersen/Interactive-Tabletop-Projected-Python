@@ -11,13 +11,13 @@ class Detector(object):
     """
     Class capable of detecting board.
     """
-    def __init__(self, board_image_filename, board_size=[1280, 800], min_matches=20):
+    def __init__(self, board_image_filename, min_matches=20):
 
-        self.board_size = board_size
         self.min_matches = min_matches
 
         self.lock = RLock()
 
+        self.state = State.NOT_DETECTED
         self.corners = None
 
         # Load board calibrator image
@@ -25,6 +25,10 @@ class Detector(object):
 
         if self.board_image is None:
             raise Exception('Could not load board calibrator image: %s' % board_image_filename)
+
+        # Get aspect ratio of board image
+        image_height, image_width = self.board_image.shape[:2]
+        self.aspect_ratio = image_height / image_width
 
         # Initialize SIFT detector
         self.sift = cv2.xfeatures2d.SIFT_create()
@@ -79,8 +83,24 @@ class Detector(object):
         # Sort out bad matches
         good_matches = []
         for m, n in matches:
-            if m.distance < 0.7 * n.distance:
+            if m.distance < 0.65 * n.distance:
                 good_matches.append(m)
+
+        matchesMask = [[0, 0] for i in range(0, len(matches))]
+
+        # ratio test as per Lowe's paper
+        for i, (m, n) in enumerate(matches):
+            if m.distance < 0.65 * n.distance:
+                matchesMask[i] = [1, 0]
+
+        draw_params = dict(matchColor=(0, 255, 0),
+                           singlePointColor=(255, 0, 0),
+                           matchesMask=matchesMask,
+                           flags=0)
+
+        print("Matches: %i" % len(good_matches))
+        img3 = cv2.drawMatchesKnn(self.board_image, self.kp1, image, kp2, matches, None, **draw_params)
+        cv2.imshow('frame', img3)
 
         # Check number of matches
         if len(good_matches) < self.min_matches:
@@ -96,16 +116,22 @@ class Detector(object):
             M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
 
             # Transform points to image
-            image_height, image_width = image.shape[:2]
+            _, image_width = image.shape[:2]
 
             src_points = np.float32([[0, 0],
-                                     [0, image_height - 1],
-                                     [image_width - 1, image_height - 1],
+                                     [0, (image_width * self.aspect_ratio) - 1],
+                                     [image_width - 1, (image_width * self.aspect_ratio) - 1],
                                      [image_width - 1, 0]]).reshape(-1, 1, 2)
             dst_points = cv2.perspectiveTransform(src_points, M)
 
             with self.lock:
                 self.corners = [[int(p[0][0]), int(p[0][1])] for p in dst_points]
+
+            print("Corners: %s" % self.corners)
+            img4 = image.copy()
+            cv2.drawContours(img4, [np.int32(self.corners).reshape(-1, 1, 2)], -1, (255, 0, 255), 2)
+            cv2.imshow('frame 2', img4)
+            cv2.waitKey(0)
 
             return State.DETECTED
 
