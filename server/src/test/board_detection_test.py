@@ -16,7 +16,8 @@ class BoardDetectionTest(BaseTest):
             ['test/resources/board_detection_source.png', detector.State.DETECTED],
             ['test/resources/board_detection_black.png', detector.State.NOT_DETECTED],
             ['test/resources/board_detection_1.jpg', detector.State.DETECTED],
-            ['test/resources/board_detection_2.jpg', detector.State.DETECTED]
+            ['test/resources/board_detection_2.jpg', detector.State.DETECTED],
+            ['test/resources/board_detection_3.jpg', detector.State.DETECTED]
         ]
 
         success_count = 0

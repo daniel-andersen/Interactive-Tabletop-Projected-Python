@@ -11,7 +11,7 @@ class Detector(object):
     """
     Class capable of detecting board.
     """
-    def __init__(self, board_image_filename, min_matches=20):
+    def __init__(self, board_image_filename, min_matches=50):
 
         self.min_matches = min_matches
 
@@ -27,10 +27,6 @@ class Detector(object):
 
         if self.board_image is None:
             raise Exception('Could not load board calibrator image: %s' % board_image_filename)
-
-        # Get aspect ratio of board image
-        image_height, image_width = self.board_image.shape[:2]
-        self.aspect_ratio = image_height / image_width
 
         # Initialize SIFT detector
         self.sift = cv2.xfeatures2d.SIFT_create()
@@ -97,7 +93,6 @@ class Detector(object):
 
         if True:
 
-            print("Matches: %i" % len(good_matches))
             draw_mask = [[0, 0] for i in range(0, len(matches))]
             for i, (m, n) in enumerate(matches):
                 if matches_mask[i] == 1 and m.distance < self.accept_distance_ratio * n.distance:
@@ -121,11 +116,11 @@ class Detector(object):
             M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
 
             # Transform points to image
-            _, image_width = image.shape[:2]
+            image_height, image_width = self.board_image.shape[:2]
 
             src_points = np.float32([[0, 0],
-                                     [0, (image_width * self.aspect_ratio) - 1],
-                                     [image_width - 1, (image_width * self.aspect_ratio) - 1],
+                                     [0, image_height - 1],
+                                     [image_width - 1, image_height - 1],
                                      [image_width - 1, 0]]).reshape(-1, 1, 2)
             dst_points = cv2.perspectiveTransform(src_points, M)
 
@@ -133,7 +128,6 @@ class Detector(object):
                 self.corners = [[int(p[0][0]), int(p[0][1])] for p in dst_points]
 
             if True:
-                print("Corners: %s" % self.corners)
                 img = image.copy()
                 cv2.drawContours(img, [np.int32(self.corners).reshape(-1, 1, 2)], -1, (255, 0, 255), 2)
                 cv2.imshow('Corners', img)
