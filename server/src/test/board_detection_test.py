@@ -18,7 +18,8 @@ class BoardDetectionTest(BaseTest):
             ['test/resources/board_detection_black.png', detector.State.NOT_DETECTED],
             ['test/resources/board_detection_1.jpg', detector.State.DETECTED],
             ['test/resources/board_detection_2.jpg', detector.State.DETECTED],
-            ['test/resources/board_detection_3.jpg', detector.State.DETECTED]
+            ['test/resources/board_detection_3.jpg', detector.State.DETECTED],
+            ['test/resources/board_detection_4.jpg', detector.State.DETECTED]
         ]
 
         success_count = 0
@@ -28,7 +29,7 @@ class BoardDetectionTest(BaseTest):
             self.print_number(current=i + 1, total=len(test_images))
 
             image = cv2.imread(image_filename)
-            state = board_detector.detect(image, debug=False)
+            state = board_detector.detect(image, debug=True)
 
             if state == expected_state:
                 success_count += 1
