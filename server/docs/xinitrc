@@ -19,14 +19,14 @@ xwit -root -warp $( cat /sys/module/*fb*/parameters/fbwidth ) $( cat /sys/module
 matchbox-window-manager -use_titlebar no -use_cursor no &
 
 # Show splash
-feh -F ~/magic_lamp/Server/assets/splash.png & feh_pid=$!
+feh -F ~/itp/Server/src/resources/splash.png & feh_pid=$!
 
 # Start server
-cd ~/magic_lamp/Server/src
+cd ~/itp/Server/src
 python main.py &
 
 # Start client
-cd ~/magic_lamp/Client
+cd ~/itp/Client
 grunt run &
 sleep 10
 

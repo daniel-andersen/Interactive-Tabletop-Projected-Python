@@ -6,31 +6,27 @@ Setup display
 
 In /boot/config.txt insert/edit:
 
-`
-disable_overscan=1
-hdmi_force_hotplug=1
-hdmi_group=2
-hdmi_mode=28
-hdmi_drive=2
-`
+    disable_overscan=1
+    hdmi_force_hotplug=1
+    hdmi_group=2
+    hdmi_mode=28
+    hdmi_drive=2
 
 Setup WiFi
 ----------
 
-`
-ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
-update_config=1
-
-network={
-        ssid="Daniel & Annie"
-        scan_ssid=1
-        psk="<password>"
-        proto=RSN
-        key_mgmt=WPA-PSK
-        pairwise=CCMP
-        auth_alg=OPEN
-}
-`
+    ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+    update_config=1
+    
+    network={
+            ssid="Daniel & Annie"
+            scan_ssid=1
+            psk="<password>"
+            proto=RSN
+            key_mgmt=WPA-PSK
+            pairwise=CCMP
+            auth_alg=OPEN
+    }
 
 Update system
 -------------
@@ -68,8 +64,8 @@ Grant all access to start X11:
 
 Move .xinitrc and rc.local into place:
 
-    ~/.xinitrc
-    /etc/rc.local
+    /etc/rc.local  # Launch X server on startup
+    ~/.xinitrc  # Launch Interactive Tabletop Project:ed with X server
 
 Install nginx webserver
 -----------------------
@@ -92,10 +88,9 @@ Install git:
 
     $ sudo apt-get install git
 
-Setup ssh-keys and clone Magic Lamp:
+Setup ssh-keys and clone Interactive Tabletop Project:ed:
 
-    $ git clone git@github.com:daniel-andersen/Interactive-Tabletop-Projected.git
-    $ mv Interactive-Tabletop-Projected magic_lamp
+    $ git clone git@github.com:daniel-andersen/Interactive-Tabletop-Projected.git itp
 
 Install dependencies:
 
@@ -107,9 +102,13 @@ Install dependencies:
 
 Install OpenCV:
 
-    $ wget -O opencv-2.4.10.zip http://sourceforge.net/projects/opencvlibrary/files/opencv-unix/2.4.10/opencv-2.4.10.zip/download
-    $ unzip opencv-2.4.10.zip
-    $ cd opencv-2.4.10
+    $ curl -L https://github.com/opencv/opencv/archive/3.2.0.zip > opencv-3.2.0.zip
+    $ unzip opencv-3.2.0.zip
+    
+    $ curl -L https://github.com/opencv/opencv_contrib/archive/3.2.0.zip > opencv-contrib-3.2.0.zip
+    $ unzip opencv-contrib-3.2.0.zip
+    
+    $ cd opencv-3.2.0
 
     $ mkdir build
     $ cd build
@@ -122,7 +121,7 @@ Client
 
 Install dependencies:
 
-    $ cd magic_lamp/Client
+    $ cd itp/Client
     $ sudo ./install_dependencies.sh
 
 Install browser
