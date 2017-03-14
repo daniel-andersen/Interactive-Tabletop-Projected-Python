@@ -2,6 +2,7 @@
 
 # Show splash
 feh -F ~/itp/server/resources/splash.png & feh_pid=$!
+wait $feh_pid
 
 # Run processes script
 ./startup_processes.sh
