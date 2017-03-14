@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Show splash
-feh -F ~/itp/Server/resources/splash.png & feh_pid=$!
+feh -F ~/itp/server/resources/splash.png & feh_pid=$!
 
 # Run processes script
 ./startup_processes.sh

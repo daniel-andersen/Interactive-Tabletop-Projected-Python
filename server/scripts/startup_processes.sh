@@ -15,7 +15,7 @@ git reset --hard
 
 # Start server
 workon cv
-cd ~/itp/Server/src
+cd ~/itp/server/src
 python -u main.py > ~/log/server.log 2>&1 &
 
 # Start client

@@ -18,24 +18,5 @@ xwit -root -warp $( cat /sys/module/*fb*/parameters/fbwidth ) $( cat /sys/module
 # Start the window manager (remove "-use_cursor no" if you actually want mouse interaction)
 matchbox-window-manager -use_titlebar no -use_cursor no &
 
-# Show splash
-feh -F ~/itp/server/src/resources/splash.png & feh_pid=$!
-
-# Start server
-cd ~/itp/Server/src
-python main.py &
-
-# Start client
-cd ~/itp/client
-grunt run &
-sleep 10
-
-# Start the browser
-~/kiosk-browser/browser http://localhost:9000 & browser_pid=$!
-sleep 2
-
-# Remove splash
-kill -9 $feh_pid
-
-wait $browser_pid
-
+# Startup
+~/itp/server/scripts/startup.sh
