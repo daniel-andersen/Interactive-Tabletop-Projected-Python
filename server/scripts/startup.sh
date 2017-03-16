@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Show splash
-feh -F ~/itp/server/resources/splash.png & feh_pid=$!
+feh -F ~/itp/server/src/resources/splash.png & feh_pid=$!
 wait $feh_pid
 
 # Run processes script
