@@ -109,7 +109,7 @@ Install OpenCV:
     $ unzip opencv-contrib-3.2.0.zip
     
     $ cd opencv-3.2.0
-
+    
     $ mkdir build
     $ cd build
     $ cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/usr/local -D BUILD_NEW_PYTHON_SUPPORT=ON -D INSTALL_C_EXAMPLES=OFF -D INSTALL_PYTHON_EXAMPLES=OFF  -D BUILD_EXAMPLES=OFF ..

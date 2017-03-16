@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import cv2
 from threading import RLock
@@ -15,12 +16,15 @@ class Detector(object):
 
         self.min_matches = min_matches
 
+        # Initialize instance variables
         self.lock = RLock()
 
-        self.state = State.NOT_DETECTED
-        self.corners = None
+        self.detect_min_stable_time = 2.0
+        self.detect_min_count = 2
 
-        self.accept_distance_ratio = 1.0
+        self.tracking_accept_distance_ratio = 1.0
+
+        self.detect_history = []  # {timestamp, corners}
 
         # Load board calibrator image
         self.board_image = cv2.imread(board_image_filename)
@@ -41,6 +45,9 @@ class Detector(object):
         # Find features in marker image
         self.kp1, self.des1 = self.sift.detectAndCompute(self.board_image, None)
 
+    def reset(self):
+        self.detect_history = []
+
     def update(self, image):
         """
         Updates detection state with image.
@@ -50,20 +57,47 @@ class Detector(object):
         """
 
         # Perform detection
-        new_state = self.detect(image)
+        corners = self.detect_corners(image)
 
-        # Update state
+        # Update history
+        if corners is not None:
+            with self.lock:
+                self.detect_history.append((time.time(), corners))
+
+        # Return detected state
+        return self.get_state()
+
+    def get_state(self):
         with self.lock:
-            self.corners = None
-            self.state = new_state
-            return self.state
 
-    def detect(self, image, debug=False):
+            # Check sufficient amount of detections
+            if len(self.detect_history) < self.detect_min_count:
+                return State.NOT_DETECTED
+
+            # Check sufficient time ellapsed
+            if self.detect_history[-1]["timestamp"] - self.detect_history[0]["timestamp"] < self.detect_min_stable_time:
+                return State.NOT_DETECTED
+
+            # Check corner deviation
+            #corner_deviation = [[0.0, 0.0] for _ in range(0, 4)]
+            #for _, state, corners in self.detect_history:
+            #    for i, p in enumerate(corners):
+            #        corner_deviation[i][0] += p[0]
+            #        corner_deviation[i][1] += p[1]
+
+            return State.DETECTED
+
+    def get_corners(self):
+        with self.lock:
+            return self.detect_history[-1]["corners"] if self.get_state() == State.DETECTED else None
+
+    def detect_corners(self, image, debug=False):
         """
-        Performs a single detection with the given image.
+        Performs a single detection of corners with the given image.
 
         :param image: Input image
-        :return: Detection status
+        :param debug: Enable debug output
+        :return: Detected corners, if any
         """
 
         # Detect image
@@ -73,7 +107,7 @@ class Detector(object):
             kp2, des2 = self.sift.detectAndCompute(image, None)
 
             if len(self.kp1) < 2 or len(kp2) < 2:
-                return State.NOT_DETECTED
+                return None
 
             # Find matches
             matches = self.flann.knnMatch(self.des1, des2, k=2)
@@ -88,14 +122,14 @@ class Detector(object):
         # Sort out outliers and bad matches
         good_matches = []
         for i, (m, n) in enumerate(matches):
-            if matches_mask[i] == 1 and m.distance < self.accept_distance_ratio * n.distance:
+            if matches_mask[i] == 1 and m.distance < self.tracking_accept_distance_ratio * n.distance:
                 good_matches.append(m)
 
         # Debug output
         if debug:
             draw_mask = [[0, 0] for i in range(0, len(matches))]
             for i, (m, n) in enumerate(matches):
-                if matches_mask[i] == 1 and m.distance < self.accept_distance_ratio * n.distance:
+                if matches_mask[i] == 1 and m.distance < self.tracking_accept_distance_ratio * n.distance:
                     draw_mask[i] = [1, 0]
 
             draw_params = dict(matchColor=(0, 255, 0), singlePointColor=(255, 0, 0), matchesMask=draw_mask, flags=0)
@@ -104,7 +138,7 @@ class Detector(object):
 
         # Check number of matches
         if len(good_matches) < self.min_matches:
-            return State.NOT_DETECTED
+            return None
 
         # Catch potential transformation exceptions
         try:
@@ -125,22 +159,17 @@ class Detector(object):
             dst_points = cv2.perspectiveTransform(src_points, M)
 
             # Get corners
-            with self.lock:
-                self.corners = [[int(p[0][0]), int(p[0][1])] for p in dst_points]
+            detected_corners = [[int(p[0][0]), int(p[0][1])] for p in dst_points]
 
             # Debug output
             if debug:
                 img = image.copy()
-                cv2.drawContours(img, [np.int32(self.corners).reshape(-1, 1, 2)], -1, (255, 0, 255), 2)
+                cv2.drawContours(img, [np.int32(detected_corners).reshape(-1, 1, 2)], -1, (255, 0, 255), 2)
                 cv2.imshow('Corners', img)
                 cv2.waitKey(0)
 
-            return State.DETECTED
+            return detected_corners
 
         except Exception as e:
             print("Exception in Detector: %s" % str(e))
-            return State.NOT_DETECTED
-
-    def get_corners(self):
-        with self.lock:
-            return self.corners
+            return None

@@ -29,9 +29,10 @@ class BoardDetectionTest(BaseTest):
             self.print_number(current=i + 1, total=len(test_images))
 
             image = cv2.imread(image_filename)
-            state = board_detector.detect(image, debug=True)
+            corners = board_detector.detect_corners(image, debug=True)
+            detected_state = detector.State.DETECTED if corners is not None else detector.State.NOT_DETECTED
 
-            if state == expected_state:
+            if detected_state == expected_state:
                 success_count += 1
             else:
                 failed_count += 1
