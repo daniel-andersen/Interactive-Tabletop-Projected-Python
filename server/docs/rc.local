@@ -17,7 +17,7 @@ if [ "$_IP" ]; then
   printf "My IP address is %s\n" "$_IP"
 fi
 
-printf "Starting X11 server..."
-su - pi -c 'startx' &
+#printf "Starting X11 server..."
+#su - pi -c 'startx -- ~/.xinitrc' &
 
 exit 0

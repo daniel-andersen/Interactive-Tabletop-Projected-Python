@@ -19,7 +19,7 @@ Setup WiFi
     update_config=1
     
     network={
-            ssid="Daniel & Annie"
+            ssid="<network name>"
             scan_ssid=1
             psk="<password>"
             proto=RSN
@@ -32,7 +32,7 @@ Update system
 -------------
 
     $ sudo apt-get update
-    $ sudo apt-get upgrade --fix-missing
+    $ sudo apt-get upgrade
 
 Install additional packages for hardware accelerated OpenGL:
 
@@ -56,16 +56,19 @@ Choose:
 Install X11
 -----------
 
-    $ sudo apt-get install xserver-xorg xinit x11-xserver-utils matchbox xwit feh --fix-missing
+    $ sudo apt-get install nodm xserver-xorg xinit x11-xserver-utils matchbox xwit feh
 
 Grant all access to start X11:
 
     $ sudo dpkg-reconfigure x11-common
 
-Move .xinitrc and rc.local into place:
+Move nodm into place:
 
-    /etc/rc.local  # Launch X server on startup
-    ~/.xinitrc  # Launch Interactive Tabletop Project:ed with X server
+    /etc/default/nodm  # Autostart X on boot
+
+Move .xsession into place:
+
+    ~/.xsession  # Launch Interactive Tabletop Project:ed with X server
 
 Install nginx webserver
 -----------------------
@@ -79,7 +82,7 @@ Move nginx.conf into place:
 Install npm
 -----------
 
-    $ sudo apt-get install npm --fix-missing
+    $ sudo apt-get install npm
 
 Server
 ------
