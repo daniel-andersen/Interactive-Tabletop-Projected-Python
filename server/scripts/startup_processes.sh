@@ -14,7 +14,7 @@ git fetch --all
 git reset --hard
 
 # Start server
-workon cv
+workon itp
 cd ~/itp/server/src
 python -u main.py > ~/log/server.log 2>&1 &
 
