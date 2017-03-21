@@ -1,4 +1,3 @@
-import sys
 import cv2
 from test.base_test import BaseTest
 from tracking.board import detector
@@ -11,15 +10,15 @@ class BoardDetectionTest(BaseTest):
         ]
 
     def detection_test(self):
-        board_detector = detector.Detector(board_image_filename='test/resources/board_detection_source.png')
+        board_detector = detector.Detector(board_image_filename='test/resources/board_detection/board_detection_source.png')
 
         test_images = [
-            ['test/resources/board_detection_source.png', detector.State.DETECTED],
-            ['test/resources/board_detection_black.png', detector.State.NOT_DETECTED],
-            ['test/resources/board_detection_1.jpg', detector.State.DETECTED],
-            ['test/resources/board_detection_2.jpg', detector.State.DETECTED],
-            ['test/resources/board_detection_3.jpg', detector.State.DETECTED],
-            ['test/resources/board_detection_4.jpg', detector.State.DETECTED]
+            ['test/resources/board_detection/board_detection_source.png', detector.State.DETECTED],
+            ['test/resources/board_detection/board_detection_black.png', detector.State.NOT_DETECTED],
+            ['test/resources/board_detection/board_detection_1.jpg', detector.State.DETECTED],
+            ['test/resources/board_detection/board_detection_2.jpg', detector.State.DETECTED],
+            ['test/resources/board_detection/board_detection_3.jpg', detector.State.DETECTED],
+            ['test/resources/board_detection/board_detection_4.jpg', detector.State.DETECTED]
         ]
 
         success_count = 0
