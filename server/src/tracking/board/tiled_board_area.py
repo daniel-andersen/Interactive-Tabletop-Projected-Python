@@ -1,5 +1,6 @@
+import cv2
 import numpy as np
-from tracking.board.board_area import BoardArea
+from tracking.board.board_area import BoardArea, SnapshotSize
 
 
 class TiledBoardArea(BoardArea):
@@ -19,7 +20,7 @@ class TiledBoardArea(BoardArea):
 
         self.tile_count = tile_count
 
-    def tile_size(self, board_snapshot, size):
+    def tile_size(self, board_snapshot, size=SnapshotSize.ORIGINAL):
         """
         Calculates the size of a single tile.
 
@@ -33,7 +34,7 @@ class TiledBoardArea(BoardArea):
         return (float(image_width) / float(self.tile_count[0]),
                 float(image_height) / float(self.tile_count[1]))
 
-    def tile_region(self, x, y, board_snapshot, size):
+    def tile_region(self, x, y, board_snapshot, size=SnapshotSize.ORIGINAL):
         """
         Calculates the tile region for tile at x, y.
 
@@ -52,29 +53,29 @@ class TiledBoardArea(BoardArea):
                 int(tile_width),
                 int(tile_height))
 
-    def tile(self, x, y, board_snapshot, size, grayscaled=False):
+    def tile(self, x, y, board_snapshot, grayscaled=False, size=SnapshotSize.ORIGINAL):
         """
         Returns the tile at x, y.
 
         :param x: X coordinate
         :param y: Y coordinate
         :param board_snapshot: Board snapshot
-        :param size: Snapshot size
         :param grayscaled: If true, use grayscaled image as source
+        :param size: Snapshot size
         :return: The tile at x, y
         """
         source_image = self.area_image(board_snapshot, size) if not grayscaled else self.grayscaled_area_image(board_snapshot, size)
         x1, y1, x2, y2 = self.tile_region(x, y, board_snapshot, size)[:4]
         return source_image[y1:y2, x1:x2]
 
-    def tile_strip(self, coordinates, board_snapshot, size, grayscaled=False):
+    def tile_strip(self, coordinates, board_snapshot, grayscaled=False, size=SnapshotSize.ORIGINAL):
         """
         Returns the tiles at the specified coordinates.
 
         :param coordinates: List of coordinates [(x, y), ...]
         :param board_snapshot: Board snapshot
-        :param size: Snapshot size
         :param grayscaled: If true and source_image is None, use grayscaled image as source
+        :param size: Snapshot size
         :return: The tiles in a single horizontal image strip
         """
         source_image = self.area_image(board_snapshot, size) if not grayscaled else self.grayscaled_area_image(board_snapshot, size)
@@ -96,12 +97,16 @@ class TiledBoardArea(BoardArea):
         for (x, y) in coordinates:
             x1, y1, x2, y2 = self.tile_region(x, y, board_snapshot, size)[:4]
             tile_image = source_image[y1:y2, x1:x2]
+            print("%i, %i" % (source_image.shape[:2][1], source_image.shape[:2][0]))
+            print("%i, %i" % (tile_width, tile_height))
+            cv2.imshow('1', tile_image)
+            cv2.waitKey(0)
             image[0:image_height, int(offset):min(int(offset) + int(tile_width), image_width)] = tile_image
             offset += tile_width
 
         return image
 
-    def tile_from_strip_image(self, index, tile_strip_image, board_snapshot, size):
+    def tile_from_strip_image(self, index, tile_strip_image, board_snapshot, size=SnapshotSize.ORIGINAL):
         """
         Returns the tile at the given index from the given tile strip image.
 
