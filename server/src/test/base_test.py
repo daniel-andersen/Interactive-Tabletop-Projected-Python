@@ -4,7 +4,7 @@ import sys
 class BaseTest(object):
     subtest_str = None
 
-    def run(self):
+    def run(self, debug=False):
         print('Test class: %s' % type(self).__name__)
 
         total_failed_count = 0
@@ -16,7 +16,7 @@ class BaseTest(object):
 
             self.subtest_str = None
 
-            success_count, failed_count = f()
+            success_count, failed_count = f(debug=debug)
 
             total_success_count += success_count
             total_failed_count += failed_count

@@ -1,14 +1,14 @@
 from threading import RLock
-from tracking.board.snapshot import Snapshot
-from tracking.board.detector import Detector
-from tracking.board.detector import State as DetectionState
+from tracking.board.board_snapshot import BoardSnapshot
+from tracking.board.board_detector import BoardDetector
+from tracking.board.board_detector import State as DetectionState
 from util import enum
 
 
 State = enum.Enum('INITIALIZING', 'DETECTING', 'READY', 'CALIBRATING')
 
 
-class Descriptor(object):
+class BoardDescriptor(object):
     """
     Class representing a description of a board.
     """
@@ -17,12 +17,12 @@ class Descriptor(object):
 
         self.state = State.INITIALIZING
 
-        self.snapshot = Snapshot()
+        self.board_snapshot = BoardSnapshot()
 
         self.board_corners = None
 
-        self.board_detector = Detector(board_image_filename='resources/board_detection.png')
-        self.board_calibrator = Detector(board_image_filename='resources/board_calibration.png')
+        self.board_detector = BoardDetector(board_image_filename='resources/board_detection.png')
+        self.board_calibrator = BoardDetector(board_image_filename='resources/board_calibration.png')
 
         self.switch_to_detection_state()
 
@@ -62,12 +62,12 @@ class Descriptor(object):
 
     def get_snapshot(self):
         with self.lock:
-            return self.snapshot
+            return self.board_snapshot
 
-    def set_snapshot(self, snapshot):
+    def set_board_snapshot(self, snapshot):
         with self.lock:
-            self.snapshot = snapshot
+            self.board_snapshot = snapshot
 
     def is_recognized(self):
         with self.lock:
-            return self.snapshot is not None
+            return self.board_snapshot is not None

@@ -8,7 +8,7 @@ from util import enum
 State = enum.Enum('NOT_DETECTED', 'DETECTED')
 
 
-class Detector(object):
+class BoardDetector(object):
     """
     Class capable of detecting board.
     """

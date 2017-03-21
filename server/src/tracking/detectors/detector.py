@@ -1,4 +1,4 @@
-from tracking.board.snapshot import SnapshotSize
+from tracking.board.board_snapshot import SnapshotSize
 
 
 class Detector(object):

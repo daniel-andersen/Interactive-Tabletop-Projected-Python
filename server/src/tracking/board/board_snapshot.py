@@ -2,17 +2,18 @@ import cv2
 from random import randint
 from threading import RLock
 from util import enum
+from tracking.util import transform
 
 
 SnapshotStatus = enum.Enum('NOT_RECOGNIZED', 'RECOGNIZED')
 SnapshotSize = enum.Enum('EXTRA_SMALL', 'SMALL', 'MEDIUM', 'LARGE', 'ORIGINAL')
 
 
-class Snapshot:
+class BoardSnapshot:
     """
     Class representing a snapshot (including current camera feed image) of a board.
 
-    Field variables:
+    Field variables (READ-ONLY!):
     status -- Recognition status (of type SnapshotStatus enum) of snapshot
     camera_image -- Original camera image
     board_images -- The recognized and transformed images in all sizes (dict of type SnapshotSize enum)
@@ -21,19 +22,28 @@ class Snapshot:
     id -- Random ID for the actual snapshot. Is set automatically when created
     """
 
-    def __init__(self, status=SnapshotStatus.NOT_RECOGNIZED, camera_image=None, board_image=None, board_corners=None):
-        self.status = status
+    def __init__(self, camera_image, board_corners, status=SnapshotStatus.RECOGNIZED):
         self.camera_image = camera_image
-        self.board_images = {}
-        self.grayscaled_board_images = {}
         self.board_corners = board_corners
+        self.status = status
 
-        self.id = randint(0, 100000)
+        self.id = randint(0, 1000000)
 
         self.lock = RLock()
 
-        if board_image is not None:
-            self.board_images[SnapshotSize.ORIGINAL] = board_image
+        self.board_images = {}
+        self.grayscaled_board_images = {}
+
+        if camera_image is not None:
+            self.board_images[SnapshotSize.ORIGINAL] = transform.transform_image(camera_image, board_corners)
+
+    def is_recognized(self):
+        """
+        Returns True if board is recognized in this snapshot or else False.
+
+        :return: True if board is recognized or else False.
+        """
+        return self.status is SnapshotStatus.RECOGNIZED
 
     def board_image(self, image_size=SnapshotSize.SMALL):
         """

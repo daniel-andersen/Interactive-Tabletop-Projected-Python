@@ -6,6 +6,7 @@ import math
 def order_corners(corners):
     """
     Orders the four corner points from top/left, top/right, bottom/right, bottom/left.
+
     :param corners: Corner points
     :return: Ordered points, clockwise from top/left corner
     """
@@ -23,6 +24,7 @@ def order_corners(corners):
 def warp_corners(corners):
     """
     Warps the corner points to a rectangle.
+
     :param corners: Source points
     :return: Points warped to a rectangle, clockwise from top/left corner
     """
@@ -47,6 +49,7 @@ def warp_corners(corners):
 def distance(p1, p2):
     """
     Calculates the distance between the two points.
+
     :param p1: First point
     :param p2: Second point
     :return: Distance between points
@@ -57,6 +60,7 @@ def distance(p1, p2):
 def transform_image(image, corners):
     """
     Perspective transform source image into rectangle.
+
     :param image: Source image to transform
     :param corners: Corners in source image
     :return: Transformed image
