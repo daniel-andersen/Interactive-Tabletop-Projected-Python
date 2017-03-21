@@ -36,6 +36,7 @@ class TiledBrickDetectionTest(BaseTest):
             if corners is None:
                 failed_count += 1
                 print('%s FAILED. Could not detect board' % image_filename)
+                continue
 
             # Create board snapshot
             test_image = cv2.imread(test_filename)
