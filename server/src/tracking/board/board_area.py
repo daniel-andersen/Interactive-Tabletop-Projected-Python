@@ -12,24 +12,27 @@ class BoardArea(object):
     cached_area_images = {}
     cached_grayscaled_area_images = {}
 
-    def __init__(self, area_id, rect=[0.0, 0.0, 1.0, 1.0]):
+    board_descriptor = None
+
+    def __init__(self, area_id, board_descriptor, rect=[0.0, 0.0, 1.0, 1.0]):
         """
         Initializes a board area.
 
         :param area_id: Area id
+        :param board_descriptor: Board descriptor to use
         :param rect: Board rect in percentage of board [x1, y1, x2, y2]
         """
         self.area_id = area_id if area_id is not None else randint(0, 100000)
+        self.board_descriptor = board_descriptor
         self.rect = rect
         self.current_board_snapshot_id = None
 
         self.lock = RLock()
 
-    def area_image(self, board_snapshot, size=SnapshotSize.SMALL):
+    def area_image(self, size=SnapshotSize.SMALL):
         """
         Extracts area image from board snapshot.
 
-        :param board_snapshot: Board snapshot
         :param size: Size to return
         :return Extracted area image
         """
@@ -37,25 +40,25 @@ class BoardArea(object):
         with self.lock:
 
             # Check if board is recognized
-            if not board_snapshot.is_recognized():
+            if not self.board_descriptor.board_snapshot.is_recognized():
                 return None
 
             # Check if snapshot has changed
-            if self.current_board_snapshot_id != board_snapshot.id:
+            if self.current_board_snapshot_id != self.board_descriptor.board_snapshot.id:
 
                 # Remove cached images
                 self.cached_area_images = {}
                 self.cached_grayscaled_area_images = {}
 
                 # Save snapshot ID
-                self.current_board_snapshot_id = board_snapshot.id
+                self.current_board_snapshot_id = self.board_descriptor.board_snapshot.id
 
             # Return cached area image
             if size in self.cached_area_images:
                 return self.cached_area_images[size]
 
             # Get board image
-            board_image = board_snapshot.board_image(size)
+            board_image = self.board_descriptor.board_snapshot.board_image(size)
             image_height, image_width = board_image.shape[:2]
 
             # Extract area image
@@ -68,11 +71,10 @@ class BoardArea(object):
 
             return self.cached_area_images[size]
 
-    def grayscaled_area_image(self, board_snapshot, size=SnapshotSize.SMALL):
+    def grayscaled_area_image(self, size=SnapshotSize.SMALL):
         """
         Extracts grayscaled area image from board snapshot.
 
-        :param board_snapshot: Board snapshot
         :param size: Size to return
         :return Extracted grayscaled area image
         """
@@ -80,16 +82,16 @@ class BoardArea(object):
         with self.lock:
 
             # Check if board is recognized
-            if not board_snapshot.is_recognized():
+            if not self.board_descriptor.board_snapshot.is_recognized():
                 return None
 
             # Check if already extracted image
-            if self.current_board_snapshot_id == board_snapshot.id:
+            if self.current_board_snapshot_id == self.board_descriptor.board_snapshot.id:
                 if size in self.cached_grayscaled_area_images:
                     return self.cached_grayscaled_area_images[size]
 
             # Extract image
-            image = self.area_image(board_snapshot, size)
+            image = self.area_image(size)
 
             # Grayscale image
             self.cached_grayscaled_area_images[size] = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)

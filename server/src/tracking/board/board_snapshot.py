@@ -22,7 +22,7 @@ class BoardSnapshot:
     id -- Random ID for the actual snapshot. Is set automatically when created
     """
 
-    def __init__(self, camera_image, board_corners, status=SnapshotStatus.RECOGNIZED):
+    def __init__(self, camera_image=None, board_corners=None, status=SnapshotStatus.RECOGNIZED):
         self.camera_image = camera_image
         self.board_corners = board_corners
         self.status = status
