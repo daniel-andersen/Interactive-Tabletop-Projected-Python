@@ -1,4 +1,3 @@
-import cv2
 import numpy as np
 from tracking.board.board_area import BoardArea, SnapshotSize
 
@@ -10,15 +9,17 @@ class TiledBoardArea(BoardArea):
     Field variables:
     tile_count -- [width, height]
     """
-    def __init__(self, area_id, tile_count, board_descriptor, rect=[0.0, 0.0, 1.0, 1.0]):
+    def __init__(self, area_id, tile_count, padding, board_descriptor, rect=[0.0, 0.0, 1.0, 1.0]):
         """
         Initializes a tiled board area.
 
         :param tile_count: Tile count [tile_count_x, tile_count_y]
+        :param padding: Tile padding in percentage [horizontal, vertical]
         """
         super(TiledBoardArea, self).__init__(area_id, board_descriptor, rect)
 
         self.tile_count = tile_count
+        self.padding = padding
 
     def tile_size(self, size=SnapshotSize.ORIGINAL):
         """
@@ -33,6 +34,31 @@ class TiledBoardArea(BoardArea):
         return (float(image_width) / float(self.tile_count[0]),
                 float(image_height) / float(self.tile_count[1]))
 
+    def tile_size_padded(self, size=SnapshotSize.ORIGINAL):
+        """
+        Calculates the size of a single tile minus padding.
+
+        :param size: Snapshot size
+        :return: Tile (width, height)
+        """
+        tile_width, tile_height = self.tile_size(size)
+        padding_width, padding_height = self.padding_size(size)
+
+        return (int(tile_width) - (padding_width * 2),
+                int(tile_height) - (padding_height * 2))
+
+    def padding_size(self, size=SnapshotSize.ORIGINAL):
+        """
+        Calculates the size of the padding in whole pixels.
+
+        :param size: Snapshot size
+        :return: Padding size (width, height)
+        """
+        tile_width, tile_height = self.tile_size(size)
+
+        return (int(tile_width * self.padding[0]),
+                int(tile_height * self.padding[1]))
+
     def tile_region(self, x, y, size=SnapshotSize.ORIGINAL):
         """
         Calculates the tile region for tile at x, y.
@@ -43,13 +69,19 @@ class TiledBoardArea(BoardArea):
         :return: The (x1, y1, x2, y2, width, height) tile region
         """
         tile_width, tile_height = self.tile_size(size)
+        tile_width_padded, tile_height_padded = self.tile_size_padded(size)
 
-        return (int(float(x) * tile_width),
-                int(float(y) * tile_height),
-                int((float(x) * tile_width)) + int(tile_width),
-                int((float(y) * tile_height)) + int(tile_height),
-                int(tile_width),
-                int(tile_height))
+        padding_width, padding_height = self.padding_size(size)
+
+        offset_x = int(float(x) * tile_width) + padding_width
+        offset_y = int(float(y) * tile_height) + padding_height
+
+        return (offset_x,
+                offset_y,
+                offset_x + tile_width_padded,
+                offset_y + tile_height_padded,
+                tile_width_padded,
+                tile_height_padded)
 
     def tile(self, x, y, grayscaled=False, size=SnapshotSize.ORIGINAL):
         """
@@ -76,10 +108,10 @@ class TiledBoardArea(BoardArea):
         """
         source_image = self.area_image(size) if not grayscaled else self.grayscaled_area_image(size)
 
-        tile_width, tile_height = self.tile_size(size)
+        tile_width, tile_height = self.tile_size_padded(size)
 
-        image_width = int(float(len(coordinates)) * tile_width)
-        image_height = int(tile_height)
+        image_width = len(coordinates) * tile_width
+        image_height = tile_height
 
         channels = source_image.shape[2] if len(source_image.shape) > 2 else 1
         if channels > 1:
@@ -87,16 +119,15 @@ class TiledBoardArea(BoardArea):
         else:
             size = (image_height, image_width)
 
-        image = np.zeros(size, source_image.dtype)
+        strip_image = np.zeros(size, source_image.dtype)
 
         offset = 0.0
         for (x, y) in coordinates:
-            x1, y1, x2, y2 = self.tile_region(x, y, size)[:4]
-            tile_image = source_image[y1:y2, x1:x2]
-            image[0:image_height, int(offset):min(int(offset) + int(tile_width), image_width)] = tile_image
+            tile_image = self.tile(x, y, grayscaled, size)
+            strip_image[0:image_height, int(offset):min(int(offset) + int(tile_width), image_width)] = tile_image
             offset += tile_width
 
-        return image
+        return strip_image
 
     def tile_from_strip_image(self, index, tile_strip_image, size=SnapshotSize.ORIGINAL):
         """
@@ -107,7 +138,7 @@ class TiledBoardArea(BoardArea):
         :param size: Snapshot size
         :return: The tile at the given index
         """
-        tile_width, tile_height = self.tile_size(size)
+        tile_width, tile_height = self.tile_size_padded(size)
         x1 = int(float(index) * tile_width)
         x2 = x1 + int(tile_width)
         return tile_strip_image[0:int(tile_height), x1:x2]

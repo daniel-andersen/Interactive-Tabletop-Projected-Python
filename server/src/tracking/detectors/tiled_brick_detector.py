@@ -50,7 +50,7 @@ class TiledBrickDetector(object):
 
         # Check probabilities
         if debug:
-            print("2) %f - %f = %f" % (max_probability, second_max_probability, max_probability - second_max_probability))
+            print("Max probability: %f - second max probability: %f - delta: %f" % (max_probability, second_max_probability, max_probability - second_max_probability))
             print(probabilities)
 
         if max_probability < self.brick_detection_minimum_probability:
@@ -119,14 +119,10 @@ class TiledBrickDetector(object):
         # Extract brick image
         brick_image = tiled_board_area.tile_from_strip_image(index, tile_strip_image)
 
-        # Remove border
-        tile_width, tile_height = tiled_board_area.tile_size()
-        border_width = int(float(tile_width) * 0.1)
-        border_height = int(float(tile_height) * 0.1)
-        brick_image = brick_image[border_height:int(tile_height) - border_height, border_width:int(tile_width) - border_width]
-
         # Calculate histogram from b/w image
         histogram = histogram_util.histogram_from_bw_image(brick_image)
 
         # Return black percentage
+        tile_width, tile_height = tiled_board_area.tile_size_padded()
+
         return histogram[0][0] / (tile_width * tile_height)

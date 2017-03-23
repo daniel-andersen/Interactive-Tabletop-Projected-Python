@@ -15,8 +15,9 @@ class TiledBrickDetectionTest(BaseTest):
         ]
 
     def detection_test(self, debug=False):
-        tests = [
-            ['test/resources/tiled_brick_detection/brick_detection_1', [32, 20], [(1, 1)]]
+        tests = [  # [Filename prefix, [tile count x, tile count y], [padding horizontal, padding vertical], [(expected x, expected y), ...]]
+            ['test/resources/tiled_brick_detection/brick_detection_1', [32, 20], [0.1, 0.1], [(1, 1), (10, 7), (15, 5), (29, 17)]],
+            ['test/resources/tiled_brick_detection/brick_detection_2', [32, 20], [0.2, 0.2], [(1, 7), (14, 8), (20, 12), (24, 18), (30, 1)]],
         ]
 
         # Initial board detection
@@ -28,14 +29,14 @@ class TiledBrickDetectionTest(BaseTest):
         success_count = 0
         failed_count = 0
 
-        for i, (image_filename, tile_count, expected_positions) in enumerate(tests):
+        for i, (image_filename, tile_count, tile_padding, expected_positions) in enumerate(tests):
             self.print_number(current=i + 1, total=len(tests))
 
             board_filename = "%s_board.png" % image_filename
             test_filename = "%s_test.png" % image_filename
 
             # Create board area
-            tiled_board_area = TiledBoardArea(0, tile_count, board_descriptor)
+            tiled_board_area = TiledBoardArea(0, tile_count, tile_padding, board_descriptor)
 
             # Detect board
             board_image = cv2.imread(board_filename)
@@ -68,12 +69,12 @@ class TiledBrickDetectionTest(BaseTest):
                 # Pick a random number of positions with no bricks
                 positions = []
                 for _ in range(5, 10):
-                    random_index = randint(0, len(no_brick_positions))
+                    random_index = randint(0, len(no_brick_positions) - 1)
                     positions.append(no_brick_positions[random_index])
                     no_brick_positions.pop(random_index)
 
                 # Insert expected position
-                expected_index = randint(0, len(positions))
+                expected_index = randint(0, len(positions) - 1)
                 positions.insert(expected_index, expected_position)
 
                 # Detect brick
