@@ -25,6 +25,9 @@ if len(filters) == 0:
     filters = ['ALL']
 
 # Run tests
+total_success_count = 0
+total_failed_count = 0
+
 for test_dict in tests:
 
     # Filter check
@@ -40,4 +43,13 @@ for test_dict in tests:
 
     # Run test
     test = test_dict['test']
-    test.run(debug=debug)
+    success_count, failed_count = test.run(debug=debug)
+
+    total_success_count += 1 if failed_count == 0 else 0
+    total_failed_count += 1 if failed_count > 0 else 0
+
+print()
+print('Result: %i/%i test%s completed successfully' % (total_success_count, total_success_count + total_failed_count, 's' if total_success_count > 1 else ''))
+if total_failed_count > 0:
+    print('        %i/%i test%s FAILED!' % (total_failed_count, total_success_count + total_failed_count, 's' if total_failed_count> 1 else ''))
+print()
