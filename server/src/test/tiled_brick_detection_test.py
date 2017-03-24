@@ -22,7 +22,6 @@ class TiledBrickDetectionTest(BaseTest):
 
         # Initial board detection
         board_detector = BoardDetector(board_image_filename='test/resources/tiled_brick_detection/board_detection_source.png')
-        tiled_brick_detector = TiledBrickDetector()
         board_descriptor = BoardDescriptor()
 
         # Run tests
@@ -37,6 +36,7 @@ class TiledBrickDetectionTest(BaseTest):
 
             # Create board area
             tiled_board_area = TiledBoardArea(0, tile_count, tile_padding, board_descriptor)
+            tiled_brick_detector = TiledBrickDetector(tiled_board_area)
 
             # Detect board
             board_image = cv2.imread(board_filename)
@@ -78,7 +78,7 @@ class TiledBrickDetectionTest(BaseTest):
                 positions.insert(expected_index, expected_position)
 
                 # Detect brick
-                detected_position = tiled_brick_detector.find_brick_among_tiles(tiled_board_area, positions, debug)
+                detected_position = tiled_brick_detector.find_brick_among_tiles(positions, debug)
                 detected_position = detected_position[0] if detected_position is not None else None
 
                 if detected_position == expected_position:
