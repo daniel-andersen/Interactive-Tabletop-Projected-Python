@@ -1,12 +1,14 @@
 import sys
 from test.board_detection_test import BoardDetectionTest
 from test.tiled_brick_detection_test import TiledBrickDetectionTest
+from test.hand_detection_test import HandDetectionTest
 
 
 # Tests to run
 tests = [
     {'test': BoardDetectionTest(), 'filter': ['BOARD_DETECTION', 'ALL', 'BASIC']},
     {'test': TiledBrickDetectionTest(), 'filter': ['BRICK_DETECTION', 'ALL', 'BASIC']},
+    {'test': HandDetectionTest(), 'filter': ['HAND_DETECTION', 'ALL', 'BASIC']},
 ]
 
 # Parse arguments
