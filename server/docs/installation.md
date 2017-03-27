@@ -79,10 +79,11 @@ Move nginx.conf into place:
 
     /etc/nginx/nginx.conf
 
-Install npm
------------
+Install npm and yarn
+--------------------
 
     $ sudo apt-get install npm
+    $ npm install -g yarn
 
 Server
 ------
