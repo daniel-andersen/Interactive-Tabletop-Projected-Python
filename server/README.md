@@ -13,3 +13,9 @@ To Do
 - Hand detection
   - Hand position
   - Hands off table-detection
+
+Installing
+----------
+
+Installing OpenCV 3 on Ubuntu: https://www.learnopencv.com/install-opencv3-on-ubuntu/
+
