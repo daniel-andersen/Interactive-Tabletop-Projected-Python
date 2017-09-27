@@ -62,7 +62,7 @@ class BoardDetector(object):
         # Update history
         if corners is not None:
             with self.lock:
-                self.detect_history.append((time.time(), corners))
+                self.detect_history.append({"timestamp": time.time(), "corners": corners})
 
         # Return detected state
         return self.get_state()
