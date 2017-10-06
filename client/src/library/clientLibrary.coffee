@@ -107,6 +107,8 @@ class Client
         @boardCalibrationDiv.style.top = '0%'
         @boardCalibrationDiv.style.width = '100%'
         @boardCalibrationDiv.style.height = '100%'
+        @boardCalibrationDiv.style.opacity = '0'
+        @boardCalibrationDiv.style.transition = 'opacity 1s linear'
         @boardCalibrationDiv.style.zIndex = 1000
         document.body.appendChild(@boardCalibrationDiv)
 
@@ -121,15 +123,40 @@ class Client
         @boardCalibrationDiv.appendChild(image)
 
         setTimeout(() =>
+            @boardCalibrationDiv.style.opacity = '1'
+        , 1)
+
+        setTimeout(() =>
             completionCallback()
         , 1000)
 
     hideBoardCalibratorImage: (completionCallback) ->
+        @boardCalibrationDiv.style.opacity = '0'
+
         setTimeout(() =>
             document.body.removeChild(@boardCalibrationDiv)
             @boardCalibrationDiv = undefined
             completionCallback()
         , 1000)
+
+    """
+    setupTensorflowDetector: Sets up a tensorflow detector.
+
+    detectorId: Detector ID to use as a reference.
+    modelName: Name of model to use.
+    completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
+    """
+    setupTensorflowDetector: (detectorId, modelName, completionCallback = undefined) ->
+        requestId = @addCompletionCallback(completionCallback)
+        json = {
+            "requestId": requestId,
+            "detectorId": detectorId,
+            "modelName": modelName
+        }
+        @sendMessage("setupTensorflowDetector", json)
+
+
+
 
     """
     initializeBoardArea: Initializes an area of the board. Is used to search for markers in a specific region, etc.
@@ -573,40 +600,3 @@ class Client
         # Delete request if not explicitely specified otherwise by callback handler
         if not shouldRemoveRequest? or shouldRemoveRequest
             delete @requests[requestId]
-
-
-    convertImageToDataURL: (image, callback) ->
-        canvas = document.createElement("CANVAS")
-        canvas.width = image.width
-        canvas.height = image.height
-
-        ctx = canvas.getContext("2d")
-        ctx.drawImage(image, 0, 0)
-
-        dataURL = canvas.toDataURL("image/png")
-        dataURL = dataURL.replace(/^.*;base64,/, "")
-
-        callback(dataURL)
-
-        canvas = null
-
-    readFileBase64: (filename, callback) ->
-        xhr = new XMLHttpRequest()
-        xhr.open("GET", filename, true)
-        xhr.responseType = "blob"
-
-        xhr.onload = (e) ->
-            if this.status == 200
-                blob = new Blob([this.response], {type: "text/xml"})
-
-                fileReader = new FileReader()
-                fileReader.onload = (e) =>
-                    contents = e.target.result
-                    contents = contents.replace(/^.*;base64,/, "")
-                    callback(contents)
-                fileReader.onerror = (e) =>
-                    console.log("Error loading file: " + e)
-
-                fileReader.readAsDataURL(blob)
-
-        xhr.send();

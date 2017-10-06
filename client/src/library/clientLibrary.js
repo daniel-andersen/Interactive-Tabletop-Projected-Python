@@ -128,6 +128,8 @@ Client = (function() {
     this.boardCalibrationDiv.style.top = '0%';
     this.boardCalibrationDiv.style.width = '100%';
     this.boardCalibrationDiv.style.height = '100%';
+    this.boardCalibrationDiv.style.opacity = '0';
+    this.boardCalibrationDiv.style.transition = 'opacity 1s linear';
     this.boardCalibrationDiv.style.zIndex = 1000;
     document.body.appendChild(this.boardCalibrationDiv);
     image = document.createElement('img');
@@ -139,6 +141,11 @@ Client = (function() {
     image.style.width = '100%';
     image.style.height = '100%';
     this.boardCalibrationDiv.appendChild(image);
+    setTimeout((function(_this) {
+      return function() {
+        return _this.boardCalibrationDiv.style.opacity = '1';
+      };
+    })(this), 1);
     return setTimeout((function(_this) {
       return function() {
         return completionCallback();
@@ -147,6 +154,7 @@ Client = (function() {
   };
 
   Client.prototype.hideBoardCalibratorImage = function(completionCallback) {
+    this.boardCalibrationDiv.style.opacity = '0';
     return setTimeout((function(_this) {
       return function() {
         document.body.removeChild(_this.boardCalibrationDiv);
@@ -154,6 +162,22 @@ Client = (function() {
         return completionCallback();
       };
     })(this), 1000);
+  };
+
+  "setupTensorflowDetector: Sets up a tensorflow detector.\n\ndetectorId: Detector ID to use as a reference.\nmodelName: Name of model to use.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+
+  Client.prototype.setupTensorflowDetector = function(detectorId, modelName, completionCallback) {
+    var json, requestId;
+    if (completionCallback == null) {
+      completionCallback = void 0;
+    }
+    requestId = this.addCompletionCallback(completionCallback);
+    json = {
+      "requestId": requestId,
+      "detectorId": detectorId,
+      "modelName": modelName
+    };
+    return this.sendMessage("setupTensorflowDetector", json);
   };
 
   "initializeBoardArea: Initializes an area of the board. Is used to search for markers in a specific region, etc.\n\nx1: Left coordinate in percentage [0..1] of board width.\ny1: Top in percentage [0..1] of board height.\nx2: Right coordinate in percentage [0..1] of board width.\ny2: Bottom coordinate in percentage [0..1] of board height.\nareaId: (Optional) Area ID to use. If none is given, a random area ID is generated and returned from the server.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -714,50 +738,6 @@ Client = (function() {
     if ((shouldRemoveRequest == null) || shouldRemoveRequest) {
       return delete this.requests[requestId];
     }
-  };
-
-  Client.prototype.convertImageToDataURL = function(image, callback) {
-    var canvas, ctx, dataURL;
-    canvas = document.createElement("CANVAS");
-    canvas.width = image.width;
-    canvas.height = image.height;
-    ctx = canvas.getContext("2d");
-    ctx.drawImage(image, 0, 0);
-    dataURL = canvas.toDataURL("image/png");
-    dataURL = dataURL.replace(/^.*;base64,/, "");
-    callback(dataURL);
-    return canvas = null;
-  };
-
-  Client.prototype.readFileBase64 = function(filename, callback) {
-    var xhr;
-    xhr = new XMLHttpRequest();
-    xhr.open("GET", filename, true);
-    xhr.responseType = "blob";
-    xhr.onload = function(e) {
-      var blob, fileReader;
-      if (this.status === 200) {
-        blob = new Blob([this.response], {
-          type: "text/xml"
-        });
-        fileReader = new FileReader();
-        fileReader.onload = (function(_this) {
-          return function(e) {
-            var contents;
-            contents = e.target.result;
-            contents = contents.replace(/^.*;base64,/, "");
-            return callback(contents);
-          };
-        })(this);
-        fileReader.onerror = (function(_this) {
-          return function(e) {
-            return console.log("Error loading file: " + e);
-          };
-        })(this);
-        return fileReader.readAsDataURL(blob);
-      }
-    };
-    return xhr.send();
   };
 
   return Client;

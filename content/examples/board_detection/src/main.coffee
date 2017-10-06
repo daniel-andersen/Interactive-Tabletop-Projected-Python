@@ -44,5 +44,8 @@ class BoardDetectionExample
 
     calibrateBoard: ->
         @client.calibrateBoard((action, payload) =>
+            @client.setupTensorflowDetector(0, "brick", (action, payload) =>
+                console.log('OK!')
+            )
             # @initializeBoardAreas()
         )

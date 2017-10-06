@@ -17,7 +17,7 @@ from server import globals
 from server.board_detector_thread import BoardDetectorThread
 from util import misc_util
 
-from tracking.board.board_detector import BoardDetector, State
+from tracking.detectors.tensorflow_detector import TensorflowDetector
 
 if misc_util.module_exists("picamera"):
     print("Using Raspberry Pi camera")
@@ -37,7 +37,11 @@ class Server(WebSocket):
         self.action_to_function_dict = {'enableDebug': self.enable_debug,
                                         'takeScreenshot': self.take_screenshot,
                                         'reset': self.reset,
-                                        'calibrateBoard': self.calibrate_board}
+                                        'calibrateBoard': self.calibrate_board,
+                                        'setupTensorflowDetector': self.setup_tensorflow_detector}
+
+        self.detectors = {}
+        self.detectors_lock = RLock()
 
         random_id_lock = RLock()
 
@@ -133,6 +137,21 @@ class Server(WebSocket):
                             ).start()
 
         return None
+
+    def setup_tensorflow_detector(self, payload):
+        """
+        Sets up a tensorflow detector.
+
+        detectorId: Detector ID to use as a reference
+        modelName: Name of model to use
+        requestId: (Optional) Request ID
+        """
+        detector = TensorflowDetector(detector_id=payload["detectorId"], model_name=payload["modelName"])
+
+        with self.detectors_lock:
+            self.detectors[payload["detectorId"]] = detector
+
+        return "OK", {}, self.request_id_from_payload(payload)
 
     def send_message(self, result, action, payload={}, request_id=None):
         """

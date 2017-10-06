@@ -54,7 +54,11 @@ BoardDetectionExample = (function() {
 
   BoardDetectionExample.prototype.calibrateBoard = function() {
     return this.client.calibrateBoard((function(_this) {
-      return function(action, payload) {};
+      return function(action, payload) {
+        return _this.client.setupTensorflowDetector(0, "brick", function(action, payload) {
+          return console.log('OK!');
+        });
+      };
     })(this));
   };
 

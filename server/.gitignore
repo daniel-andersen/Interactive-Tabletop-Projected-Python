@@ -62,3 +62,5 @@ src/debug
 
 venv
 
+src/resources/*frozen_inference_graph.pb
+
