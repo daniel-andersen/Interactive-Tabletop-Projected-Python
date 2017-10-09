@@ -62,5 +62,5 @@ src/debug
 
 venv
 
-src/resources/*frozen_inference_graph.pb
+src/resources/tensorflow/*frozen_inference_graph.pb
 
