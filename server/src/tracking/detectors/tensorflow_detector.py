@@ -78,7 +78,7 @@ class TensorflowDetector(Detector):
         return []
 
     def load_model(self):
-        path_to_ckpt = 'resources/%s_frozen_inference_graph.pb' % self.model_name
+        path_to_ckpt = 'resources/tensorflow/%s_frozen_inference_graph.pb' % self.model_name
 
         self.detection_graph = tf.Graph()
         with self.detection_graph.as_default():

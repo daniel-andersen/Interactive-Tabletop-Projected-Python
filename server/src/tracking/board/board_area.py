@@ -2,7 +2,12 @@ from threading import RLock
 
 import cv2
 from random import randint
+
 from tracking.board.board_snapshot import SnapshotSize
+
+
+BoardAreaId_FULL_IMAGE = -2
+BoardAreaId_FULL_BOARD = -1
 
 
 class BoardArea(object):

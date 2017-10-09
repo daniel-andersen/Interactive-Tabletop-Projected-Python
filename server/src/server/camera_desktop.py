@@ -60,4 +60,4 @@ class Camera(object):
         _, camera_image = self.camera.read()
         with self.lock:
             self.image = camera_image
-            self.image = cv2.imread("debug_board.png")  # TODO! Remove! Only for test purposes!
+            self.image = cv2.imread("resources/debug/debug_board.png")  # TODO! Remove! Only for test purposes!

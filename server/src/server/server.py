@@ -17,6 +17,7 @@ from server import globals
 from server.board_detector_thread import BoardDetectorThread
 from util import misc_util
 
+from tracking.board.board_area import BoardArea
 from tracking.detectors.tensorflow_detector import TensorflowDetector
 
 if misc_util.module_exists("picamera"):
@@ -87,6 +88,7 @@ class Server(WebSocket):
         """
         resolution = payload["resolution"] if "resolution" in payload else [640, 480]
 
+        globals.reset()
         self.initialize_video(resolution)
 
         return "OK", {}, self.request_id_from_payload(payload)
@@ -150,6 +152,53 @@ class Server(WebSocket):
 
         with self.detectors_lock:
             self.detectors[payload["detectorId"]] = detector
+
+        return "OK", {}, self.request_id_from_payload(payload)
+
+    def initialize_board_area(self, payload):
+        """
+        Initializes board area with given parameters.
+
+        requestId: (Optional) Request ID
+        id: (Optional) Area id
+        x1: X1 in percentage of board size.
+        y1: Y1 in percentage of board size.
+        x2: X2 in percentage of board size.
+        y2: Y2 in percentage of board size.
+        """
+        with globals.get_state().board_descriptor_lock, globals.get_state().board_areas_lock:
+            board_descriptor = globals.get_state().get_board_descriptor()
+            board_areas = globals.get_state().get_board_areas()
+
+            board_area = BoardArea(
+                payload["id"] if "id" in payload else None,
+                [payload["x1"], payload["y1"], payload["x2"], payload["y2"]],
+                board_descriptor
+            )
+            board_areas[board_area.area_id] = board_area
+
+            return "OK", {"id": board_area.area_id}, self.request_id_from_payload(payload)
+
+    def remove_board_areas(self, payload):
+        """
+        Removes all board areas.
+
+        requestId: (Optional) Request ID
+        """
+        globals.get_state().reset_board_areas()
+
+        return "OK", {}, self.request_id_from_payload(payload)
+
+    def remove_board_area(self, payload):
+        """
+        Removes the given board area.
+
+        requestId: (Optional) Request ID
+        id: Area ID.
+        """
+        area_id = payload["id"]
+
+        globals.get_state().remove_board_area(area_id)
 
         return "OK", {}, self.request_id_from_payload(payload)
 

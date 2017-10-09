@@ -1,9 +1,23 @@
 from threading import RLock
+from tracking.board.board_descriptor import BoardDescriptor
+from tracking.board.board_area import BoardArea
+from tracking.board.board_area import BoardAreaId_FULL_BOARD
 
 
 class GlobalState:
 
     debug = False
+
+    def __init__(self):
+
+        # Initialize default board descriptor
+        board_descriptor = BoardDescriptor()
+        board_descriptor.board_size = [1280, 800]
+        board_descriptor.border_percentage_size = [0.0, 0.0]
+        self.set_board_descriptor(board_descriptor)
+
+        # Reset board areas
+        self.reset_board_areas()
 
     """
     RGB camera
@@ -35,9 +49,73 @@ class GlobalState:
         with self.board_detector_lock:
             self._board_detector = board_detector
 
+    """
+    Board descriptor
+    """
 
-_global_state_instance = GlobalState()
+    _board_descriptor = None
+    board_descriptor_lock = RLock()
+
+    def get_board_descriptor(self):
+        with self.board_descriptor_lock:
+            return self._board_descriptor
+
+    def set_board_descriptor(self, board_descriptor):
+        with self.board_descriptor_lock:
+            self._board_descriptor = board_descriptor
+
+    """
+    Board areas
+    """
+
+    _board_areas = {}
+    board_areas_lock = RLock()
+
+    def reset_board_areas(self):
+        with self.board_areas_lock:
+
+            # Initialize default board area (full board)
+            board_area = BoardArea(
+                area_id=BoardAreaId_FULL_BOARD,
+                board_descriptor=self.get_board_descriptor(),
+                rect=[0.0, 0.0, 1.0, 1.0]
+            )
+            self.set_board_area(board_area.area_id, board_area)
+
+    def get_board_areas(self):
+        with self.board_areas_lock:
+            return self._board_areas
+
+    def set_board_areas(self, board_areas):
+        with self.board_areas_lock:
+            self._board_areas = board_areas
+
+    def get_board_area(self, area_id):
+        with self.board_areas_lock:
+            return self._board_areas[area_id] if area_id in self._board_areas else None
+
+    def set_board_area(self, area_id, board_area):
+        with self.board_areas_lock:
+            self._board_areas[area_id] = board_area
+
+    def remove_board_area(self, area_id):
+        with self.board_areas_lock:
+            del self._board_areas[area_id]
+
+
+def reset():
+    global _global_state_instance, _global_state_instance_lock
+    with _global_state_instance_lock:
+        _global_state_instance = GlobalState()
 
 
 def get_state():
-    return _global_state_instance
+    global _global_state_instance, _global_state_instance_lock
+    with _global_state_instance_lock:
+        return _global_state_instance
+
+
+_global_state_instance = None
+_global_state_instance_lock = RLock()
+
+reset()

@@ -21,8 +21,7 @@ class BoardDescriptor(object):
 
         self.board_corners = None
 
-        self.board_detector = BoardDetector(board_image_filename='resources/board_detection.png')
-        self.board_calibrator = BoardDetector(board_image_filename='resources/board_calibration.png')
+        self.board_detector = BoardDetector(board_image_filename='resources/board_calibration.png')
 
         self.switch_to_detection_state()
 
