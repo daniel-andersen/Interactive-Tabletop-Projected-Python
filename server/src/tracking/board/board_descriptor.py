@@ -1,11 +1,7 @@
 from threading import RLock
-from tracking.board.board_snapshot import BoardSnapshot
+
 from tracking.board.board_detector import BoardDetector
-from tracking.board.board_detector import State as DetectionState
-from util import enum
-
-
-State = enum.Enum('INITIALIZING', 'DETECTING', 'READY', 'CALIBRATING')
+from tracking.board.board_snapshot import BoardSnapshot, SnapshotStatus
 
 
 class BoardDescriptor(object):
@@ -15,57 +11,30 @@ class BoardDescriptor(object):
     def __init__(self):
         self.lock = RLock()
 
-        self.state = State.INITIALIZING
-
-        self.board_snapshot = BoardSnapshot()
-
-        self.board_corners = None
-
         self.board_detector = BoardDetector(board_image_filename='resources/board_calibration.png')
 
-        self.switch_to_detection_state()
-
-    def switch_to_detection_state(self):
-        self.state = State.DETECTING
-
-    def switch_to_ready_state(self):
-        self.state = State.READY
-
-    def switch_to_calibration_state(self):
-        self.state = State.CALIBRATING
+        self.board_snapshot = BoardSnapshot()
+        self.board_snapshot.status = SnapshotStatus.NOT_RECOGNIZED
 
     def update(self, image):
-
         with self.lock:
+            self.board_snapshot = BoardSnapshot(camera_image=image, board_corners=self.board_detector.get_corners())
 
-            # Update detection state
-            if self.state == State.DETECTING:
-                self.update_detection(image)
-
-            # Update ready state
-            if self.state == State.READY:
-                self.update_ready(image)
-
-    def update_detection(self, image):
-
-        # Update detection
-        detection_state = self.board_detector.update(image)
-
-        # Detected board
-        if detection_state == DetectionState.DETECTED:
-            self.board_corners = self.board_detector.get_corners()
-            self.switch_to_ready_state()
-
-    def update_ready(self, image):
-        pass
-
-    def get_snapshot(self):
+    def set_board_detector(self, board_detector):
         with self.lock:
-            return self.board_snapshot
+            self.board_detector = board_detector
+
+    def get_board_detector(self):
+        with self.lock:
+            return self.board_detector
 
     def set_board_snapshot(self, snapshot):
         with self.lock:
             self.board_snapshot = snapshot
+
+    def get_board_snapshot(self):
+        with self.lock:
+            return self.board_snapshot
 
     def is_recognized(self):
         with self.lock:

@@ -48,7 +48,26 @@ BoardDetectionExample = (function() {
   BoardDetectionExample.prototype.calibrateBoard = function() {
     return this.client.calibrateBoard((function(_this) {
       return function(action, payload) {
-        return console.log('Calibrated board!');
+        return _this.setupTensorflowDetector();
+      };
+    })(this));
+  };
+
+  BoardDetectionExample.prototype.setupTensorflowDetector = function() {
+    return this.client.setupTensorflowDetector(0, "brick", (function(_this) {
+      return function(action, payload) {
+        return _this.detectBricks();
+      };
+    })(this));
+  };
+
+  BoardDetectionExample.prototype.detectBricks = function() {
+    return this.setDebugCameraImage("brick_detection.png", (function(_this) {
+      return function(action, payload) {
+        return _this.client.detectImages(_this.client.boardAreaId_fullBoard, 0, function(action, payload) {
+          console.log("Bricks detected!");
+          return console.log(payload);
+        });
       };
     })(this));
   };

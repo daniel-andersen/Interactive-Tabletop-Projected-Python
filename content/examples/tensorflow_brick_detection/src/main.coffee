@@ -28,6 +28,15 @@ class BoardDetectionExample
         image.src = "assets/images/" + filename
 
     calibrateBoard: ->
-        @client.calibrateBoard((action, payload) =>
-            console.log('Calibrated board!')
+        @client.calibrateBoard((action, payload) => @setupTensorflowDetector())
+
+    setupTensorflowDetector: ->
+        @client.setupTensorflowDetector(0, "brick", (action, payload) => @detectBricks())
+
+    detectBricks: ->
+        @setDebugCameraImage("brick_detection.png", (action, payload) =>
+            @client.detectImages(@client.boardAreaId_fullBoard, 0, (action, payload) =>
+                console.log("Bricks detected!")
+                console.log(payload)
+            )
         )

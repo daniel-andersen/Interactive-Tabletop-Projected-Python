@@ -33,6 +33,11 @@ module.exports = function(grunt) {
         projects: {
           "../content/examples/board_detection": "default"
         }
+      },
+      example_tensorflow_brick_detection: {
+        projects: {
+          "../content/examples/tensorflow_brick_detection": "default"
+        }
       }
     },
     clean: ["target"],
@@ -49,6 +54,14 @@ module.exports = function(grunt) {
           {expand: true, cwd: "../content/examples/board_detection/src", src: "**", dest: "target/content/examples/board_detection/src"},
           {expand: true, cwd: "../content/examples/board_detection/lib", src: "**", dest: "target/content/examples/board_detection/lib"},
           {expand: true, cwd: "../content/examples/board_detection/", src: "*.html", dest: "target/content/examples/board_detection/"}
+        ]
+      },
+      example_tensorflow_brick_detection: {
+        files: [
+          {expand: true, cwd: "../content/examples/tensorflow_brick_detection/assets", src: "**", dest: "target/content/examples/tensorflow_brick_detection/assets"},
+          {expand: true, cwd: "../content/examples/tensorflow_brick_detection/src", src: "**", dest: "target/content/examples/tensorflow_brick_detection/src"},
+          {expand: true, cwd: "../content/examples/tensorflow_brick_detection/lib", src: "**", dest: "target/content/examples/tensorflow_brick_detection/lib"},
+          {expand: true, cwd: "../content/examples/tensorflow_brick_detection/", src: "*.html", dest: "target/content/examples/tensorflow_brick_detection/"}
         ]
       }
     }

@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 import tensorflow as tf
 
@@ -12,13 +13,15 @@ class TensorflowDetector(Detector):
 
     detection_graph = None
 
-    def __init__(self, detector_id, model_name):
+    def __init__(self, detector_id, model_name, min_score=0.9):
         """
         :param detector_id: Detector ID
         :param model_name: Name of model to use
         """
         super().__init__(detector_id)
+
         self.model_name = model_name
+        self.min_score = min_score
 
         self.load_model()
 
@@ -28,17 +31,17 @@ class TensorflowDetector(Detector):
 
         :return: Input resolution (of type SnapshotSize enum)
         """
-        return SnapshotSize.MEDIUM
+        return SnapshotSize.SMALL
 
-    def detect(self, image):
+    def detect_in_image(self, image):
         """
         Run detector in image.
 
         :param image: Image
-        :return: List of detected features each containing at least {"detectorId", "centerX", "centerY", "width", "height", "angle"}
+        :return: List of detected features each containing {detectorId, class, score, centerX, centerY, width, height, angle}
         """
         with self.detection_graph.as_default():
-            with tf.Session(graph=self.detection_graph) as sess:
+            with tf.Session(graph=self.detection_graph) as session:
 
                 # Definite input and output Tensors for detection_graph
                 image_tensor = self.detection_graph.get_tensor_by_name('image_tensor:0')
@@ -56,26 +59,18 @@ class TensorflowDetector(Detector):
                 image_expanded = np.expand_dims(image, axis=0)
 
                 # Actual detection.
-                (boxes, scores, classes, num) = sess.run(
+                (boxes, scores, classes, num) = session.run(
                     [detection_boxes, detection_scores, detection_classes, num_detections],
                     feed_dict={image_tensor: image_expanded})
 
-                # Visualization of the results of a detection.
-                """
-                vis_util.visualize_boxes_and_labels_on_image_array(
-                    image_np,
-                    np.squeeze(boxes),
-                    np.squeeze(classes).astype(np.int32),
-                    np.squeeze(scores),
-                    category_index,
-                    use_normalized_coordinates=True,
-                    line_thickness=2)
-                plt.figure(figsize=IMAGE_SIZE)
-                plt.imshow(image_np)
-                plt.show()
-                """
-
-        return []
+                return [{"detectorId": self.detector_id,
+                         "class": int(classes[0][i]),
+                         "score": float(scores[0][i]),
+                         "centerX": float(boxes[0][i][1] + boxes[0][i][3]) / 2.0,
+                         "centerY": float(boxes[0][i][0] + boxes[0][i][2]) / 2.0,
+                         "width": float(boxes[0][i][3] - boxes[0][i][1]),
+                         "height": float(boxes[0][i][2] - boxes[0][i][0]),
+                         "angle": 0.0} for i in range(0, len(scores[0])) if scores[0][i] >= self.min_score]
 
     def load_model(self):
         path_to_ckpt = 'resources/tensorflow/%s_frozen_inference_graph.pb' % self.model_name

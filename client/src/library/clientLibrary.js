@@ -9,6 +9,8 @@ Client = (function() {
     this.socketOpen = false;
     this.requests = {};
     this.boardCalibrationDiv = void 0;
+    this.boardAreaId_fullImage = -2;
+    this.boardAreaId_fullBoard = -1;
   }
 
   "connect: Establishes a websocket connection to the server.\n\nTakes two callback parameters.\nonSocketOpen: onSocketOpen() is called when socket connection has been established.\nonMessage: onMessage(json) is called with json response from server. The json consists of the following mandatory fields:\n  - result: Fx. \"OK\" or \"BOARD_NOT_RECOGNIZED\"\n  - action: Action which message is a reply to, fx. \"reset\" or \"initializeBoard\"\n  - payload: The actual payload. Varies from response to response.\n  - requestId: Unique request id for which this is a response to.";
@@ -97,6 +99,26 @@ Client = (function() {
       json["filename"] = filename;
     }
     return this.sendMessage("takeScreenshot", json);
+  };
+
+  "setDebugCameraImage: Uploads debug camera image.\n\nimage: Source marker image.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+
+  Client.prototype.setDebugCameraImage = function(image, completionCallback) {
+    var requestId;
+    if (completionCallback == null) {
+      completionCallback = void 0;
+    }
+    requestId = this.addCompletionCallback(completionCallback);
+    return ClientUtil.convertImageToDataURL(image, (function(_this) {
+      return function(base64Image) {
+        var json;
+        json = {
+          "requestId": requestId,
+          "imageBase64": base64Image
+        };
+        return _this.sendMessage("setDebugCameraImage", json);
+      };
+    })(this));
   };
 
   "calibrateBoard: Calibrates the board.\n\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -305,6 +327,21 @@ Client = (function() {
     return this.sendMessage("removeMarker", {
       "requestId": requestId,
       "id": markerId
+    });
+  };
+
+  "requestTiledBrickPosition: Returns the position of a brick among the given possible positions in a tiled area.\n\nareaId: Area ID of tiled board area.\ndetectorId: The ID of the detector to use.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+
+  Client.prototype.detectImages = function(areaId, detectorId, completionCallback) {
+    var requestId;
+    if (completionCallback == null) {
+      completionCallback = void 0;
+    }
+    requestId = this.addCompletionCallback(completionCallback);
+    return this.sendMessage("detectImages", {
+      "requestId": requestId,
+      "areaId": areaId,
+      "detectorId": detectorId
     });
   };
 

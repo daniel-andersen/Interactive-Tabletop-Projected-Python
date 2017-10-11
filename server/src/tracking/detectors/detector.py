@@ -17,11 +17,22 @@ class Detector(object):
         """
         return SnapshotSize.MEDIUM
 
-    def detect(self, image):
+    def detect(self, image=None, board_area=None):
         """
-        Run detector in image.
+        Run detector in image or board area.
 
         :param image: Image
-        :return: List of detected features each containing at least {"detectorId", "centerX", "centerY", "width", "height", "angle"}
+        :param board_area: Board area
+        :return: List of detected features each containing at least {detectorId, centerX, centerY, width, height, angle}
         """
-        return []
+        if image is not None:
+            return self.detect_in_image(image)
+        if board_area is not None:
+            return self.detect_in_board_area(board_area)
+        raise Exception("Either 'image' or 'board_area' must be given as input to 'detect'")
+
+    def detect_in_image(self, image):
+        raise Exception("Function 'detect_in_image' must be overridden!")
+
+    def detect_in_board_area(self, board_area):
+        return self.detect_in_image(board_area.area_image(size=self.preferred_input_image_resolution()))

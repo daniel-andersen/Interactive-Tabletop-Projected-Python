@@ -2,7 +2,7 @@ import time
 
 from threading import Thread
 from server import globals
-from tracking.board import board_detector
+from tracking.board.board_detector import State
 
 
 class BoardDetectorThread(object):
@@ -17,11 +17,6 @@ class BoardDetectorThread(object):
 
     def _run(self):
 
-        # Create board detector
-        with globals.get_state().board_detector_lock:
-            if globals.get_state().get_board_detector() is None:
-                globals.get_state().set_board_detector(board_detector.BoardDetector(board_image_filename='resources/board_calibration.png'))
-
         # Update board calibration
         start_time = time.time()
 
@@ -30,16 +25,19 @@ class BoardDetectorThread(object):
             # Sleep a while
             time.sleep(0.01)
 
+            # Get board detector
+            board_detector = globals.get_state().get_board_descriptor().get_board_detector()
+
             # Update board calibrator with camera image
             with globals.get_state().camera_lock:
                 camera = globals.get_state().get_camera()
                 if camera is not None:
                     image = camera.read()
                     if image is not None:
-                        globals.get_state().get_board_detector().update(image)
+                        board_detector.update(image)
 
             # Check calibrated
-            if globals.get_state().get_board_detector().get_state() == board_detector.State.DETECTED:
+            if board_detector.get_state() == State.DETECTED:
                 print('Board calibrated')
                 self.callback_function()
                 return

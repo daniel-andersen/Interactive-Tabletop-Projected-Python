@@ -1,9 +1,8 @@
 import cv2
 from random import randint
 from test.base_test import BaseTest
-from tracking.board.board_detector import BoardDetector
+from tracking.board.board_detector import BoardDetector, State
 from tracking.board.board_descriptor import BoardDescriptor
-from tracking.board.board_snapshot import BoardSnapshot
 from tracking.board.tiled_board_area import TiledBoardArea
 from tracking.detectors.tiled_brick_detector import TiledBrickDetector
 
@@ -21,7 +20,6 @@ class TiledBrickDetectionTest(BaseTest):
         ]
 
         # Initial board detection
-        board_detector = BoardDetector(board_image_filename='test/resources/tiled_brick_detection/board_detection_source.png')
         board_descriptor = BoardDescriptor()
 
         # Run tests
@@ -40,18 +38,19 @@ class TiledBrickDetectionTest(BaseTest):
 
             # Detect board
             board_image = cv2.imread(board_filename)
-            corners = board_detector.detect_corners(board_image)
+            corners = board_descriptor.get_board_detector().detect_corners(board_image)
             if corners is None:
                 failed_count += 1
                 print('%s FAILED. Could not detect board' % image_filename)
                 continue
 
-            # Create board snapshot
-            test_image = cv2.imread(test_filename)
-            board_snapshot = BoardSnapshot(test_image, corners)
+            board_descriptor.get_board_detector().update(board_image)
+            board_descriptor.get_board_detector().state = State.DETECTED
+            board_descriptor.update(board_image)
 
             # Update board descriptor
-            board_descriptor.set_board_snapshot(board_snapshot)
+            test_image = cv2.imread(test_filename)
+            board_descriptor.update(test_image)
 
             # Detect bricks
             detected_count = 0

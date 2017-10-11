@@ -10,14 +10,10 @@ class GlobalState:
 
     def __init__(self):
 
-        # Initialize default board descriptor
-        board_descriptor = BoardDescriptor()
-        board_descriptor.board_size = [1280, 800]
-        board_descriptor.border_percentage_size = [0.0, 0.0]
-        self.set_board_descriptor(board_descriptor)
-
-        # Reset board areas
+        # Perform reset
+        self.reset_board_descriptor()
         self.reset_board_areas()
+        self.reset_detectors()
 
     """
     RGB camera
@@ -56,6 +52,12 @@ class GlobalState:
     _board_descriptor = None
     board_descriptor_lock = RLock()
 
+    def reset_board_descriptor(self):
+        board_descriptor = BoardDescriptor()
+        board_descriptor.board_size = [1280, 800]
+        board_descriptor.border_percentage_size = [0.0, 0.0]
+        self.set_board_descriptor(board_descriptor)
+
     def get_board_descriptor(self):
         with self.board_descriptor_lock:
             return self._board_descriptor
@@ -73,6 +75,7 @@ class GlobalState:
 
     def reset_board_areas(self):
         with self.board_areas_lock:
+            self._board_areas = {}
 
             # Initialize default board area (full board)
             board_area = BoardArea(
@@ -81,14 +84,6 @@ class GlobalState:
                 rect=[0.0, 0.0, 1.0, 1.0]
             )
             self.set_board_area(board_area.area_id, board_area)
-
-    def get_board_areas(self):
-        with self.board_areas_lock:
-            return self._board_areas
-
-    def set_board_areas(self, board_areas):
-        with self.board_areas_lock:
-            self._board_areas = board_areas
 
     def get_board_area(self, area_id):
         with self.board_areas_lock:
@@ -101,6 +96,29 @@ class GlobalState:
     def remove_board_area(self, area_id):
         with self.board_areas_lock:
             del self._board_areas[area_id]
+
+    """
+    Detectors
+    """
+
+    _detectors= {}
+    detectors_lock = RLock()
+
+    def reset_detectors(self):
+        with self.detectors_lock:
+            self._detectors = {}
+
+    def get_detector(self, detector_id):
+        with self.detectors_lock:
+            return self._detectors[detector_id] if detector_id in self._detectors else None
+
+    def set_detector(self, detector_id, detector):
+        with self.detectors_lock:
+            self._detectors[detector_id] = detector
+
+    def remove_detector(self, detector_id):
+        with self.detectors_lock:
+            del self._detectors[detector_id]
 
 
 def reset():

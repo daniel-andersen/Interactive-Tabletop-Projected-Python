@@ -9,14 +9,14 @@ class TiledBoardArea(BoardArea):
     Field variables:
     tile_count -- [width, height]
     """
-    def __init__(self, area_id, tile_count, padding, board_descriptor, rect=[0.0, 0.0, 1.0, 1.0]):
+    def __init__(self, area_id, tile_count, padding, rect=[0.0, 0.0, 1.0, 1.0]):
         """
         Initializes a tiled board area.
 
         :param tile_count: Tile count [tile_count_x, tile_count_y]
         :param padding: Tile padding in percentage [horizontal, vertical]
         """
-        super(TiledBoardArea, self).__init__(area_id, board_descriptor, rect)
+        super(TiledBoardArea, self).__init__(area_id, rect)
 
         self.tile_count = tile_count
         self.padding = padding

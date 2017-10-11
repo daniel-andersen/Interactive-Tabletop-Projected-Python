@@ -7,7 +7,6 @@ import traceback
 import base64
 import cv2
 import numpy as np
-from threading import Thread
 from threading import RLock
 from random import randint
 
@@ -15,6 +14,7 @@ from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
 
 from server import globals
 from server.board_detector_thread import BoardDetectorThread
+from server.images_detector_thread import ImagesDetectorThread
 from util import misc_util
 
 from tracking.board.board_area import BoardArea
@@ -37,9 +37,11 @@ class Server(WebSocket):
 
         self.action_to_function_dict = {'enableDebug': self.enable_debug,
                                         'takeScreenshot': self.take_screenshot,
+                                        'setDebugCameraImage': self.set_debug_camera_image,
                                         'reset': self.reset,
                                         'calibrateBoard': self.calibrate_board,
-                                        'setupTensorflowDetector': self.setup_tensorflow_detector}
+                                        'setupTensorflowDetector': self.setup_tensorflow_detector,
+                                        'detectImages': self.detect_images}
 
         self.detectors = {}
         self.detectors_lock = RLock()
@@ -77,7 +79,7 @@ class Server(WebSocket):
             if globals.get_state().get_camera() is not None:
                 return
             globals.get_state().set_camera(Camera())
-            globals.get_state().get_camera().start(resolution)
+            globals.get_state().get_camera().start(delegate=self, resolution=resolution)
 
     def reset(self, payload):
         """
@@ -110,17 +112,34 @@ class Server(WebSocket):
         requestId: (Optional) Request ID
         filename: (Optional) Screenshot filename
         """
-        with globals.get_state().camera_lock:
-            camera = globals.get_state().get_camera()
-            if camera is not None:
-                image = camera.read()
-                if image is not None:
-                    filename = payload["filename"] if "filename" in payload else\
-                        "debug/board_{0}.png".format(time.strftime("%Y-%m-%d-%H%M%S"))
-                    cv2.imwrite(filename, image)
-                    return "OK", {}, self.request_id_from_payload(payload)
+        camera = globals.get_state().get_camera()
+        if camera is not None:
+            image = camera.read()
+            if image is not None:
+                filename = payload["filename"] if "filename" in payload else\
+                    "debug/board_{0}.png".format(time.strftime("%Y-%m-%d-%H%M%S"))
+                cv2.imwrite(filename, image)
+                return "OK", {}, self.request_id_from_payload(payload)
 
         return "CAMERA_NOT_READY", {}, self.request_id_from_payload(payload)
+
+    def set_debug_camera_image(self, payload):
+        """
+        Overriden the camera input with the given image.
+
+        imageBase64: Image as base 64 encoded PNG
+        """
+        raw_image = base64.b64decode(payload["imageBase64"])
+        raw_bytes = np.asarray(bytearray(raw_image), dtype=np.uint8)
+        image = cv2.imdecode(raw_bytes, cv2.IMREAD_UNCHANGED)
+
+        camera = globals.get_state().get_camera()
+        if camera is None:
+            return "CAMERA_NOT_READY", {}, self.request_id_from_payload(payload)
+
+        camera.set_debug_image(image)
+
+        return "OK", {}, self.request_id_from_payload(payload)
 
     def calibrate_board(self, payload):
         """
@@ -150,8 +169,7 @@ class Server(WebSocket):
         """
         detector = TensorflowDetector(detector_id=payload["detectorId"], model_name=payload["modelName"])
 
-        with self.detectors_lock:
-            self.detectors[payload["detectorId"]] = detector
+        globals.get_state().set_detector(detector.detector_id, detector)
 
         return "OK", {}, self.request_id_from_payload(payload)
 
@@ -166,16 +184,15 @@ class Server(WebSocket):
         x2: X2 in percentage of board size.
         y2: Y2 in percentage of board size.
         """
-        with globals.get_state().board_descriptor_lock, globals.get_state().board_areas_lock:
+        with globals.get_state().board_descriptor_lock:
             board_descriptor = globals.get_state().get_board_descriptor()
-            board_areas = globals.get_state().get_board_areas()
 
             board_area = BoardArea(
-                payload["id"] if "id" in payload else None,
-                [payload["x1"], payload["y1"], payload["x2"], payload["y2"]],
-                board_descriptor
+                area_id=payload["id"] if "id" in payload else None,
+                board_descriptor=board_descriptor,
+                rect=[payload["x1"], payload["y1"], payload["x2"], payload["y2"]]
             )
-            board_areas[board_area.area_id] = board_area
+            globals.get_state().set_board_area(board_area.area_id, board_area)
 
             return "OK", {"id": board_area.area_id}, self.request_id_from_payload(payload)
 
@@ -201,6 +218,30 @@ class Server(WebSocket):
         globals.get_state().remove_board_area(area_id)
 
         return "OK", {}, self.request_id_from_payload(payload)
+
+    def detect_images(self, payload):
+        """
+        Detects images on the board using the given detector.
+
+        areaId: ID of area to detect images in
+        detectorId: Detector ID to use as a reference
+        requestId: (Optional) Request ID
+        """
+        board_area = globals.get_state().get_board_area(payload["areaId"])
+        if board_area is None:
+            return "BOARD_AREA_NOT_FOUND", {}, self.request_id_from_payload(payload)
+
+        detector = globals.get_state().get_detector(payload["detectorId"])
+        if detector is None:
+            return "DETECTOR_NOT_FOUND", {}, self.request_id_from_payload(payload)
+
+        ImagesDetectorThread(detector, board_area, callback_function=lambda result: self.send_message(result="OK",
+                                                                                                      action="detectImages",
+                                                                                                      payload=result,
+                                                                                                      request_id=self.request_id_from_payload(payload))
+                             ).start()
+
+        return None
 
     def send_message(self, result, action, payload={}, request_id=None):
         """
@@ -237,6 +278,10 @@ class Server(WebSocket):
         """
         return payload["requestId"] if "requestId" in payload else self.pick_request_id()
 
+    def camera_image_updated(self, image):
+        board_descriptor = globals.get_state().get_board_descriptor()
+        if board_descriptor is not None:
+            board_descriptor.update(image)
 
 def start_server():
     print("Starting server...")

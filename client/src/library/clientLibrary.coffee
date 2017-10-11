@@ -11,6 +11,9 @@ class Client
 
         @boardCalibrationDiv = undefined
 
+        @boardAreaId_fullImage = -2
+        @boardAreaId_fullBoard = -1
+
 
 
     """
@@ -86,6 +89,22 @@ class Client
         json = {"requestId": requestId}
         if filename? then json["filename"] = filename
         @sendMessage("takeScreenshot", json)
+
+    """
+    setDebugCameraImage: Uploads debug camera image.
+
+    image: Source marker image.
+    completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
+    """
+    setDebugCameraImage: (image, completionCallback = undefined) ->
+        requestId = @addCompletionCallback(completionCallback)
+        ClientUtil.convertImageToDataURL(image, (base64Image) =>
+            json = {
+                "requestId": requestId,
+                "imageBase64": base64Image
+            }
+            @sendMessage("setDebugCameraImage", json)
+        )
 
     """
     calibrateBoard: Calibrates the board.
@@ -254,6 +273,21 @@ class Client
         @sendMessage("removeMarker", {
             "requestId": requestId,
             "id": markerId
+        })
+
+    """
+    requestTiledBrickPosition: Returns the position of a brick among the given possible positions in a tiled area.
+
+    areaId: Area ID of tiled board area.
+    detectorId: The ID of the detector to use.
+    completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
+    """
+    detectImages: (areaId, detectorId, completionCallback = undefined) ->
+        requestId = @addCompletionCallback(completionCallback)
+        @sendMessage("detectImages", {
+            "requestId": requestId,
+            "areaId": areaId,
+            "detectorId": detectorId
         })
 
     """

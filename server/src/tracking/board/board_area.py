@@ -66,6 +66,8 @@ class BoardArea(object):
             board_image = self.board_descriptor.board_snapshot.board_image(size)
             image_height, image_width = board_image.shape[:2]
 
+            cv2.imwrite("debug.png", board_image)
+
             # Extract area image
             x1 = int(float(image_width) * self.rect[0])
             y1 = int(float(image_height) * self.rect[1])
@@ -102,3 +104,12 @@ class BoardArea(object):
             self.cached_grayscaled_area_images[size] = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
             return self.cached_grayscaled_area_images[size]
+
+    def transform_camera_point(self, x, y):
+        """
+        Transforms a point in the camera image to the board area.
+
+        :param x: X-coordinate
+        :param y: Y-coordinate
+        :return: Transformed point in board area
+        """

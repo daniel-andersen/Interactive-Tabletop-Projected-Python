@@ -34,7 +34,7 @@ class BoardSnapshot:
         self.board_images = {}
         self.grayscaled_board_images = {}
 
-        if camera_image is not None:
+        if camera_image is not None and board_corners is not None:
             self.board_images[SnapshotSize.ORIGINAL] = transform.transform_image(camera_image, board_corners)
 
     def is_recognized(self):

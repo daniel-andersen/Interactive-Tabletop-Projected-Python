@@ -13,6 +13,7 @@ class Camera(object):
     raw_capture = None
     stream = None
     lock = Lock()
+    debug_image = None
 
     def start(self, resolution=(640, 480), framerate=16):
         """
@@ -72,7 +73,10 @@ class Camera(object):
 
             # Grab image
             with self.lock:
-                self.image = rotated_image
+                if self.debug_image is None:
+                    self.image = rotated_image
+                else:
+                    self.image = self.debug_image
 
             # Stop
             if self.stopped:
@@ -80,3 +84,15 @@ class Camera(object):
                 self.raw_capture.close()
                 self.camera.close()
                 return
+
+    def set_debug_image(self, image):
+        """
+        Overrides the camera input with the given image. Set to None to revert to camera input.
+
+        :param image: Debug image
+        """
+        with self.lock:
+            if len(image.shape) == 3 and image.shape[2] == 4:
+                image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)  # Remove alpha channel
+            self.debug_image = image
+            self.image = image
