@@ -21,6 +21,9 @@ class TiledBrickDetectionTest(BaseTest):
 
         # Initial board detection
         board_descriptor = BoardDescriptor()
+        board_descriptor.set_board_detector(BoardDetector(board_image_filename="test/resources/tiled_brick_detection/board_detection_source.png"))
+        board_descriptor.get_board_detector().detect_min_count = 1
+        board_descriptor.get_board_detector().detect_min_stable_time = 0.0
 
         # Run tests
         success_count = 0
@@ -44,11 +47,11 @@ class TiledBrickDetectionTest(BaseTest):
                 print('%s FAILED. Could not detect board' % image_filename)
                 continue
 
+            # Force update board descriptor to recognize board immediately
             board_descriptor.get_board_detector().update(board_image)
             board_descriptor.get_board_detector().state = State.DETECTED
-            board_descriptor.update(board_image)
 
-            # Update board descriptor
+            # Update board descriptor with test brick image
             test_image = cv2.imread(test_filename)
             board_descriptor.update(test_image)
 
