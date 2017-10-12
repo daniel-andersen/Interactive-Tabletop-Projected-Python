@@ -38,6 +38,11 @@ module.exports = function(grunt) {
         projects: {
           "../content/examples/tensorflow_brick_detection": "default"
         }
+      },
+      maze: {
+        projects: {
+          "../content/maze": "default"
+        }
       }
     },
     clean: ["target"],
@@ -62,6 +67,14 @@ module.exports = function(grunt) {
           {expand: true, cwd: "../content/examples/tensorflow_brick_detection/src", src: "**", dest: "target/content/examples/tensorflow_brick_detection/src"},
           {expand: true, cwd: "../content/examples/tensorflow_brick_detection/lib", src: "**", dest: "target/content/examples/tensorflow_brick_detection/lib"},
           {expand: true, cwd: "../content/examples/tensorflow_brick_detection/", src: "*.html", dest: "target/content/examples/tensorflow_brick_detection/"}
+        ]
+      },
+      maze: {
+        files: [
+          {expand: true, cwd: "../content/maze/assets", src: "**", dest: "target/content/maze/assets"},
+          {expand: true, cwd: "../content/maze/src", src: "**", dest: "target/content/maze/src"},
+          {expand: true, cwd: "../content/maze/lib", src: "**", dest: "target/content/maze/lib"},
+          {expand: true, cwd: "../content/maze/", src: "*.html", dest: "target/content/maze/"}
         ]
       }
     }

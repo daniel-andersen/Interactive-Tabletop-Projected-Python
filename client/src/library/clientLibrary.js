@@ -170,7 +170,9 @@ Client = (function() {
     })(this), 1);
     return setTimeout((function(_this) {
       return function() {
-        return completionCallback();
+        if (completionCallback != null) {
+          return completionCallback();
+        }
       };
     })(this), 1000);
   };
@@ -181,7 +183,9 @@ Client = (function() {
       return function() {
         document.body.removeChild(_this.boardCalibrationDiv);
         _this.boardCalibrationDiv = void 0;
-        return completionCallback();
+        if (completionCallback != null) {
+          return completionCallback();
+        }
       };
     })(this), 1000);
   };

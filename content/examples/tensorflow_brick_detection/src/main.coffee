@@ -1,4 +1,4 @@
-class BoardDetectionExample
+class TensorflowBrickDetectionExample
 
     constructor: () ->
         @client = new Client()

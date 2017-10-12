@@ -2,11 +2,14 @@
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
     <head>
         <meta charset="utf-8" />
-        <title>Board Detection Example</title>
+        <title>MAZE</title>
         <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1" />
         <script type="text/javascript" src="../../../library/clientUtil.js"></script>
         <script type="text/javascript" src="../../../library/clientLibrary.js"></script>
-        <script type="text/javascript" src="src/main.js"></script>
+        <script type="text/javascript" src="src/util.js"></script>
+        <script type="text/javascript" src="src/mazeModel.js"></script>
+        <script type="text/javascript" src="src/player.js"></script>
+        <script type="text/javascript" src="src/game.js"></script>
         <style>
             .fullscreen_black {
                 background: black;
@@ -20,12 +23,15 @@
     </head>
     <body class="fullscreen_black">
         <div id="content" class="fullscreen_black" style="height: 100vh;">
+            <div id="tileMap" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%;"></div>
+            <div id="blackOverlayMap" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%;"></div>
+            <img id="title" src="assets/images/title.png" style="opacity: 0; transition : opacity 2s linear; position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: contain;" />
         </div>
 
         <script>
             window.addEventListener("DOMContentLoaded", function() {
-                var example = new BoardDetectionExample();
-                example.start();
+                var mazeGame = new MazeGame();
+                mazeGame.start();
             });
         </script>
     </body>

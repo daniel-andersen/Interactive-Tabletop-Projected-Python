@@ -146,7 +146,8 @@ class Client
         , 1)
 
         setTimeout(() =>
-            completionCallback()
+            if completionCallback?
+                completionCallback()
         , 1000)
 
     hideBoardCalibratorImage: (completionCallback) ->
@@ -155,7 +156,8 @@ class Client
         setTimeout(() =>
             document.body.removeChild(@boardCalibrationDiv)
             @boardCalibrationDiv = undefined
-            completionCallback()
+            if completionCallback?
+                completionCallback()
         , 1000)
 
     """

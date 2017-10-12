@@ -1,11 +1,11 @@
-var BoardDetectionExample;
+var TensorflowBrickDetectionExample;
 
-BoardDetectionExample = (function() {
-  function BoardDetectionExample() {
+TensorflowBrickDetectionExample = (function() {
+  function TensorflowBrickDetectionExample() {
     this.client = new Client();
   }
 
-  BoardDetectionExample.prototype.start = function() {
+  TensorflowBrickDetectionExample.prototype.start = function() {
     return this.client.connect(((function(_this) {
       return function() {
         return _this.reset();
@@ -17,11 +17,11 @@ BoardDetectionExample = (function() {
     })(this)));
   };
 
-  BoardDetectionExample.prototype.stop = function() {
+  TensorflowBrickDetectionExample.prototype.stop = function() {
     return this.client.disconnect();
   };
 
-  BoardDetectionExample.prototype.reset = function() {
+  TensorflowBrickDetectionExample.prototype.reset = function() {
     return this.client.reset([1600, 1200], (function(_this) {
       return function(action, payload) {
         _this.client.enableDebug();
@@ -32,9 +32,9 @@ BoardDetectionExample = (function() {
     })(this));
   };
 
-  BoardDetectionExample.prototype.onMessage = function(json) {};
+  TensorflowBrickDetectionExample.prototype.onMessage = function(json) {};
 
-  BoardDetectionExample.prototype.setDebugCameraImage = function(filename, completionCallback) {
+  TensorflowBrickDetectionExample.prototype.setDebugCameraImage = function(filename, completionCallback) {
     var image;
     image = new Image();
     image.onload = (function(_this) {
@@ -45,7 +45,7 @@ BoardDetectionExample = (function() {
     return image.src = "assets/images/" + filename;
   };
 
-  BoardDetectionExample.prototype.calibrateBoard = function() {
+  TensorflowBrickDetectionExample.prototype.calibrateBoard = function() {
     return this.client.calibrateBoard((function(_this) {
       return function(action, payload) {
         return _this.setupTensorflowDetector();
@@ -53,7 +53,7 @@ BoardDetectionExample = (function() {
     })(this));
   };
 
-  BoardDetectionExample.prototype.setupTensorflowDetector = function() {
+  TensorflowBrickDetectionExample.prototype.setupTensorflowDetector = function() {
     return this.client.setupTensorflowDetector(0, "brick", (function(_this) {
       return function(action, payload) {
         return _this.detectBricks();
@@ -61,7 +61,7 @@ BoardDetectionExample = (function() {
     })(this));
   };
 
-  BoardDetectionExample.prototype.detectBricks = function() {
+  TensorflowBrickDetectionExample.prototype.detectBricks = function() {
     return this.setDebugCameraImage("brick_detection.png", (function(_this) {
       return function(action, payload) {
         return _this.client.detectImages(_this.client.boardAreaId_fullBoard, 0, function(action, payload) {
@@ -72,7 +72,7 @@ BoardDetectionExample = (function() {
     })(this));
   };
 
-  return BoardDetectionExample;
+  return TensorflowBrickDetectionExample;
 
 })();
 
