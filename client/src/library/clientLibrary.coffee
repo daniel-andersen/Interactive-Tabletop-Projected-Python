@@ -64,6 +64,7 @@ class Client
         @sendMessage("enableDebug", {
             "requestId": requestId
         })
+        return requestId
 
     """
     reset: Resets the server.
@@ -77,6 +78,7 @@ class Client
         json = {"requestId": requestId}
         if resolution? then json["resolution"] = resolution
         @sendMessage("reset", json)
+        return requestId
 
     """
     takeScreenshot: Takes and stores a screenshot from the camera.
@@ -89,11 +91,12 @@ class Client
         json = {"requestId": requestId}
         if filename? then json["filename"] = filename
         @sendMessage("takeScreenshot", json)
+        return requestId
 
     """
     setDebugCameraImage: Uploads debug camera image.
 
-    image: Source marker image.
+    image: Debug image.
     completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
     """
     setDebugCameraImage: (image, completionCallback = undefined) ->
@@ -105,6 +108,25 @@ class Client
             }
             @sendMessage("setDebugCameraImage", json)
         )
+        return requestId
+
+    """
+    setDebugCameraCanvas: Uploads debug camera canvas.
+
+    canvas: Debug canvas.
+    completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
+    """
+    setDebugCameraCanvas: (canvas, completionCallback = undefined) ->
+        dataURL = canvas.toDataURL("image/png")
+        base64Image = dataURL.replace(/^.*;base64,/, "")
+
+        requestId = @addCompletionCallback(completionCallback)
+        json = {
+            "requestId": requestId,
+            "imageBase64": base64Image
+        }
+        @sendMessage("setDebugCameraImage", json)
+        return requestId
 
     """
     calibrateBoard: Calibrates the board.
@@ -112,11 +134,12 @@ class Client
     completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
     """
     calibrateBoard: (completionCallback = undefined) ->
+        requestId = @addCompletionCallback(() => @hideBoardCalibratorImage(completionCallback))
         @showBoardCalibratorImage(() =>
-            requestId = @addCompletionCallback(() => @hideBoardCalibratorImage(completionCallback))
             json = {"requestId": requestId}
             @sendMessage("calibrateBoard", json)
         )
+        return requestId
 
     showBoardCalibratorImage: (completionCallback) ->
         @boardCalibrationDiv = document.createElement('div')
@@ -175,6 +198,7 @@ class Client
             "modelName": modelName
         }
         @sendMessage("setupTensorflowDetector", json)
+        return requestId
 
 
 
@@ -200,6 +224,7 @@ class Client
         }
         if areaId? then json["id"] = areaId
         @sendMessage("initializeBoardArea", json)
+        return requestId
 
     """
     initializeTiledBoardArea: Initializes a tiled board area, ie. an area which is divided into equally sized tiles.
@@ -226,6 +251,7 @@ class Client
         }
         if areaId? then json["id"] = areaId
         @sendMessage("initializeTiledBoardArea", json)
+        return requestId
 
     """
     removeBoardAreas: Removes all board areas at server end. Maintaining a board area requires some server processing, so
@@ -238,6 +264,7 @@ class Client
         @sendMessage("removeBoardAreas", {
             "requestId": requestId
         })
+        return requestId
 
     """
     removeBoardArea: Removes a specific board area at server end. Maintaining a board area requires some server processing, so
@@ -252,6 +279,7 @@ class Client
             "requestId": requestId,
             "id": areaId
         })
+        return requestId
 
     """
     removeMarkers: Removes all markers from the server.
@@ -263,6 +291,7 @@ class Client
         @sendMessage("removeMarkers", {
             "requestId": requestId
         })
+        return requestId
 
     """
     removeMarker: Removes a specific marker from the server.
@@ -276,6 +305,7 @@ class Client
             "requestId": requestId,
             "id": markerId
         })
+        return requestId
 
     """
     requestTiledBrickPosition: Returns the position of a brick among the given possible positions in a tiled area.
@@ -291,6 +321,7 @@ class Client
             "areaId": areaId,
             "detectorId": detectorId
         })
+        return requestId
 
     """
     requestTiledBrickPosition: Returns the position of a brick among the given possible positions in a tiled area.
@@ -306,6 +337,7 @@ class Client
             "areaId": areaId,
             "validPositions": validPositions
         })
+        return requestId
 
     """
     requestTiledBrickPositions: Returns the positions of bricks among the given possible positions in a tiled area.
@@ -321,6 +353,7 @@ class Client
             "areaId": areaId,
             "validPositions": validPositions
         })
+        return requestId
 
     """
     reportBackWhenBrickFoundAtAnyOfPositions: Keeps searching for a brick in the given positions in a tiled area and returns
@@ -342,6 +375,7 @@ class Client
         if id? then json["id"] = id
         if stabilityLevel? then json["stabilityLevel"] = stabilityLevel
         @sendMessage("reportBackWhenBrickFoundAtAnyOfPositions", json)
+        return requestId
 
     """
     reportBackWhenBrickMovedToAnyOfPositions: Reports back when brick has moved to any of the given positions in a tiled area.
@@ -364,6 +398,7 @@ class Client
         if id? then json["id"] = id
         if stabilityLevel? then json["stabilityLevel"] = stabilityLevel
         @sendMessage("reportBackWhenBrickMovedToAnyOfPositions", json)
+        return requestId
 
     """
     reportBackWhenBrickMovedToPosition: Reports back when brick has moved to the given position in a tiled area.
@@ -385,6 +420,7 @@ class Client
         if id? then json["id"] = id
         if stabilityLevel? then json["stabilityLevel"] = stabilityLevel
         @sendMessage("reportBackWhenBrickMovedToPosition", json)
+        return requestId
 
     """
     initializeImageMarker: Initializes an image marker.
@@ -405,6 +441,7 @@ class Client
             if minMatches? then json["minMatches"] = minMatches
             @sendMessage("initializeImageMarker", json)
         )
+        return requestId
 
     """
     initializeHaarClassifierMarker: Initializes a Haar Classifier with the given filename.
@@ -422,6 +459,7 @@ class Client
                 "dataBase64": base64Data
             })
         )
+        return requestId
 
     """
     initializeShapeMarkerWithContour: Initializes a shape marker with the given contour.
@@ -442,6 +480,7 @@ class Client
         if minArea? then json["minArea"] = minArea
         if maxArea? then json["maxArea"] = maxArea
         @sendMessage("initializeShapeMarker", json)
+        return requestId
 
     """
     initializeShapeMarkerWithImage: Initializes a shape marker with shape extracted from the given image.
@@ -464,6 +503,7 @@ class Client
             if maxArea? then json["maxArea"] = maxArea
             @sendMessage("initializeShapeMarker", json)
         )
+        return requestId
 
     """
     initializeArUcoMarker: Initializes an ArUco marker with given properties.
@@ -484,6 +524,7 @@ class Client
         }
         if dictionarySize? then json["dictionarySize"] = dictionarySize
         @sendMessage("initializeArUcoMarker", json)
+        return requestId
 
     """
     reportBackWhenMarkerFound: Keeps searching for marker and reports back when found.
@@ -504,6 +545,7 @@ class Client
         if id? then json["id"] = id
         if stabilityLevel? then json["stabilityLevel"] = stabilityLevel
         @sendMessage("reportBackWhenMarkerFound", json)
+        return requestId
 
     """
     requestMarkers: Returns which markers among the given list of markers that are currently visible in the given area.
@@ -524,6 +566,7 @@ class Client
         if id? then json["id"] = id
         if stabilityLevel? then json["stabilityLevel"] = stabilityLevel
         @sendMessage("requestMarkers", json)
+        return requestId
 
     """
     requestArUcoMarkers: Returns a list of all visible ArUco markers of given size in given area.
@@ -542,6 +585,7 @@ class Client
         }
         if id? then json["id"] = id
         @sendMessage("requestArUcoMarkers", json)
+        return requestId
 
     """
     startTrackingMarker: Continously tracks a marker in the given area. Continously reports back.
@@ -560,6 +604,7 @@ class Client
         }
         if id? then json["id"] = id
         @sendMessage("startTrackingMarker", json)
+        return requestId
 
     """
     requestContours: Returns a list of all visible contours in given area.
@@ -578,6 +623,7 @@ class Client
         if id? then json["id"] = id
         if approximation? then json["approximation"] = approximation
         @sendMessage("requestContours", json)
+        return requestId
 
     """
     requestHumanHeadPositions: Returns human head positions as a 3D vector with (0, 0, 0) representing board center.
@@ -592,6 +638,7 @@ class Client
         }
         if id? then json["id"] = id
         @sendMessage("requestHumanHeadPositions", json)
+        return requestId
 
 
 
@@ -601,6 +648,7 @@ class Client
             "payload": payload
         }
         @socket.send(JSON.stringify(message))
+        return payload["requestId"]
 
 
     addCompletionCallback: (completionCallback) ->

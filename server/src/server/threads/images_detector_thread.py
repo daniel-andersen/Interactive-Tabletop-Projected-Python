@@ -1,15 +1,14 @@
 from threading import Thread
 
+from server.threads.server_thread import ServerThread
 
-class ImagesDetectorThread(object):
+
+class ImagesDetectorThread(ServerThread):
     def __init__(self, detector, board_area, callback_function):
+        super().__init__()
         self.detector = detector
         self.board_area = board_area
         self.callback_function = callback_function
-
-    def start(self):
-        thread = Thread(target=self._run, args=())
-        thread.start()
 
     def _run(self):
         result = self.detector.detect(board_area=self.board_area)

@@ -1,24 +1,23 @@
 from __future__ import with_statement
 
+import base64
 import json
 import sys
 import time
 import traceback
-import base64
+from random import randint
+from threading import RLock
+
 import cv2
 import numpy as np
-from threading import RLock
-from random import randint
-
 from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
 
 from server import globals
-from server.board_detector_thread import BoardDetectorThread
-from server.images_detector_thread import ImagesDetectorThread
-from util import misc_util
-
+from server.threads.board_detector_thread import BoardDetectorThread
+from server.threads.images_detector_thread import ImagesDetectorThread
 from tracking.board.board_area import BoardArea
 from tracking.detectors.tensorflow_detector import TensorflowDetector
+from util import misc_util
 
 if misc_util.module_exists("picamera"):
     print("Using Raspberry Pi camera")
@@ -35,10 +34,11 @@ class Server(WebSocket):
     def __init__(self, server, sock, address):
         super().__init__(server, sock, address)
 
-        self.action_to_function_dict = {'enableDebug': self.enable_debug,
+        self.action_to_function_dict = {'cancelRequest': self.cancel_request,
+                                        'reset': self.reset,
+                                        'enableDebug': self.enable_debug,
                                         'takeScreenshot': self.take_screenshot,
                                         'setDebugCameraImage': self.set_debug_camera_image,
-                                        'reset': self.reset,
                                         'calibrateBoard': self.calibrate_board,
                                         'setupTensorflowDetector': self.setup_tensorflow_detector,
                                         'detectImages': self.detect_images}
@@ -46,7 +46,8 @@ class Server(WebSocket):
         self.detectors = {}
         self.detectors_lock = RLock()
 
-        random_id_lock = RLock()
+        self.threads = {}
+        self.threads_lock = RLock()
 
     def handleMessage(self):
         """
@@ -81,6 +82,15 @@ class Server(WebSocket):
             globals.get_state().set_camera(Camera())
             globals.get_state().get_camera().start(delegate=self, resolution=resolution)
 
+    def cancel_request(self, payload):
+        """
+        Cancels a request made to the server.
+
+        requestId: Request ID
+        """
+        self.cancel_server_thread(request_id=payload["requestId"])
+        return "OK", {}, self.request_id_from_payload(payload)
+
     def reset(self, payload):
         """
         Resets the board.
@@ -90,6 +100,7 @@ class Server(WebSocket):
         """
         resolution = payload["resolution"] if "resolution" in payload else [640, 480]
 
+        self.cancel_server_threads()
         globals.reset()
         self.initialize_video(resolution)
 
@@ -250,12 +261,12 @@ class Server(WebSocket):
         :param result Result code
         :param action Client action from which the message originates
         :param payload Payload
-        :param request_id: Request ID. If none given, random ID is generated
+        :param request_id: Request ID
         """
         message = {"result": result,
                    "action": action,
                    "payload": payload,
-                   "requestId": request_id if request_id is not None else self.random_id()}
+                   "requestId": request_id}
         self.sendMessage(json.dumps(message, ensure_ascii=False))
 
         print("Sent message: %s" % message)
@@ -282,6 +293,29 @@ class Server(WebSocket):
         board_descriptor = globals.get_state().get_board_descriptor()
         if board_descriptor is not None:
             board_descriptor.update(image)
+
+    def start_server_thread(self, request_id, thread):
+        with self.threads_lock:
+            self.threads[request_id] = thread
+
+        try:
+            thread.start()
+        except Exception as e:
+            print("Exception in start_server_thread: %s" % str(e))
+            traceback.print_exc(file=sys.stdout)
+
+    def cancel_server_thread(self, request_id):
+        with self.threads_lock:
+            thread = self.threads.pop(request_id, None)
+            if thread:
+                thread.stop()
+
+    def cancel_server_threads(self):
+        with self.threads_lock:
+            for request_id in self.threads.keys():
+                self.cancel_server_thread(request_id)
+            self.threads = {}
+
 
 def start_server():
     print("Starting server...")

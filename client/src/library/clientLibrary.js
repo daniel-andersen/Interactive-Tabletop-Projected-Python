@@ -55,9 +55,10 @@ Client = (function() {
       completionCallback = void 0;
     }
     requestId = this.addCompletionCallback(completionCallback);
-    return this.sendMessage("enableDebug", {
+    this.sendMessage("enableDebug", {
       "requestId": requestId
     });
+    return requestId;
   };
 
   "reset: Resets the server.\n\nresolution: (Optional) Camera resolution to use in form [width, height].\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -78,7 +79,8 @@ Client = (function() {
     if (resolution != null) {
       json["resolution"] = resolution;
     }
-    return this.sendMessage("reset", json);
+    this.sendMessage("reset", json);
+    return requestId;
   };
 
   "takeScreenshot: Takes and stores a screenshot from the camera.\n\nfilename: (Optional) Screenshot filename.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -98,10 +100,11 @@ Client = (function() {
     if (filename != null) {
       json["filename"] = filename;
     }
-    return this.sendMessage("takeScreenshot", json);
+    this.sendMessage("takeScreenshot", json);
+    return requestId;
   };
 
-  "setDebugCameraImage: Uploads debug camera image.\n\nimage: Source marker image.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+  "setDebugCameraImage: Uploads debug camera image.\n\nimage: Debug image.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
 
   Client.prototype.setDebugCameraImage = function(image, completionCallback) {
     var requestId;
@@ -109,7 +112,7 @@ Client = (function() {
       completionCallback = void 0;
     }
     requestId = this.addCompletionCallback(completionCallback);
-    return ClientUtil.convertImageToDataURL(image, (function(_this) {
+    ClientUtil.convertImageToDataURL(image, (function(_this) {
       return function(base64Image) {
         var json;
         json = {
@@ -119,26 +122,49 @@ Client = (function() {
         return _this.sendMessage("setDebugCameraImage", json);
       };
     })(this));
+    return requestId;
+  };
+
+  "setDebugCameraCanvas: Uploads debug camera canvas.\n\ncanvas: Debug canvas.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+
+  Client.prototype.setDebugCameraCanvas = function(canvas, completionCallback) {
+    var base64Image, dataURL, json, requestId;
+    if (completionCallback == null) {
+      completionCallback = void 0;
+    }
+    dataURL = canvas.toDataURL("image/png");
+    base64Image = dataURL.replace(/^.*;base64,/, "");
+    requestId = this.addCompletionCallback(completionCallback);
+    json = {
+      "requestId": requestId,
+      "imageBase64": base64Image
+    };
+    this.sendMessage("setDebugCameraImage", json);
+    return requestId;
   };
 
   "calibrateBoard: Calibrates the board.\n\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
 
   Client.prototype.calibrateBoard = function(completionCallback) {
+    var requestId;
     if (completionCallback == null) {
       completionCallback = void 0;
     }
-    return this.showBoardCalibratorImage((function(_this) {
+    requestId = this.addCompletionCallback((function(_this) {
       return function() {
-        var json, requestId;
-        requestId = _this.addCompletionCallback(function() {
-          return _this.hideBoardCalibratorImage(completionCallback);
-        });
+        return _this.hideBoardCalibratorImage(completionCallback);
+      };
+    })(this));
+    this.showBoardCalibratorImage((function(_this) {
+      return function() {
+        var json;
         json = {
           "requestId": requestId
         };
         return _this.sendMessage("calibrateBoard", json);
       };
     })(this));
+    return requestId;
   };
 
   Client.prototype.showBoardCalibratorImage = function(completionCallback) {
@@ -203,7 +229,8 @@ Client = (function() {
       "detectorId": detectorId,
       "modelName": modelName
     };
-    return this.sendMessage("setupTensorflowDetector", json);
+    this.sendMessage("setupTensorflowDetector", json);
+    return requestId;
   };
 
   "initializeBoardArea: Initializes an area of the board. Is used to search for markers in a specific region, etc.\n\nx1: Left coordinate in percentage [0..1] of board width.\ny1: Top in percentage [0..1] of board height.\nx2: Right coordinate in percentage [0..1] of board width.\ny2: Bottom coordinate in percentage [0..1] of board height.\nareaId: (Optional) Area ID to use. If none is given, a random area ID is generated and returned from the server.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -239,7 +266,8 @@ Client = (function() {
     if (areaId != null) {
       json["id"] = areaId;
     }
-    return this.sendMessage("initializeBoardArea", json);
+    this.sendMessage("initializeBoardArea", json);
+    return requestId;
   };
 
   "initializeTiledBoardArea: Initializes a tiled board area, ie. an area which is divided into equally sized tiles.\n\ntileCountX: Number of tiles horizontally.\ntileCountY: Number of tiles vertically.\nx1: Left coordinate in percentage [0..1] of board width.\ny1: Top in percentage [0..1] of board height.\nx2: Right coordinate in percentage [0..1] of board width.\ny2: Bottom coordinate in percentage [0..1] of board height.\nareaId: (Optional) Area ID to use. If none is given, a random area ID is generated and returned from the server.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -277,7 +305,8 @@ Client = (function() {
     if (areaId != null) {
       json["id"] = areaId;
     }
-    return this.sendMessage("initializeTiledBoardArea", json);
+    this.sendMessage("initializeTiledBoardArea", json);
+    return requestId;
   };
 
   "removeBoardAreas: Removes all board areas at server end. Maintaining a board area requires some server processing, so\nit is good practice to remove them when not used any longer.\n\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -288,9 +317,10 @@ Client = (function() {
       completionCallback = void 0;
     }
     requestId = this.addCompletionCallback(completionCallback);
-    return this.sendMessage("removeBoardAreas", {
+    this.sendMessage("removeBoardAreas", {
       "requestId": requestId
     });
+    return requestId;
   };
 
   "removeBoardArea: Removes a specific board area at server end. Maintaining a board area requires some server processing, so\nit is good practice to remove them when not used any longer.\n\nareaId: Board area ID.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -301,10 +331,11 @@ Client = (function() {
       completionCallback = void 0;
     }
     requestId = this.addCompletionCallback(completionCallback);
-    return this.sendMessage("removeBoardArea", {
+    this.sendMessage("removeBoardArea", {
       "requestId": requestId,
       "id": areaId
     });
+    return requestId;
   };
 
   "removeMarkers: Removes all markers from the server.\n\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -315,9 +346,10 @@ Client = (function() {
       completionCallback = void 0;
     }
     requestId = this.addCompletionCallback(completionCallback);
-    return this.sendMessage("removeMarkers", {
+    this.sendMessage("removeMarkers", {
       "requestId": requestId
     });
+    return requestId;
   };
 
   "removeMarker: Removes a specific marker from the server.\n\nmarkerId: Marker ID.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -328,10 +360,11 @@ Client = (function() {
       completionCallback = void 0;
     }
     requestId = this.addCompletionCallback(completionCallback);
-    return this.sendMessage("removeMarker", {
+    this.sendMessage("removeMarker", {
       "requestId": requestId,
       "id": markerId
     });
+    return requestId;
   };
 
   "requestTiledBrickPosition: Returns the position of a brick among the given possible positions in a tiled area.\n\nareaId: Area ID of tiled board area.\ndetectorId: The ID of the detector to use.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -342,11 +375,12 @@ Client = (function() {
       completionCallback = void 0;
     }
     requestId = this.addCompletionCallback(completionCallback);
-    return this.sendMessage("detectImages", {
+    this.sendMessage("detectImages", {
       "requestId": requestId,
       "areaId": areaId,
       "detectorId": detectorId
     });
+    return requestId;
   };
 
   "requestTiledBrickPosition: Returns the position of a brick among the given possible positions in a tiled area.\n\nareaId: Area ID of tiled board area.\nvalidPositions: A list of valid positions in the form [[x, y], [x, y], ...].\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -357,11 +391,12 @@ Client = (function() {
       completionCallback = void 0;
     }
     requestId = this.addCompletionCallback(completionCallback);
-    return this.sendMessage("requestBrickPosition", {
+    this.sendMessage("requestBrickPosition", {
       "requestId": requestId,
       "areaId": areaId,
       "validPositions": validPositions
     });
+    return requestId;
   };
 
   "requestTiledBrickPositions: Returns the positions of bricks among the given possible positions in a tiled area.\n\nareaId: Area ID of tiled board area.\nvalidPositions: A list of valid positions in the form [[x, y], [x, y], ...].\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -372,11 +407,12 @@ Client = (function() {
       completionCallback = void 0;
     }
     requestId = this.addCompletionCallback(completionCallback);
-    return this.sendMessage("requestBrickPositions", {
+    this.sendMessage("requestBrickPositions", {
       "requestId": requestId,
       "areaId": areaId,
       "validPositions": validPositions
     });
+    return requestId;
   };
 
   "reportBackWhenBrickFoundAtAnyOfPositions: Keeps searching for a brick in the given positions in a tiled area and returns\nthe position when found.\n\nareaId: Area ID of tiled board area.\nvalidPositions: A list of valid positions in the form [[x, y], [x, y], ...].\nid: (Optional) Reporter ID.\nstabilityLevel: (Optional) Minimum stability level of board area before returning result.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -404,7 +440,8 @@ Client = (function() {
     if (stabilityLevel != null) {
       json["stabilityLevel"] = stabilityLevel;
     }
-    return this.sendMessage("reportBackWhenBrickFoundAtAnyOfPositions", json);
+    this.sendMessage("reportBackWhenBrickFoundAtAnyOfPositions", json);
+    return requestId;
   };
 
   "reportBackWhenBrickMovedToAnyOfPositions: Reports back when brick has moved to any of the given positions in a tiled area.\n\nareaId: Area ID of tiled board area.\ninitialPosition: Position where brick is currently located in form [x, y].\nvalidPositions: A list of valid positions in the form [[x, y], [x, y], ...].\nid: (Optional) Reporter ID.\nstabilityLevel: (Optional) Minimum stability level of board area before returning result.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -433,7 +470,8 @@ Client = (function() {
     if (stabilityLevel != null) {
       json["stabilityLevel"] = stabilityLevel;
     }
-    return this.sendMessage("reportBackWhenBrickMovedToAnyOfPositions", json);
+    this.sendMessage("reportBackWhenBrickMovedToAnyOfPositions", json);
+    return requestId;
   };
 
   "reportBackWhenBrickMovedToPosition: Reports back when brick has moved to the given position in a tiled area.\n\nposition: Target position to trigger the callback in form [x, y].\nvalidPositions: A list of valid positions in the form [[x, y], [x, y], ...] where the brick could be located.\nid: (Optional) Reporter ID.\nstabilityLevel: (Optional) Minimum stability level of board area before returning result.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -462,7 +500,8 @@ Client = (function() {
     if (stabilityLevel != null) {
       json["stabilityLevel"] = stabilityLevel;
     }
-    return this.sendMessage("reportBackWhenBrickMovedToPosition", json);
+    this.sendMessage("reportBackWhenBrickMovedToPosition", json);
+    return requestId;
   };
 
   "initializeImageMarker: Initializes an image marker.\n\nmarkerId: Marker ID.\nimage: Source marker image.\nminMatches: (Optional) Minimum number of matches required. (8 is recommended minimum).\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -476,7 +515,7 @@ Client = (function() {
       completionCallback = void 0;
     }
     requestId = this.addCompletionCallback(completionCallback);
-    return this.convertImageToDataURL(image, (function(_this) {
+    this.convertImageToDataURL(image, (function(_this) {
       return function(base64Image) {
         var json;
         json = {
@@ -490,6 +529,7 @@ Client = (function() {
         return _this.sendMessage("initializeImageMarker", json);
       };
     })(this));
+    return requestId;
   };
 
   "initializeHaarClassifierMarker: Initializes a Haar Classifier with the given filename.\n\nmarkerId: Marker ID.\nfilename: Filename of Haar Classifier.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -500,7 +540,7 @@ Client = (function() {
       completionCallback = void 0;
     }
     requestId = this.addCompletionCallback(completionCallback);
-    return this.readFileBase64(filename, (function(_this) {
+    this.readFileBase64(filename, (function(_this) {
       return function(base64Data) {
         return _this.sendMessage("initializeHaarClassifierMarker", {
           "requestId": requestId,
@@ -509,6 +549,7 @@ Client = (function() {
         });
       };
     })(this));
+    return requestId;
   };
 
   "initializeShapeMarkerWithContour: Initializes a shape marker with the given contour.\n\nmarkerId: Marker ID.\ncontour: Contour of shape in form [[x, y], [x, y], ...].\nminArea: (Optional) Minimum area in percentage [0..1] of board area image size.\nmaxArea: (Optional) Maximum area in percentage [0..1] of board area image size.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -536,7 +577,8 @@ Client = (function() {
     if (maxArea != null) {
       json["maxArea"] = maxArea;
     }
-    return this.sendMessage("initializeShapeMarker", json);
+    this.sendMessage("initializeShapeMarker", json);
+    return requestId;
   };
 
   "initializeShapeMarkerWithImage: Initializes a shape marker with shape extracted from the given image.\n\nmarkerId: Marker ID.\nimage: Marker image. Must be black contour on white image.\nminArea: (Optional) Minimum area in percentage [0..1] of board area image size.\nmaxArea: (Optional) Maximum area in percentage [0..1] of board area image size.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -553,7 +595,7 @@ Client = (function() {
       completionCallback = void 0;
     }
     requestId = this.addCompletionCallback(completionCallback);
-    return this.convertImageToDataURL(image, (function(_this) {
+    this.convertImageToDataURL(image, (function(_this) {
       return function(base64Image) {
         var json;
         json = {
@@ -570,6 +612,7 @@ Client = (function() {
         return _this.sendMessage("initializeShapeMarker", json);
       };
     })(this));
+    return requestId;
   };
 
   "initializeArUcoMarker: Initializes an ArUco marker with given properties.\n\nmarkerId: Marker ID.\narUcoMarkerId: ArUco marker ID. Number in range [0..dictionarySize-1].\nmarkerSize: Marker size. Any of 4, 5, 6, 7.\ndictionarySize: (Optional) Dictionary size. Any of 100, 250, 1000.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -592,7 +635,8 @@ Client = (function() {
     if (dictionarySize != null) {
       json["dictionarySize"] = dictionarySize;
     }
-    return this.sendMessage("initializeArUcoMarker", json);
+    this.sendMessage("initializeArUcoMarker", json);
+    return requestId;
   };
 
   "reportBackWhenMarkerFound: Keeps searching for marker and reports back when found.\n\nareaId: Area ID to search for marker in.\nmarkerId: Marker ID to search for.\nid: (Optional) Reporter ID.\nstabilityLevel: (Optional) Minimum stability level of board area before returning result.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -620,7 +664,8 @@ Client = (function() {
     if (stabilityLevel != null) {
       json["stabilityLevel"] = stabilityLevel;
     }
-    return this.sendMessage("reportBackWhenMarkerFound", json);
+    this.sendMessage("reportBackWhenMarkerFound", json);
+    return requestId;
   };
 
   "requestMarkers: Returns which markers among the given list of markers that are currently visible in the given area.\n\nareaId: Area ID to search for markers in.\nmarkerIds: Marker IDs to search for in form [id, id, ...].\nid: (Optional) Reporter ID.\nstabilityLevel: (Optional) Minimum stability level of board area before returning result.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -648,7 +693,8 @@ Client = (function() {
     if (stabilityLevel != null) {
       json["stabilityLevel"] = stabilityLevel;
     }
-    return this.sendMessage("requestMarkers", json);
+    this.sendMessage("requestMarkers", json);
+    return requestId;
   };
 
   "requestArUcoMarkers: Returns a list of all visible ArUco markers of given size in given area.\n\nareaId: Area ID to search for markers in.\nmarkerSize: ArUco marker size. Any of 4, 5, 6, 7.\nid: (Optional) Reporter ID.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -670,7 +716,8 @@ Client = (function() {
     if (id != null) {
       json["id"] = id;
     }
-    return this.sendMessage("requestArUcoMarkers", json);
+    this.sendMessage("requestArUcoMarkers", json);
+    return requestId;
   };
 
   "startTrackingMarker: Continously tracks a marker in the given area. Continously reports back.\n\nareaId: Area ID to track marker in.\nmarkerId: Marker ID to track.\nid: (Optional) Reporter ID.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -692,7 +739,8 @@ Client = (function() {
     if (id != null) {
       json["id"] = id;
     }
-    return this.sendMessage("startTrackingMarker", json);
+    this.sendMessage("startTrackingMarker", json);
+    return requestId;
   };
 
   "requestContours: Returns a list of all visible contours in given area.\n\nareaId: Area ID to search for markers in.\napproximation: (Optional) Contour approximation constant. This is the maximum distance between the original curve and its approximation.\nid: (Optional) Reporter ID.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -716,7 +764,8 @@ Client = (function() {
     if (approximation != null) {
       json["approximation"] = approximation;
     }
-    return this.sendMessage("requestContours", json);
+    this.sendMessage("requestContours", json);
+    return requestId;
   };
 
   "requestHumanHeadPositions: Returns human head positions as a 3D vector with (0, 0, 0) representing board center.\n\nid: (Optional) Reporter ID.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
@@ -736,7 +785,8 @@ Client = (function() {
     if (id != null) {
       json["id"] = id;
     }
-    return this.sendMessage("requestHumanHeadPositions", json);
+    this.sendMessage("requestHumanHeadPositions", json);
+    return requestId;
   };
 
   Client.prototype.sendMessage = function(action, payload) {
@@ -745,7 +795,8 @@ Client = (function() {
       "action": action,
       "payload": payload
     };
-    return this.socket.send(JSON.stringify(message));
+    this.socket.send(JSON.stringify(message));
+    return payload["requestId"];
   };
 
   Client.prototype.addCompletionCallback = function(completionCallback) {

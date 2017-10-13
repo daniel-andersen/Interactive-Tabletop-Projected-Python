@@ -10,6 +10,7 @@ MazeGame = (function() {
   function MazeGame() {
     this.client = new Client();
     this.mazeModel = new MazeModel();
+    this.mazeDebug = new MazeDebug(this.client, 1280, 800, this.mazeModel.width, this.mazeModel.height);
   }
 
   MazeGame.prototype.start = function() {
@@ -30,7 +31,7 @@ MazeGame = (function() {
   };
 
   MazeGame.prototype.reset = function() {
-    return this.client.reset([1600, 1200]);
+    return this.client.reset();
   };
 
   MazeGame.prototype.onMessage = function(json) {
@@ -39,8 +40,6 @@ MazeGame = (function() {
         return this.calibrateBoard();
       case "calibrateBoard":
         return this.startNewGame();
-      case "initializeTiledBoardArea":
-        return this.ready();
       case "brickFoundAtPosition":
         return this.brickFoundAtPosition(json["payload"]);
       case "brickMovedToPosition":
@@ -49,7 +48,7 @@ MazeGame = (function() {
   };
 
   MazeGame.prototype.calibrateBoard = function() {
-    return Util.setDebugCameraImage("assets/images/board_calibration.png", this.client, (function(_this) {
+    return this.mazeDebug.setDebugCameraImage("assets/images/board_calibration.png", (function(_this) {
       return function(action, payload) {
         return _this.client.calibrateBoard();
       };
@@ -60,9 +59,10 @@ MazeGame = (function() {
     this.gameState = GameState.INITIALIZING;
     setTimeout((function(_this) {
       return function() {
-        return _this.resetMaze();
+        _this.resetMaze();
+        return _this.ready();
       };
-    })(this), 2500);
+    })(this), 1500);
     return setTimeout((function(_this) {
       return function() {
         return _this.titleImage.style.opacity = '1';
@@ -136,6 +136,11 @@ MazeGame = (function() {
         overlay.style.top = (y * 100.0 / this.mazeModel.height) + "%";
         overlay.style.width = (100.0 / this.mazeModel.width) + "%";
         overlay.style.height = (100.0 / this.mazeModel.height) + "%";
+        overlay.onclick = (function(_this) {
+          return function() {
+            return _this.tileClicked(x, y);
+          };
+        })(this);
         this.blackOverlayMapDiv.appendChild(overlay);
       }
     }
@@ -165,14 +170,6 @@ MazeGame = (function() {
     this.treasureImage.style.transition = "opacity 1s linear";
     this.treasureImage.style.width = (100.0 / this.mazeModel.width) + "%";
     return this.treasureImage.style.height = (100.0 / this.mazeModel.height) + "%";
-  };
-
-  MazeGame.prototype.initializeBoard = function() {
-    return this.client.initializeBoard();
-  };
-
-  MazeGame.prototype.initializeTiledBoardArea = function() {
-    return this.client.initializeTiledBoardArea(this.mazeModel.width, this.mazeModel.height, 0.0, 0.0, 1.0, 1.0, 0);
   };
 
   MazeGame.prototype.waitForStartPositions = function() {
@@ -442,15 +439,16 @@ MazeGame = (function() {
         for (x = k = 0, ref1 = this.mazeModel.width - 1; 0 <= ref1 ? k <= ref1 : k >= ref1; x = 0 <= ref1 ? ++k : --k) {
           entry = this.mazeModel.entryAtCoordinate(x, y);
           tile = this.tileMap[y][x];
-          console.log(tile);
-          console.log(entry.tileIndex);
-          console.log(this.tileImages[entry.tileIndex]);
           results1.push(tile.src = this.tileImages[entry.tileIndex].src);
         }
         return results1;
       }).call(this));
     }
     return results;
+  };
+
+  MazeGame.prototype.tileClicked = function(x, y) {
+    return console.log(x + ", " + y);
   };
 
   return MazeGame;

@@ -29,7 +29,7 @@ module.exports = function(grunt) {
       }
 	},
     subgrunt: {
-      example_board_detection: {
+      /*example_board_detection: {
         projects: {
           "../content/examples/board_detection": "default"
         }
@@ -38,7 +38,7 @@ module.exports = function(grunt) {
         projects: {
           "../content/examples/tensorflow_brick_detection": "default"
         }
-      },
+      },*/
       maze: {
         projects: {
           "../content/maze": "default"
@@ -53,7 +53,7 @@ module.exports = function(grunt) {
         src: "**",
         dest: "target/"
       },
-      example_board_detection: {
+      /*example_board_detection: {
         files: [
           {expand: true, cwd: "../content/examples/board_detection/assets", src: "**", dest: "target/content/examples/board_detection/assets"},
           {expand: true, cwd: "../content/examples/board_detection/src", src: "**", dest: "target/content/examples/board_detection/src"},
@@ -68,7 +68,7 @@ module.exports = function(grunt) {
           {expand: true, cwd: "../content/examples/tensorflow_brick_detection/lib", src: "**", dest: "target/content/examples/tensorflow_brick_detection/lib"},
           {expand: true, cwd: "../content/examples/tensorflow_brick_detection/", src: "*.html", dest: "target/content/examples/tensorflow_brick_detection/"}
         ]
-      },
+      },*/
       maze: {
         files: [
           {expand: true, cwd: "../content/maze/assets", src: "**", dest: "target/content/maze/assets"},

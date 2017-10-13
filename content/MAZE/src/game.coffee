@@ -10,6 +10,7 @@ class MazeGame
     constructor: ->
         @client = new Client()
         @mazeModel = new MazeModel()
+        @mazeDebug = new MazeDebug(@client, 1280, 800, @mazeModel.width, @mazeModel.height)
 
     start: ->
         @setupUi()
@@ -23,18 +24,17 @@ class MazeGame
         @client.disconnect()
 
     reset: ->
-        @client.reset([1600, 1200])
+        @client.reset()
 
     onMessage: (json) ->
         switch json["action"]
             when "reset" then @calibrateBoard()
             when "calibrateBoard" then @startNewGame()
-            when "initializeTiledBoardArea" then @ready()
             when "brickFoundAtPosition" then @brickFoundAtPosition(json["payload"])
             when "brickMovedToPosition" then @brickMovedToPosition(json["payload"])
 
     calibrateBoard: ->
-        Util.setDebugCameraImage("assets/images/board_calibration.png", @client, (action, payload) =>
+        @mazeDebug.setDebugCameraImage("assets/images/board_calibration.png", (action, payload) =>
             @client.calibrateBoard()
         )
 
@@ -46,7 +46,8 @@ class MazeGame
         # Prepare map
         setTimeout(() =>
             @resetMaze()
-        , 2500)
+            @ready()
+        , 1500)
 
         # Fade logo
         setTimeout(() =>
@@ -97,6 +98,7 @@ class MazeGame
                 overlay.style.top = (y * 100.0 / @mazeModel.height) + "%"
                 overlay.style.width = (100.0 / @mazeModel.width) + "%"
                 overlay.style.height = (100.0 / @mazeModel.height) + "%"
+                overlay.onclick = () => @tileClicked(x, y)
                 @blackOverlayMapDiv.appendChild(overlay)
 
         # Create tile alpha map
@@ -113,12 +115,6 @@ class MazeGame
         @treasureImage.style.width = (100.0 / @mazeModel.width) + "%"
         @treasureImage.style.height = (100.0 / @mazeModel.height) + "%"
 
-
-    initializeBoard: ->
-        @client.initializeBoard()
-
-    initializeTiledBoardArea: ->
-        @client.initializeTiledBoardArea(@mazeModel.width, @mazeModel.height, 0.0, 0.0, 1.0, 1.0, 0)
 
     waitForStartPositions: ->
         for player in @mazeModel.players
@@ -329,7 +325,7 @@ class MazeGame
             for x in [0..@mazeModel.width - 1]
                 entry = @mazeModel.entryAtCoordinate(x, y)
                 tile = @tileMap[y][x]
-                console.log(tile)
-                console.log(entry.tileIndex)
-                console.log(@tileImages[entry.tileIndex])
                 tile.src = @tileImages[entry.tileIndex].src
+
+    tileClicked: (x, y) ->
+        console.log(x + ", " + y)

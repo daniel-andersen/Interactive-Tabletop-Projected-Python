@@ -7,17 +7,6 @@ Util = (function() {
     return Math.floor(Math.random() * (max - min) + min);
   };
 
-  Util.setDebugCameraImage = function(filename, client, completionCallback) {
-    var image;
-    image = new Image();
-    image.onload = (function(_this) {
-      return function() {
-        return client.setDebugCameraImage(image, completionCallback);
-      };
-    })(this);
-    return image.src = filename;
-  };
-
   return Util;
 
 })();

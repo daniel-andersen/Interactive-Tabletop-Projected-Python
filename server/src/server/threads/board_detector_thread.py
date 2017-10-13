@@ -2,18 +2,16 @@ import time
 
 from threading import Thread
 from server import globals
+from server.threads.server_thread import ServerThread
 from tracking.board.board_detector import State
 
 
-class BoardDetectorThread(object):
+class BoardDetectorThread(ServerThread):
     def __init__(self, callback_function, timeout_function=None, timeout=20.0):
+        super().__init__()
         self.timeout_function = timeout_function
         self.callback_function = callback_function
         self.timeout = timeout
-
-    def start(self):
-        thread = Thread(target=self._run, args=())
-        thread.start()
 
     def _run(self):
 
@@ -24,6 +22,10 @@ class BoardDetectorThread(object):
 
             # Sleep a while
             time.sleep(0.01)
+
+            # Check if stopped
+            if self.stopped:
+                return
 
             # Get board detector
             board_detector = globals.get_state().get_board_descriptor().get_board_detector()
