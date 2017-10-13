@@ -8,7 +8,7 @@ wait $feh_pid
 ./startup_processes.sh
 
 # Start the browser
-~/kiosk-browser/browser http://localhost:9002/content/Startup/index.html & browser_pid=$!
+~/kiosk-browser/browser http://localhost:9002/index.html & browser_pid=$!
 
 sleep 2
 kill -9 $feh_pid
