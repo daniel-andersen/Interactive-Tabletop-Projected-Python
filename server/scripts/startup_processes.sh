@@ -14,8 +14,8 @@ git fetch --all
 git reset --hard
 
 # Start server
-workon itp
 cd ~/itp/server/src
+source venv/bin/activate
 python -u main.py > ~/log/server.log 2>&1 &
 
 # Start client
