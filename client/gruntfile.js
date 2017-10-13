@@ -39,9 +39,9 @@ module.exports = function(grunt) {
           "../content/examples/tensorflow_brick_detection": "default"
         }
       },*/
-      maze: {
+      MAZE: {
         projects: {
-          "../content/maze": "default"
+          "../content/MAZE": "default"
         }
       }
     },
@@ -69,12 +69,12 @@ module.exports = function(grunt) {
           {expand: true, cwd: "../content/examples/tensorflow_brick_detection/", src: "*.html", dest: "target/content/examples/tensorflow_brick_detection/"}
         ]
       },*/
-      maze: {
+      MAZE: {
         files: [
-          {expand: true, cwd: "../content/maze/assets", src: "**", dest: "target/content/maze/assets"},
-          {expand: true, cwd: "../content/maze/src", src: "**", dest: "target/content/maze/src"},
-          {expand: true, cwd: "../content/maze/lib", src: "**", dest: "target/content/maze/lib"},
-          {expand: true, cwd: "../content/maze/", src: "*.html", dest: "target/content/maze/"}
+          {expand: true, cwd: "../content/MAZE/assets", src: "**", dest: "target/content/MAZE/assets"},
+          {expand: true, cwd: "../content/MAZE/src", src: "**", dest: "target/content/MAZE/src"},
+          {expand: true, cwd: "../content/MAZE/lib", src: "**", dest: "target/content/MAZE/lib"},
+          {expand: true, cwd: "../content/MAZE/", src: "*.html", dest: "target/content/MAZE/"}
         ]
       }
     }
