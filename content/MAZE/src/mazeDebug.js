@@ -22,7 +22,21 @@ MazeDebug = (function() {
   };
 
   MazeDebug.prototype.setupCameraCanvas = function() {
-    var ctx, x, y;
+    var ctx;
+    this.canvas = document.createElement("CANVAS");
+    this.canvas.width = this.canvasWidth;
+    this.canvas.height = this.canvasHeight;
+    ctx = this.canvas.getContext("2d");
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
+    return this.resetTileMap(false);
+  };
+
+  MazeDebug.prototype.resetTileMap = function(updateCanvas) {
+    var x, y;
+    if (updateCanvas == null) {
+      updateCanvas = false;
+    }
     this.tileMap = (function() {
       var i, ref, results;
       results = [];
@@ -38,12 +52,9 @@ MazeDebug = (function() {
       }
       return results;
     }).call(this);
-    this.canvas = document.createElement("CANVAS");
-    this.canvas.width = this.canvasWidth;
-    this.canvas.height = this.canvasHeight;
-    ctx = this.canvas.getContext("2d");
-    ctx.fillStyle = "white";
-    return ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
+    if (updateCanvas) {
+      return this.updateCanvas();
+    }
   };
 
   MazeDebug.prototype.updateCanvas = function() {

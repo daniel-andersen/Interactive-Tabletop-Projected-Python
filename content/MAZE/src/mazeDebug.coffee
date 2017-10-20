@@ -8,8 +8,6 @@ class MazeDebug
         document.addEventListener("click", (event) => capturedSelf.toggleTile(event.clientX, event.clientY))
 
     setupCameraCanvas: ->
-        @tileMap = ((0 for x in [1..@tileMapWidth]) for y in [1..@tileMapHeight])
-
         @canvas = document.createElement("CANVAS")
         @canvas.width = @canvasWidth
         @canvas.height = @canvasHeight
@@ -17,6 +15,13 @@ class MazeDebug
         ctx = @canvas.getContext("2d")
         ctx.fillStyle = "white"
         ctx.fillRect(0, 0, @canvasWidth, @canvasHeight)
+
+        @resetTileMap(false)
+
+    resetTileMap: (updateCanvas = false) ->
+        @tileMap = ((0 for x in [1..@tileMapWidth]) for y in [1..@tileMapHeight])
+        if updateCanvas
+            @updateCanvas()
 
     updateCanvas: ->
         ctx = @canvas.getContext("2d")

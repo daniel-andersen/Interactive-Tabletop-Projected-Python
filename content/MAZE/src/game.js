@@ -8,6 +8,7 @@ GameState = {
 
 MazeGame = (function() {
   function MazeGame() {
+    this.detectingBricks = false;
     this.client = new Client();
     this.mazeModel = new MazeModel();
     this.mazeDebug = new MazeDebug(this.client, 1280, 800, this.mazeModel.width, this.mazeModel.height);
@@ -20,9 +21,7 @@ MazeGame = (function() {
         return _this.reset();
       };
     })(this)), ((function(_this) {
-      return function(json) {
-        return _this.onMessage(json);
-      };
+      return function(json) {};
     })(this)));
   };
 
@@ -31,26 +30,28 @@ MazeGame = (function() {
   };
 
   MazeGame.prototype.reset = function() {
-    return this.client.reset();
-  };
-
-  MazeGame.prototype.onMessage = function(json) {
-    switch (json["action"]) {
-      case "reset":
-        return this.calibrateBoard();
-      case "calibrateBoard":
-        return this.startNewGame();
-      case "brickFoundAtPosition":
-        return this.brickFoundAtPosition(json["payload"]);
-      case "brickMovedToPosition":
-        return this.brickMovedToPosition(json["payload"]);
-    }
+    return this.client.reset(void 0, (function(_this) {
+      return function(action, payload) {
+        return _this.calibrateBoard();
+      };
+    })(this));
   };
 
   MazeGame.prototype.calibrateBoard = function() {
     return this.mazeDebug.setDebugCameraImage("assets/images/board_calibration.png", (function(_this) {
       return function(action, payload) {
-        return _this.client.calibrateBoard();
+        return _this.client.calibrateBoard(function(action, payload) {
+          return _this.initializeTiledBoardArea();
+        });
+      };
+    })(this));
+  };
+
+  MazeGame.prototype.initializeTiledBoardArea = function() {
+    this.boardArea = 0;
+    return this.client.initializeTiledBoardArea(this.mazeModel.width, this.mazeModel.height, 0.0, 0.0, 1.0, 1.0, this.boardArea, (function(_this) {
+      return function(action, payload) {
+        return _this.startNewGame();
       };
     })(this));
   };
@@ -59,6 +60,7 @@ MazeGame = (function() {
     this.gameState = GameState.INITIALIZING;
     setTimeout((function(_this) {
       return function() {
+        _this.mazeDebug.resetTileMap();
         _this.resetMaze();
         return _this.ready();
       };
@@ -136,11 +138,6 @@ MazeGame = (function() {
         overlay.style.top = (y * 100.0 / this.mazeModel.height) + "%";
         overlay.style.width = (100.0 / this.mazeModel.width) + "%";
         overlay.style.height = (100.0 / this.mazeModel.height) + "%";
-        overlay.onclick = (function(_this) {
-          return function() {
-            return _this.tileClicked(x, y);
-          };
-        })(this);
         this.blackOverlayMapDiv.appendChild(overlay);
       }
     }
@@ -183,17 +180,7 @@ MazeGame = (function() {
     return results;
   };
 
-  MazeGame.prototype.brickFoundAtPosition = function(payload) {
-    var player, position;
-    player = this.mazeModel.players[payload["id"]];
-    position = new Position(payload["position"][0], payload["position"][1]);
-    return this.playerPlacedInitialBrick(player, position);
-  };
-
-  MazeGame.prototype.brickMovedToPosition = function(payload) {
-    var player, position;
-    player = this.mazeModel.players[payload["id"]];
-    position = new Position(payload["position"][0], payload["position"][1]);
+  MazeGame.prototype.brickMovedToPosition = function(player, position) {
     switch (this.gameState) {
       case GameState.INITIAL_PLACEMENT:
         if (position.equals(player.position)) {
@@ -246,7 +233,7 @@ MazeGame = (function() {
 
   MazeGame.prototype.playerMovedBrick = function(position) {
     var oldPosition;
-    this.client.resetReporters();
+    this.client.cancelRequests();
     oldPosition = this.currentPlayer.position;
     this.currentPlayer.position = position;
     this.updateMaze();
@@ -297,7 +284,12 @@ MazeGame = (function() {
       }
       return results;
     }).call(this);
-    return this.client.reportBackWhenBrickMovedToPosition(0, [player.position.x, player.position.y], positions, player.index);
+    return this.client.detectTiledBrick(this.boardArea, positions, [player.position.x, player.position.y], true, (function(_this) {
+      return function(action, payload) {
+        position = new Position(payload["position"][0], payload["position"][1]);
+        return _this.playerPlacedInitialBrick(_this.mazeModel.players[player], position);
+      };
+    })(this));
   };
 
   MazeGame.prototype.requestPlayerPosition = function(player) {
@@ -329,7 +321,12 @@ MazeGame = (function() {
       }
       return results;
     })();
-    return this.client.reportBackWhenBrickMovedToAnyOfPositions(0, [player.position.x, player.position.y], positions, player.index);
+    return this.client.detectTiledBrickMovement(this.boardArea, positions, [player.position.x, player.position.y], void 0, (function(_this) {
+      return function(action, payload) {
+        position = new Position(payload["position"][0], payload["position"][1]);
+        return _this.brickMovedToPosition(_this.mazeModel.players[player], position);
+      };
+    })(this));
   };
 
   MazeGame.prototype.ready = function() {
@@ -445,10 +442,6 @@ MazeGame = (function() {
       }).call(this));
     }
     return results;
-  };
-
-  MazeGame.prototype.tileClicked = function(x, y) {
-    return console.log(x + ", " + y);
   };
 
   return MazeGame;

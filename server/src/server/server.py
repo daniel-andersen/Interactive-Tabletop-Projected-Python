@@ -15,7 +15,10 @@ from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
 from server import globals
 from server.threads.board_detector_thread import BoardDetectorThread
 from server.threads.images_detector_thread import ImagesDetectorThread
+from server.threads.tiled_brick_detector_threads import TiledBrickDetectorThread, TiledBrickMovementDetectorThread, \
+    TiledBricksDetectorThread
 from tracking.board.board_area import BoardArea
+from tracking.board.tiled_board_area import TiledBoardArea
 from tracking.detectors.tensorflow_detector import TensorflowDetector
 from util import misc_util
 
@@ -35,11 +38,16 @@ class Server(WebSocket):
         super().__init__(server, sock, address)
 
         self.action_to_function_dict = {'cancelRequest': self.cancel_request,
+                                        'cancelRequests': self.cancel_requests,
                                         'reset': self.reset,
                                         'enableDebug': self.enable_debug,
                                         'takeScreenshot': self.take_screenshot,
                                         'setDebugCameraImage': self.set_debug_camera_image,
                                         'calibrateBoard': self.calibrate_board,
+                                        'initializeTiledBoardArea': self.initialize_tiled_board_area,
+                                        'detectTiledBrick': self.detect_tiled_brick,
+                                        'detectTiledBricks': self.detect_tiled_bricks,
+                                        'detectTiledBrickMovement': self.detect_tiled_brick_movement,
                                         'setupTensorflowDetector': self.setup_tensorflow_detector,
                                         'detectImages': self.detect_images}
 
@@ -88,7 +96,14 @@ class Server(WebSocket):
 
         requestId: Request ID
         """
-        self.cancel_server_thread(request_id=payload["requestId"])
+        self.cancel_thread(request_id=payload["requestId"])
+        return "OK", {}, self.request_id_from_payload(payload)
+
+    def cancel_requests(self, payload):
+        """
+        Cancels all requests made to the server.
+        """
+        self.cancel_threads()
         return "OK", {}, self.request_id_from_payload(payload)
 
     def reset(self, payload):
@@ -100,7 +115,7 @@ class Server(WebSocket):
         """
         resolution = payload["resolution"] if "resolution" in payload else [640, 480]
 
-        self.cancel_server_threads()
+        self.cancel_threads()
         globals.reset()
         self.initialize_video(resolution)
 
@@ -158,15 +173,16 @@ class Server(WebSocket):
 
         requestId: (Optional) Request ID
         """
-        BoardDetectorThread(callback_function=lambda: self.send_message(result="OK",
-                                                                        action="calibrateBoard",
-                                                                        payload={},
-                                                                        request_id=self.request_id_from_payload(payload)),
-                            timeout_function=lambda: self.send_message(result="CALIBRATION TIMEOUT",
-                                                                       action="calibrateBoard",
-                                                                       payload={},
-                                                                       request_id=self.request_id_from_payload(payload))
-                            ).start()
+        thread = BoardDetectorThread(self.request_id_from_payload(payload),
+                                     callback_function=lambda: self.stop_thread(thread,
+                                                                                result="OK",
+                                                                                action="calibrateBoard",
+                                                                                payload={}),
+                                     timeout_function=lambda: self.stop_thread(thread,
+                                                                               result="CALIBRATION TIMEOUT",
+                                                                               action="calibrateBoard",
+                                                                               payload={}))
+        self.start_thread(self.request_id_from_payload(payload), thread)
 
         return None
 
@@ -203,6 +219,33 @@ class Server(WebSocket):
                 board_descriptor=board_descriptor,
                 rect=[payload["x1"], payload["y1"], payload["x2"], payload["y2"]]
             )
+            globals.get_state().set_board_area(board_area.area_id, board_area)
+
+            return "OK", {"id": board_area.area_id}, self.request_id_from_payload(payload)
+
+    def initialize_tiled_board_area(self, payload):
+        """
+        Initializes tiled board area with given parameters.
+
+        requestId: (Optional) Request ID
+        id: (Optional) Area id
+        tileCountX: Number of horizontal tiles.
+        tileCountY: Number of vertical tiles.
+        x1: X1 in percentage of board size.
+        y1: Y1 in percentage of board size.
+        x2: X2 in percentage of board size.
+        y2: Y2 in percentage of board size.
+        """
+        with globals.get_state().board_descriptor_lock, globals.get_state().board_areas_lock:
+            board_descriptor = globals.get_state().get_board_descriptor()
+
+            board_area = TiledBoardArea(
+                payload["id"] if "id" in payload else None,
+                [payload["tileCountX"], payload["tileCountY"]],
+                [payload["x1"], payload["y1"], payload["x2"], payload["y2"]],
+                board_descriptor
+            )
+
             globals.get_state().set_board_area(board_area.area_id, board_area)
 
             return "OK", {"id": board_area.area_id}, self.request_id_from_payload(payload)
@@ -246,11 +289,102 @@ class Server(WebSocket):
         if detector is None:
             return "DETECTOR_NOT_FOUND", {}, self.request_id_from_payload(payload)
 
-        ImagesDetectorThread(detector, board_area, callback_function=lambda result: self.send_message(result="OK",
-                                                                                                      action="detectImages",
-                                                                                                      payload=result,
-                                                                                                      request_id=self.request_id_from_payload(payload))
-                             ).start()
+        thread = ImagesDetectorThread(self.request_id_from_payload(payload),
+                                      detector, board_area,
+                                      callback_function=lambda result: self.stop_thread(thread,
+                                                                                        result="OK",
+                                                                                        action="detectImages",
+                                                                                        payload=result))
+
+        self.start_thread(self.request_id_from_payload(payload), thread)
+
+        return None
+
+    def detect_tiled_brick(self, payload):
+        """
+        Detects tiled brick at any of the given positions.
+
+        areaId: Tiled board area id
+        validPositions: Positions to search for brick in.
+        targetPosition: (Optional) Target position for brick to be placed. Use fx. for initial brick positioning.
+        waitForPosition: (Optional) If True, waits for brick to be detected.
+        requestId: (Optional) Request ID
+        """
+        board_area = globals.get_state().get_board_area(payload["areaId"])
+        valid_positions = payload["validPositions"]
+        target_position = payload["targetPosition"]
+        wait_for_position = payload["waitForPosition"] if "waitForPosition" in payload else False
+
+        thread = TiledBrickDetectorThread(
+            self.request_id_from_payload(payload),
+            board_area,
+            valid_positions,
+            target_position,
+            wait_for_position,
+            callback_function=lambda tile: self.stop_thread(thread,
+                                                            result="OK",
+                                                            action="detectTiledBrick",
+                                                            payload={"tile": tile} if tile else {}))
+
+        self.start_thread(self.request_id_from_payload(payload), thread)
+
+        return None
+
+    def detect_tiled_bricks(self, payload):
+        """
+        Detects tiled bricks at the given positions.
+
+        areaId: Tiled board area id
+        validPositions: Positions to search for brick in.
+        waitForPosition: (Optional) If True, waits for bricks to be detected.
+        requestId: (Optional) Request ID
+        """
+        board_area = globals.get_state().get_board_area(payload["areaId"])
+        valid_positions = payload["validPositions"]
+        wait_for_position = payload["waitForPosition"] if "waitForPosition" in payload else False
+
+        thread = TiledBricksDetectorThread(
+            self.request_id_from_payload(payload),
+            board_area,
+            valid_positions,
+            wait_for_position,
+            callback_function=lambda tiles: self.stop_thread(thread,
+                                                             result="OK",
+                                                             action="detectTiledBricks",
+                                                             payload={"tiles": tiles}))
+
+        self.start_thread(self.request_id_from_payload(payload), thread)
+
+        return None
+
+    def detect_tiled_brick_movement(self, payload):
+        """
+        Reports back when brick is found in any of the given positions other than the initial position.
+
+        areaId: Tiled board area id
+        validPositions: Positions to search for object in.
+        initialPosition: (Optional) Initial position.
+        targetPosition: (Optional) Target position.
+        requestId: (Optional) Request ID
+        """
+        board_area = globals.get_state().get_board_area(payload["areaId"])
+        valid_positions = payload["validPositions"]
+        initial_position = payload["initialPosition"] if "initialPosition" in payload else None
+        target_position = payload["targetPosition"] if "targetPosition" in payload else None
+
+        thread = TiledBrickMovementDetectorThread(
+            self.request_id_from_payload(payload),
+            board_area,
+            valid_positions,
+            initial_position,
+            target_position,
+            callback_function=lambda from_position, to_position: self.stop_thread(thread,
+                                                                                  result="OK",
+                                                                                  action="detectTiledBrickMovement",
+                                                                                  payload={"position": to_position,
+                                                                                           "initialPosition": from_position}))
+
+        self.start_thread(self.request_id_from_payload(payload), thread)
 
         return None
 
@@ -294,26 +428,30 @@ class Server(WebSocket):
         if board_descriptor is not None:
             board_descriptor.update(image)
 
-    def start_server_thread(self, request_id, thread):
+    def start_thread(self, request_id, thread):
         with self.threads_lock:
             self.threads[request_id] = thread
 
         try:
             thread.start()
         except Exception as e:
-            print("Exception in start_server_thread: %s" % str(e))
+            print("Exception in start_thread: %s" % str(e))
             traceback.print_exc(file=sys.stdout)
 
-    def cancel_server_thread(self, request_id):
+    def stop_thread(self, thread, result, action, payload):
+        self.cancel_thread(thread.request_id)
+        self.send_message(result, action, payload, thread.request_id)
+
+    def cancel_thread(self, request_id):
         with self.threads_lock:
             thread = self.threads.pop(request_id, None)
             if thread:
                 thread.stop()
 
-    def cancel_server_threads(self):
+    def cancel_threads(self):
         with self.threads_lock:
             for request_id in self.threads.keys():
-                self.cancel_server_thread(request_id)
+                self.cancel_thread(request_id)
             self.threads = {}
 
 

@@ -61,6 +61,20 @@ Client = (function() {
     return requestId;
   };
 
+  "cancelRequest: Cancels a request.\n\nrequestId: Request ID of request to cancel.";
+
+  Client.prototype.cancelRequest = function(requestId) {
+    return this.sendMessage("cancelRequest", {
+      "requestId": requestId
+    });
+  };
+
+  "cancelRequests: Cancels all requests made to server.";
+
+  Client.prototype.cancelRequests = function() {
+    return this.sendMessage("cancelRequest", {});
+  };
+
   "reset: Resets the server.\n\nresolution: (Optional) Camera resolution to use in form [width, height].\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
 
   Client.prototype.reset = function(resolution, completionCallback) {
@@ -367,7 +381,7 @@ Client = (function() {
     return requestId;
   };
 
-  "requestTiledBrickPosition: Returns the position of a brick among the given possible positions in a tiled area.\n\nareaId: Area ID of tiled board area.\ndetectorId: The ID of the detector to use.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+  "detectImages: Detect images in the given area.\n\nareaId: Area ID of tiled board area.\ndetectorId: The ID of the detector to use.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
 
   Client.prototype.detectImages = function(areaId, detectorId, completionCallback) {
     var requestId;
@@ -383,47 +397,15 @@ Client = (function() {
     return requestId;
   };
 
-  "requestTiledBrickPosition: Returns the position of a brick among the given possible positions in a tiled area.\n\nareaId: Area ID of tiled board area.\nvalidPositions: A list of valid positions in the form [[x, y], [x, y], ...].\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+  "detectTiledBrick: Returns the position of a brick among the given possible positions in a tiled area.\n\nareaId: Area ID of tiled board area.\nvalidPositions: A list of valid positions in the form [[x, y], [x, y], ...].\ntargetPosition: (Optional) Target position.\nwaitForPosition: (Optional) If true, waits for brick to be detected, else returns immediately.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
 
-  Client.prototype.requestTiledBrickPosition = function(areaId, validPositions, completionCallback) {
-    var requestId;
-    if (completionCallback == null) {
-      completionCallback = void 0;
-    }
-    requestId = this.addCompletionCallback(completionCallback);
-    this.sendMessage("requestBrickPosition", {
-      "requestId": requestId,
-      "areaId": areaId,
-      "validPositions": validPositions
-    });
-    return requestId;
-  };
-
-  "requestTiledBrickPositions: Returns the positions of bricks among the given possible positions in a tiled area.\n\nareaId: Area ID of tiled board area.\nvalidPositions: A list of valid positions in the form [[x, y], [x, y], ...].\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
-
-  Client.prototype.requestTiledBrickPosition = function(areaId, validPositions, completionCallback) {
-    var requestId;
-    if (completionCallback == null) {
-      completionCallback = void 0;
-    }
-    requestId = this.addCompletionCallback(completionCallback);
-    this.sendMessage("requestBrickPositions", {
-      "requestId": requestId,
-      "areaId": areaId,
-      "validPositions": validPositions
-    });
-    return requestId;
-  };
-
-  "reportBackWhenBrickFoundAtAnyOfPositions: Keeps searching for a brick in the given positions in a tiled area and returns\nthe position when found.\n\nareaId: Area ID of tiled board area.\nvalidPositions: A list of valid positions in the form [[x, y], [x, y], ...].\nid: (Optional) Reporter ID.\nstabilityLevel: (Optional) Minimum stability level of board area before returning result.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
-
-  Client.prototype.reportBackWhenBrickFoundAtAnyOfPositions = function(areaId, validPositions, id, stabilityLevel, completionCallback) {
+  Client.prototype.detectTiledBrick = function(areaId, validPositions, targetPosition, waitForPosition, completionCallback) {
     var json, requestId;
-    if (id == null) {
-      id = void 0;
+    if (targetPosition == null) {
+      targetPosition = void 0;
     }
-    if (stabilityLevel == null) {
-      stabilityLevel = void 0;
+    if (waitForPosition == null) {
+      waitForPosition = false;
     }
     if (completionCallback == null) {
       completionCallback = void 0;
@@ -434,25 +416,45 @@ Client = (function() {
       "areaId": areaId,
       "validPositions": validPositions
     };
-    if (id != null) {
-      json["id"] = id;
+    if (targetPosition != null) {
+      json["targetPosition"] = targetPosition;
     }
-    if (stabilityLevel != null) {
-      json["stabilityLevel"] = stabilityLevel;
+    if (waitForPosition != null) {
+      json["waitForPosition"] = waitForPosition;
     }
-    this.sendMessage("reportBackWhenBrickFoundAtAnyOfPositions", json);
+    this.sendMessage("detectTiledBrick", json);
     return requestId;
   };
 
-  "reportBackWhenBrickMovedToAnyOfPositions: Reports back when brick has moved to any of the given positions in a tiled area.\n\nareaId: Area ID of tiled board area.\ninitialPosition: Position where brick is currently located in form [x, y].\nvalidPositions: A list of valid positions in the form [[x, y], [x, y], ...].\nid: (Optional) Reporter ID.\nstabilityLevel: (Optional) Minimum stability level of board area before returning result.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+  "detectTiledBricks: Returns the positions of bricks among the given possible positions in a tiled area.\n\nareaId: Area ID of tiled board area.\nvalidPositions: A list of valid positions in the form [[x, y], [x, y], ...].\nwaitForPosition: (Optional) If true, waits for brick to be detected, else returns immediately.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
 
-  Client.prototype.reportBackWhenBrickMovedToAnyOfPositions = function(areaId, initialPosition, validPositions, id, stabilityLevel, completionCallback) {
+  Client.prototype.detectTiledBricks = function(areaId, validPositions, completionCallback) {
     var json, requestId;
-    if (id == null) {
-      id = void 0;
+    if (completionCallback == null) {
+      completionCallback = void 0;
     }
-    if (stabilityLevel == null) {
-      stabilityLevel = void 0;
+    requestId = this.addCompletionCallback(completionCallback);
+    json = {
+      "requestId": requestId,
+      "areaId": areaId,
+      "validPositions": validPositions
+    };
+    if (typeof waitForPosition !== "undefined" && waitForPosition !== null) {
+      json["waitForPosition"] = waitForPosition;
+    }
+    this.sendMessage("detectTiledBricks", json);
+    return requestId;
+  };
+
+  "detectTiledBrickMovement: Keeps searching for a brick in the given positions in a tiled area and returns\nthe position when found.\n\nareaId: Area ID of tiled board area.\nvalidPositions: A list of valid positions in the form [[x, y], [x, y], ...].\ninitialPosition: (Optional) Initial position.\ntargetPosition: (Optional) Target position.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+
+  Client.prototype.detectTiledBrickMovement = function(areaId, validPositions, initialPosition, targetPosition, completionCallback) {
+    var json, requestId;
+    if (initialPosition == null) {
+      initialPosition = void 0;
+    }
+    if (targetPosition == null) {
+      targetPosition = void 0;
     }
     if (completionCallback == null) {
       completionCallback = void 0;
@@ -461,46 +463,15 @@ Client = (function() {
     json = {
       "requestId": requestId,
       "areaId": areaId,
-      "initialPosition": initialPosition,
       "validPositions": validPositions
     };
-    if (id != null) {
-      json["id"] = id;
+    if (initialPosition != null) {
+      json["initialPosition"] = initialPosition;
     }
-    if (stabilityLevel != null) {
-      json["stabilityLevel"] = stabilityLevel;
+    if (targetPosition != null) {
+      json["targetPosition"] = targetPosition;
     }
-    this.sendMessage("reportBackWhenBrickMovedToAnyOfPositions", json);
-    return requestId;
-  };
-
-  "reportBackWhenBrickMovedToPosition: Reports back when brick has moved to the given position in a tiled area.\n\nposition: Target position to trigger the callback in form [x, y].\nvalidPositions: A list of valid positions in the form [[x, y], [x, y], ...] where the brick could be located.\nid: (Optional) Reporter ID.\nstabilityLevel: (Optional) Minimum stability level of board area before returning result.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
-
-  Client.prototype.reportBackWhenBrickMovedToPosition = function(areaId, position, validPositions, id, stabilityLevel, completionCallback) {
-    var json, requestId;
-    if (id == null) {
-      id = void 0;
-    }
-    if (stabilityLevel == null) {
-      stabilityLevel = void 0;
-    }
-    if (completionCallback == null) {
-      completionCallback = void 0;
-    }
-    requestId = this.addCompletionCallback(completionCallback);
-    json = {
-      "requestId": requestId,
-      "areaId": areaId,
-      "position": position,
-      "validPositions": validPositions
-    };
-    if (id != null) {
-      json["id"] = id;
-    }
-    if (stabilityLevel != null) {
-      json["stabilityLevel"] = stabilityLevel;
-    }
-    this.sendMessage("reportBackWhenBrickMovedToPosition", json);
+    this.sendMessage("detectTiledBrickMovement", json);
     return requestId;
   };
 

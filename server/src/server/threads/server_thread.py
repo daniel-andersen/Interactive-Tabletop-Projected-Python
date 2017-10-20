@@ -3,9 +3,9 @@ from threading import Thread
 
 
 class ServerThread(object):
-    def __init__(self):
+    def __init__(self, request_id):
+        self.request_id = request_id
         self.stopped = False
-        self.id = uuid.uuid4()
 
     def start(self):
         thread = Thread(target=self._run, args=())

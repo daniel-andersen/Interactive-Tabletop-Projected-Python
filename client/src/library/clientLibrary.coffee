@@ -67,6 +67,20 @@ class Client
         return requestId
 
     """
+    cancelRequest: Cancels a request.
+
+    requestId: Request ID of request to cancel.
+    """
+    cancelRequest: (requestId) ->
+        @sendMessage("cancelRequest", {"requestId": requestId})
+
+    """
+    cancelRequests: Cancels all requests made to server.
+    """
+    cancelRequests: ->
+        @sendMessage("cancelRequest", {})
+
+    """
     reset: Resets the server.
 
     resolution: (Optional) Camera resolution to use in form [width, height].
@@ -156,7 +170,7 @@ class Client
 
         image = document.createElement('img')
         image.src = 'assets/images/board_calibration.png'
-        image.style.objectFit= 'contain'
+        image.style.objectFit = 'contain'
         image.style.position = 'fixed'
         image.style.left = '0%'
         image.style.top = '0%'
@@ -308,7 +322,7 @@ class Client
         return requestId
 
     """
-    requestTiledBrickPosition: Returns the position of a brick among the given possible positions in a tiled area.
+    detectImages: Detect images in the given area.
 
     areaId: Area ID of tiled board area.
     detectorId: The ID of the detector to use.
@@ -324,102 +338,65 @@ class Client
         return requestId
 
     """
-    requestTiledBrickPosition: Returns the position of a brick among the given possible positions in a tiled area.
+    detectTiledBrick: Returns the position of a brick among the given possible positions in a tiled area.
 
     areaId: Area ID of tiled board area.
     validPositions: A list of valid positions in the form [[x, y], [x, y], ...].
+    targetPosition: (Optional) Target position.
+    waitForPosition: (Optional) If true, waits for brick to be detected, else returns immediately.
     completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
     """
-    requestTiledBrickPosition: (areaId, validPositions, completionCallback = undefined) ->
+    detectTiledBrick: (areaId, validPositions, targetPosition = undefined, waitForPosition = false, completionCallback = undefined) ->
         requestId = @addCompletionCallback(completionCallback)
-        @sendMessage("requestBrickPosition", {
+        json = {
             "requestId": requestId,
             "areaId": areaId,
             "validPositions": validPositions
-        })
+        }
+        if targetPosition? then json["targetPosition"] = targetPosition
+        if waitForPosition? then json["waitForPosition"] = waitForPosition
+        @sendMessage("detectTiledBrick", json)
         return requestId
 
     """
-    requestTiledBrickPositions: Returns the positions of bricks among the given possible positions in a tiled area.
+    detectTiledBricks: Returns the positions of bricks among the given possible positions in a tiled area.
 
     areaId: Area ID of tiled board area.
     validPositions: A list of valid positions in the form [[x, y], [x, y], ...].
+    waitForPosition: (Optional) If true, waits for brick to be detected, else returns immediately.
     completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
     """
-    requestTiledBrickPosition: (areaId, validPositions, completionCallback = undefined) ->
+    detectTiledBricks: (areaId, validPositions, completionCallback = undefined) ->
         requestId = @addCompletionCallback(completionCallback)
-        @sendMessage("requestBrickPositions", {
+        json = {
             "requestId": requestId,
             "areaId": areaId,
             "validPositions": validPositions
-        })
+        }
+        if waitForPosition? then json["waitForPosition"] = waitForPosition
+        @sendMessage("detectTiledBricks", json)
         return requestId
 
     """
-    reportBackWhenBrickFoundAtAnyOfPositions: Keeps searching for a brick in the given positions in a tiled area and returns
+    detectTiledBrickMovement: Keeps searching for a brick in the given positions in a tiled area and returns
     the position when found.
 
     areaId: Area ID of tiled board area.
     validPositions: A list of valid positions in the form [[x, y], [x, y], ...].
-    id: (Optional) Reporter ID.
-    stabilityLevel: (Optional) Minimum stability level of board area before returning result.
+    initialPosition: (Optional) Initial position.
+    targetPosition: (Optional) Target position.
     completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
     """
-    reportBackWhenBrickFoundAtAnyOfPositions: (areaId, validPositions, id = undefined, stabilityLevel = undefined, completionCallback = undefined) ->
+    detectTiledBrickMovement: (areaId, validPositions, initialPosition = undefined, targetPosition = undefined, completionCallback = undefined) ->
         requestId = @addCompletionCallback(completionCallback)
         json = {
             "requestId": requestId,
             "areaId": areaId,
             "validPositions": validPositions
         }
-        if id? then json["id"] = id
-        if stabilityLevel? then json["stabilityLevel"] = stabilityLevel
-        @sendMessage("reportBackWhenBrickFoundAtAnyOfPositions", json)
-        return requestId
-
-    """
-    reportBackWhenBrickMovedToAnyOfPositions: Reports back when brick has moved to any of the given positions in a tiled area.
-
-    areaId: Area ID of tiled board area.
-    initialPosition: Position where brick is currently located in form [x, y].
-    validPositions: A list of valid positions in the form [[x, y], [x, y], ...].
-    id: (Optional) Reporter ID.
-    stabilityLevel: (Optional) Minimum stability level of board area before returning result.
-    completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
-    """
-    reportBackWhenBrickMovedToAnyOfPositions: (areaId, initialPosition, validPositions, id = undefined, stabilityLevel = undefined, completionCallback = undefined) ->
-        requestId = @addCompletionCallback(completionCallback)
-        json = {
-            "requestId": requestId,
-            "areaId": areaId,
-            "initialPosition": initialPosition,
-            "validPositions": validPositions
-        }
-        if id? then json["id"] = id
-        if stabilityLevel? then json["stabilityLevel"] = stabilityLevel
-        @sendMessage("reportBackWhenBrickMovedToAnyOfPositions", json)
-        return requestId
-
-    """
-    reportBackWhenBrickMovedToPosition: Reports back when brick has moved to the given position in a tiled area.
-
-    position: Target position to trigger the callback in form [x, y].
-    validPositions: A list of valid positions in the form [[x, y], [x, y], ...] where the brick could be located.
-    id: (Optional) Reporter ID.
-    stabilityLevel: (Optional) Minimum stability level of board area before returning result.
-    completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
-    """
-    reportBackWhenBrickMovedToPosition: (areaId, position, validPositions, id = undefined, stabilityLevel = undefined, completionCallback = undefined) ->
-        requestId = @addCompletionCallback(completionCallback)
-        json = {
-            "requestId": requestId,
-            "areaId": areaId,
-            "position": position,
-            "validPositions": validPositions
-        }
-        if id? then json["id"] = id
-        if stabilityLevel? then json["stabilityLevel"] = stabilityLevel
-        @sendMessage("reportBackWhenBrickMovedToPosition", json)
+        if initialPosition? then json["initialPosition"] = initialPosition
+        if targetPosition? then json["targetPosition"] = targetPosition
+        @sendMessage("detectTiledBrickMovement", json)
         return requestId
 
     """

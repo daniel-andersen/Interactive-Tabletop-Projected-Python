@@ -8,6 +8,8 @@ GameState =
 class MazeGame
 
     constructor: ->
+        @detectingBricks = false
+
         @client = new Client()
         @mazeModel = new MazeModel()
         @mazeDebug = new MazeDebug(@client, 1280, 800, @mazeModel.width, @mazeModel.height)
@@ -17,25 +19,28 @@ class MazeGame
 
         @client.connect(
           (() => @reset()),
-          ((json) => @onMessage(json))
+          ((json) => )
         )
 
     stop: ->
         @client.disconnect()
 
     reset: ->
-        @client.reset()
-
-    onMessage: (json) ->
-        switch json["action"]
-            when "reset" then @calibrateBoard()
-            when "calibrateBoard" then @startNewGame()
-            when "brickFoundAtPosition" then @brickFoundAtPosition(json["payload"])
-            when "brickMovedToPosition" then @brickMovedToPosition(json["payload"])
+        @client.reset(undefined, (action, payload) =>
+            @calibrateBoard()
+        )
 
     calibrateBoard: ->
         @mazeDebug.setDebugCameraImage("assets/images/board_calibration.png", (action, payload) =>
-            @client.calibrateBoard()
+            @client.calibrateBoard((action, payload) =>
+                @initializeTiledBoardArea()
+            )
+        )
+
+    initializeTiledBoardArea: ->
+        @boardArea = 0
+        @client.initializeTiledBoardArea(@mazeModel.width, @mazeModel.height, 0.0, 0.0, 1.0, 1.0, @boardArea, (action, payload) =>
+            @startNewGame()
         )
 
     startNewGame: ->
@@ -45,6 +50,7 @@ class MazeGame
 
         # Prepare map
         setTimeout(() =>
+            @mazeDebug.resetTileMap()
             @resetMaze()
             @ready()
         , 1500)
@@ -98,7 +104,6 @@ class MazeGame
                 overlay.style.top = (y * 100.0 / @mazeModel.height) + "%"
                 overlay.style.width = (100.0 / @mazeModel.width) + "%"
                 overlay.style.height = (100.0 / @mazeModel.height) + "%"
-                overlay.onclick = () => @tileClicked(x, y)
                 @blackOverlayMapDiv.appendChild(overlay)
 
         # Create tile alpha map
@@ -120,15 +125,7 @@ class MazeGame
         for player in @mazeModel.players
             @requestPlayerInitialPosition(player)
 
-    brickFoundAtPosition: (payload) ->
-        player = @mazeModel.players[payload["id"]]
-        position = new Position(payload["position"][0], payload["position"][1])
-        @playerPlacedInitialBrick(player, position)
-
-    brickMovedToPosition: (payload) ->
-        player = @mazeModel.players[payload["id"]]
-        position = new Position(payload["position"][0], payload["position"][1])
-
+    brickMovedToPosition: (player, position) ->
         switch @gameState
             when GameState.INITIAL_PLACEMENT
                 if position.equals(player.position)
@@ -179,8 +176,8 @@ class MazeGame
 
     playerMovedBrick: (position) ->
 
-        # Reset reporters
-        @client.resetReporters()
+        # Cancel all running requests
+        @client.cancelRequests()
 
         # Move player
         oldPosition = @currentPlayer.position
@@ -223,7 +220,10 @@ class MazeGame
 
     requestPlayerInitialPosition: (player) ->
         positions = ([position.x, position.y] for position in @mazeModel.positionsReachableFromPosition(player.position, player.reachDistance + 2))
-        @client.reportBackWhenBrickMovedToPosition(0, [player.position.x, player.position.y], positions, player.index)
+        @client.detectTiledBrick(@boardArea, positions, [player.position.x, player.position.y], true, (action, payload) =>
+            position = new Position(payload["position"][0], payload["position"][1])
+            @playerPlacedInitialBrick(@mazeModel.players[player], position)
+        )
 
     requestPlayerPosition: (player) ->
 
@@ -237,7 +237,10 @@ class MazeGame
 
         # Request position
         positions = ([position.x, position.y] for position in playerPositions)
-        @client.reportBackWhenBrickMovedToAnyOfPositions(0, [player.position.x, player.position.y], positions, player.index)
+        @client.detectTiledBrickMovement(@boardArea, positions, [player.position.x, player.position.y], undefined, (action, payload) =>
+            position = new Position(payload["position"][0], payload["position"][1])
+            @brickMovedToPosition(@mazeModel.players[player], position)
+        )
 
     ready: ->
 
@@ -318,7 +321,6 @@ class MazeGame
                 overlay = @blackOverlayMap[y][x]
                 overlay.style.opacity = 1.0 - @tileAlphaMap[y][x]
 
-
     drawMaze: ->
 
         for y in [0..@mazeModel.height - 1]
@@ -326,6 +328,3 @@ class MazeGame
                 entry = @mazeModel.entryAtCoordinate(x, y)
                 tile = @tileMap[y][x]
                 tile.src = @tileImages[entry.tileIndex].src
-
-    tileClicked: (x, y) ->
-        console.log(x + ", " + y)

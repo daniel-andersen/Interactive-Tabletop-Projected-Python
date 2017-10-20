@@ -1,5 +1,6 @@
 import numpy as np
 from tracking.board.board_area import BoardArea, SnapshotSize
+from tracking.detectors.tiled_brick_detector import TiledBrickDetector
 
 
 class TiledBoardArea(BoardArea):
@@ -20,6 +21,7 @@ class TiledBoardArea(BoardArea):
 
         self.tile_count = tile_count
         self.padding = padding
+        self.brick_detector = TiledBrickDetector(tiled_board_area=self)
 
     def tile_size(self, size=SnapshotSize.ORIGINAL):
         """

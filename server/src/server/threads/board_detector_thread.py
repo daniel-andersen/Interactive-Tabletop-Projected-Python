@@ -1,14 +1,13 @@
 import time
 
-from threading import Thread
 from server import globals
 from server.threads.server_thread import ServerThread
 from tracking.board.board_detector import State
 
 
 class BoardDetectorThread(ServerThread):
-    def __init__(self, callback_function, timeout_function=None, timeout=20.0):
-        super().__init__()
+    def __init__(self, request_id, callback_function, timeout_function=None, timeout=20.0):
+        super().__init__(request_id)
         self.timeout_function = timeout_function
         self.callback_function = callback_function
         self.timeout = timeout

@@ -31,7 +31,7 @@ class TensorflowDetector(Detector):
 
         :return: Input resolution (of type SnapshotSize enum)
         """
-        return SnapshotSize.SMALL
+        return SnapshotSize.EXTRA_SMALL
 
     def detect_in_image(self, image):
         """
