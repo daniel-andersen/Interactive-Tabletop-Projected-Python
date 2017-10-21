@@ -137,8 +137,21 @@ class MazeGame
                     @playerMovedBrick(position)
 
     playerPlacedInitialBrick: (player, position) ->
+
+        # Activate player
         player.state = PlayerState.IDLE
         player.reachDistance = playerDefaultReachDistance
+
+        # Set player turn if first player
+        otherPlayerTurn = false
+        for aPlayer in @mazeModel.players
+            if aPlayer.state == PlayerState.TURN
+                otherPlayerTurn = true
+
+        if not otherPlayerTurn?
+            player.state = PlayerState.TURN
+
+        # Update MAZE
         @updateMaze()
 
         # Start brick move reporter
@@ -221,8 +234,8 @@ class MazeGame
     requestPlayerInitialPosition: (player) ->
         positions = ([position.x, position.y] for position in @mazeModel.positionsReachableFromPosition(player.position, player.reachDistance + 2))
         @client.detectTiledBrick(@boardArea, positions, [player.position.x, player.position.y], true, (action, payload) =>
-            position = new Position(payload["position"][0], payload["position"][1])
-            @playerPlacedInitialBrick(@mazeModel.players[player], position)
+            position = new Position(payload["tile"][0], payload["tile"][1])
+            @playerPlacedInitialBrick(player, position)
         )
 
     requestPlayerPosition: (player) ->
@@ -237,9 +250,11 @@ class MazeGame
 
         # Request position
         positions = ([position.x, position.y] for position in playerPositions)
+        positions.push([player.position.x, player.position.y])
+
         @client.detectTiledBrickMovement(@boardArea, positions, [player.position.x, player.position.y], undefined, (action, payload) =>
             position = new Position(payload["position"][0], payload["position"][1])
-            @brickMovedToPosition(@mazeModel.players[player], position)
+            @brickMovedToPosition(player, position)
         )
 
     ready: ->
@@ -312,6 +327,7 @@ class MazeGame
                 for position in @mazeModel.positionsReachableFromPosition(player.position, player.reachDistance + 2)
                     @tileAlphaMap[position.y][position.x] = @tileAlphaDark
 
+                console.log(player.state)
                 for position in @mazeModel.positionsReachableFromPosition(player.position, player.reachDistance)
                     @tileAlphaMap[position.y][position.x] = if player.state == PlayerState.TURN then 1.0 else @tileAlphaDark
 

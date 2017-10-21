@@ -197,8 +197,20 @@ MazeGame = (function() {
   };
 
   MazeGame.prototype.playerPlacedInitialBrick = function(player, position) {
+    var aPlayer, j, len, otherPlayerTurn, ref;
     player.state = PlayerState.IDLE;
     player.reachDistance = playerDefaultReachDistance;
+    otherPlayerTurn = false;
+    ref = this.mazeModel.players;
+    for (j = 0, len = ref.length; j < len; j++) {
+      aPlayer = ref[j];
+      if (aPlayer.state === PlayerState.TURN) {
+        otherPlayerTurn = true;
+      }
+    }
+    if (otherPlayerTurn == null) {
+      player.state = PlayerState.TURN;
+    }
     this.updateMaze();
     return setTimeout((function(_this) {
       return function() {
@@ -286,8 +298,8 @@ MazeGame = (function() {
     }).call(this);
     return this.client.detectTiledBrick(this.boardArea, positions, [player.position.x, player.position.y], true, (function(_this) {
       return function(action, payload) {
-        position = new Position(payload["position"][0], payload["position"][1]);
-        return _this.playerPlacedInitialBrick(_this.mazeModel.players[player], position);
+        position = new Position(payload["tile"][0], payload["tile"][1]);
+        return _this.playerPlacedInitialBrick(player, position);
       };
     })(this));
   };
@@ -321,10 +333,11 @@ MazeGame = (function() {
       }
       return results;
     })();
+    positions.push([player.position.x, player.position.y]);
     return this.client.detectTiledBrickMovement(this.boardArea, positions, [player.position.x, player.position.y], void 0, (function(_this) {
       return function(action, payload) {
         position = new Position(payload["position"][0], payload["position"][1]);
-        return _this.brickMovedToPosition(_this.mazeModel.players[player], position);
+        return _this.brickMovedToPosition(player, position);
       };
     })(this));
   };
@@ -404,6 +417,7 @@ MazeGame = (function() {
           position = ref[k];
           this.tileAlphaMap[position.y][position.x] = this.tileAlphaDark;
         }
+        console.log(player.state);
         ref1 = this.mazeModel.positionsReachableFromPosition(player.position, player.reachDistance);
         for (l = 0, len2 = ref1.length; l < len2; l++) {
           position = ref1[l];

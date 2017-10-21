@@ -165,6 +165,8 @@ class Server(WebSocket):
 
         camera.set_debug_image(image)
 
+        cv2.imwrite("debug.png", image)
+
         return "OK", {}, self.request_id_from_payload(payload)
 
     def calibrate_board(self, payload):

@@ -25,12 +25,11 @@ class TiledBrickDetectorThreadBase(ServerThread):
             first_run = True
 
             # Check if we have a board area image
-            if self.board_area.area_image() is not TiledBrickDetectorKeepWaiting:
+            if self.board_area.area_image() is not None:
 
                 # Update
-                result = self.update()
-                if result:
-                    return result
+                if self.update():
+                    return
 
             # No board area image
             else:
@@ -57,20 +56,22 @@ class TiledBricksDetectorThread(TiledBrickDetectorThreadBase):
     def update(self):
 
         # Detect bricks
-        result = self.board_area.brick_detector.find_bricks_among_tiles(self.board_area, self.valid_positions)
+        result = self.board_area.brick_detector.find_bricks_among_tiles(self.valid_positions)
 
         positions = [position for position, detected, propability in result if detected]
 
         # Got positions
         if len(positions) > 0 or not self.wait_for_position:
-            return positions
+            self.callback_function(positions)
+            return True
 
         # Not waiting for positions
         if not self.wait_for_position:
-            return []
+            self.callback_function([])
+            return True
 
         # Waiting for positions
-        return TiledBrickDetectorKeepWaiting()
+        return False
 
 
 class TiledBrickDetectorThread(TiledBrickDetectorThreadBase):
@@ -84,25 +85,28 @@ class TiledBrickDetectorThread(TiledBrickDetectorThreadBase):
     def update(self):
 
         # Detect bricks
-        position, propabilities = self.board_area.brick_detector.find_brick_among_tiles(self.board_area, self.valid_positions)
+        position, propabilities = self.board_area.brick_detector.find_brick_among_tiles(self.valid_positions)
 
         # Got position
         if position:
 
             # No specific target position
             if self.target_position is None:
-                return position
+                self.callback_function(position)
+                return True
 
             # Target position specified
             elif position[0] == self.target_position[0] and position[1] == self.target_position[1]:
-                return position
+                self.callback_function(position)
+                return True
 
         # Not waiting for position
         if not self.wait_for_position:
-            return None
+            self.callback_function(None)
+            return True
 
         # Waiting for position
-        return TiledBrickDetectorKeepWaiting()
+        return False
 
 
 class TiledBrickMovementDetectorThread(TiledBrickDetectorThreadBase):
@@ -117,27 +121,25 @@ class TiledBrickMovementDetectorThread(TiledBrickDetectorThreadBase):
     def update(self):
 
         # Detect brick position
-        position, propabilities = self.board_area.brick_detector.find_brick_among_tiles(self.board_area, self.valid_positions)
+        position, propabilities = self.board_area.brick_detector.find_brick_among_tiles(self.valid_positions)
 
         if not position:
-            return TiledBrickDetectorKeepWaiting()
+            return False
 
         # Update initial position
         if not self.initial_position:
             self.initial_position = position
-            return TiledBrickDetectorKeepWaiting()
+            return False
 
         # Check if moved away from initial position
         if position[0] != self.initial_position[0] or position[1] != self.initial_position[1]:
 
             # Return found position if no target defined
             if not self.target_position:
-                return position, self.initial_position
+                self.callback_function(position, self.initial_position)
+                return True
 
             # Check moved to target position
             if self.target_position and position[0] == self.target_position[0] and position[1] == self.target_position[1]:
-                return position, self.initial_position
-
-
-class TiledBrickDetectorKeepWaiting(object):
-    pass
+                self.callback_function(position, self.initial_position)
+                return True

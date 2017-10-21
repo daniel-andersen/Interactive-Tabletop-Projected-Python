@@ -66,8 +66,6 @@ class BoardArea(object):
             board_image = self.board_descriptor.board_snapshot.board_image(size)
             image_height, image_width = board_image.shape[:2]
 
-            cv2.imwrite("debug.png", board_image)
-
             # Extract area image
             x1 = int(float(image_width) * self.rect[0])
             y1 = int(float(image_height) * self.rect[1])

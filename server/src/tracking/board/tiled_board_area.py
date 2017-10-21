@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 from tracking.board.board_area import BoardArea, SnapshotSize
 from tracking.detectors.tiled_brick_detector import TiledBrickDetector
