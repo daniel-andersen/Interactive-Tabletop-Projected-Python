@@ -69,16 +69,26 @@ class Client
     """
     cancelRequest: Cancels a request.
 
-    requestId: Request ID of request to cancel.
+    id: Request ID of request to cancel.
+    completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
     """
-    cancelRequest: (requestId) ->
-        @sendMessage("cancelRequest", {"requestId": requestId})
+    cancelRequest: (id, completionCallback = undefined) ->
+        requestId = @addCompletionCallback(completionCallback)
+        @sendMessage("cancelRequest", {
+            "id": id,
+            "requestId": requestId
+        })
 
     """
     cancelRequests: Cancels all requests made to server.
+
+    completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
     """
-    cancelRequests: ->
-        @sendMessage("cancelRequest", {})
+    cancelRequests: (completionCallback = undefined) ->
+        requestId = @addCompletionCallback(completionCallback)
+        @sendMessage("cancelRequests", {
+            "requestId": requestId
+        })
 
     """
     reset: Resets the server.

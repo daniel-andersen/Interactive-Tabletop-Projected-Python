@@ -79,6 +79,7 @@ MazeGame = (function() {
     this.tileMapDiv = document.getElementById("tileMap");
     this.blackOverlayMapDiv = document.getElementById("blackOverlayMap");
     this.titleImage = document.getElementById("title");
+    this.transientObjectsOverlay = document.getElementById("transientObjectsOverlay");
     this.tileImages = [];
     for (i = j = 1; j <= 16; i = ++j) {
       image = new Image();
@@ -165,8 +166,10 @@ MazeGame = (function() {
     this.treasureImage.src = "assets/images/treasure.png";
     this.treasureImage.style.opacity = "0";
     this.treasureImage.style.transition = "opacity 1s linear";
+    this.treasureImage.style.position = "absolute";
     this.treasureImage.style.width = (100.0 / this.mazeModel.width) + "%";
-    return this.treasureImage.style.height = (100.0 / this.mazeModel.height) + "%";
+    this.treasureImage.style.height = (100.0 / this.mazeModel.height) + "%";
+    return this.transientObjectsOverlay.appendChild(this.treasureImage);
   };
 
   MazeGame.prototype.waitForStartPositions = function() {
@@ -197,30 +200,42 @@ MazeGame = (function() {
   };
 
   MazeGame.prototype.playerPlacedInitialBrick = function(player, position) {
-    var aPlayer, j, len, otherPlayerTurn, ref;
+    var aPlayer, firstPlayer, j, len, p, ref;
     player.state = PlayerState.IDLE;
     player.reachDistance = playerDefaultReachDistance;
-    otherPlayerTurn = false;
+    firstPlayer = true;
     ref = this.mazeModel.players;
     for (j = 0, len = ref.length; j < len; j++) {
       aPlayer = ref[j];
       if (aPlayer.state === PlayerState.TURN) {
-        otherPlayerTurn = true;
+        firstPlayer = false;
       }
     }
-    if (otherPlayerTurn == null) {
+    if (firstPlayer) {
       player.state = PlayerState.TURN;
     }
-    this.updateMaze();
-    return setTimeout((function(_this) {
+    if (firstPlayer) {
+      this.titleImage.style.opacity = '0';
+      p = this.positionOnScreenInPercentage(this.mazeModel.treasurePosition.x, this.mazeModel.treasurePosition.y);
+      this.treasureImage.style.left = p.x + "%";
+      this.treasureImage.style.top = p.y + "%";
+      setTimeout((function(_this) {
+        return function() {
+          return _this.treasureImage.style.opacity = "1";
+        };
+      })(this), 2000);
+    }
+    return this.updateMaze((function(_this) {
       return function() {
-        return _this.requestPlayerPosition(player);
+        if (firstPlayer) {
+          return _this.requestPlayerPosition(player);
+        }
       };
-    })(this), 1500);
+    })(this));
   };
 
   MazeGame.prototype.playerMovedInitialBrick = function(player, position) {
-    var aPlayer, j, len, p, ref;
+    var aPlayer, j, len, ref;
     ref = this.mazeModel.players;
     for (j = 0, len = ref.length; j < len; j++) {
       aPlayer = ref[j];
@@ -229,59 +244,49 @@ MazeGame = (function() {
       }
     }
     this.gameState = GameState.PLAYING_GAME;
-    this.titleImage.style.opacity = '0';
-    p = this.positionOnMap(this.mazeModel.treasurePosition.x, this.mazeModel.treasurePosition.y);
-    this.treasureImage.style.left = (p.x * 100.0 / this.mazeModel.width) + "%";
-    this.treasureImage.style.top = (p.y * 100.0 / this.mazeModel.height) + "%";
-    setTimeout((function(_this) {
-      return function() {
-        return _this.treasureImage.style.opacity = "1";
-      };
-    })(this), 1000);
     player.state = PlayerState.TURN;
     this.currentPlayer = player;
     return this.playerMovedBrick(position);
   };
 
   MazeGame.prototype.playerMovedBrick = function(position) {
-    var oldPosition;
-    this.client.cancelRequests();
-    oldPosition = this.currentPlayer.position;
-    this.currentPlayer.position = position;
-    this.updateMaze();
-    if (this.currentPlayer.position.equals(this.mazeModel.treasurePosition)) {
-      return this.playerDidFindTreasure(oldPosition);
-    } else {
-      return this.nextPlayerTurn();
-    }
+    return this.client.cancelRequests((function(_this) {
+      return function() {
+        var oldPosition;
+        oldPosition = _this.currentPlayer.position;
+        _this.currentPlayer.position = position;
+        if (_this.currentPlayer.position.equals(_this.mazeModel.treasurePosition)) {
+          return _this.playerDidFindTreasure(oldPosition);
+        } else {
+          return _this.nextPlayerTurn();
+        }
+      };
+    })(this));
   };
 
   MazeGame.prototype.playerDidFindTreasure = function(fromPosition) {
-    setTimeout((function(_this) {
+    return this.updateMaze((function(_this) {
       return function() {
-        var p;
-        return p = _this.positionOnMap(fromPosition.x, fromPosition.y);
+        setTimeout(function() {
+          var p;
+          return p = _this.positionOnScreenInPercentage(fromPosition.x, fromPosition.y);
+        }, 1000);
+        return setTimeout(function() {
+          var j, len, player, ref;
+          ref = _this.mazeModel.players;
+          for (j = 0, len = ref.length; j < len; j++) {
+            player = ref[j];
+            player.state = PlayerState.DISABLED;
+          }
+          _this.treasureImage.style.opacity = "0";
+          _this.clearMaze();
+          return _this.updateMaze(function() {
+            _this.startNewGame();
+            return _this.reset();
+          });
+        }, 4000);
       };
-    })(this), 1000);
-    setTimeout((function(_this) {
-      return function() {
-        var j, len, player, ref;
-        ref = _this.mazeModel.players;
-        for (j = 0, len = ref.length; j < len; j++) {
-          player = ref[j];
-          player.state = PlayerState.DISABLED;
-        }
-        _this.treasureImage.style.opacity = "0";
-        _this.clearMaze();
-        return _this.updateMaze();
-      };
-    })(this), 4000);
-    return setTimeout((function(_this) {
-      return function() {
-        _this.startNewGame();
-        return _this.reset();
-      };
-    })(this), 7000);
+    })(this));
   };
 
   MazeGame.prototype.requestPlayerInitialPosition = function(player) {
@@ -364,80 +369,88 @@ MazeGame = (function() {
   };
 
   MazeGame.prototype.nextPlayerTurn = function() {
-    var index, j, len, player, ref;
-    index = this.currentPlayer.index;
-    while (true) {
-      index = (index + 1) % this.mazeModel.players.length;
-      if (this.mazeModel.players[index].state !== PlayerState.DISABLED) {
-        this.currentPlayer = this.mazeModel.players[index];
-        break;
-      }
-    }
-    ref = this.mazeModel.players;
-    for (j = 0, len = ref.length; j < len; j++) {
-      player = ref[j];
-      if (player.state !== PlayerState.DISABLED) {
-        player.state = PlayerState.IDLE;
-      }
-    }
-    this.currentPlayer.state = PlayerState.TURN;
-    this.updateMaze();
-    return setTimeout((function(_this) {
+    return this.updateMaze((function(_this) {
       return function() {
-        return _this.requestPlayerPosition(_this.currentPlayer);
+        var index, j, len, player, ref;
+        index = _this.currentPlayer.index;
+        while (true) {
+          index = (index + 1) % _this.mazeModel.players.length;
+          if (_this.mazeModel.players[index].state !== PlayerState.DISABLED) {
+            _this.currentPlayer = _this.mazeModel.players[index];
+            break;
+          }
+        }
+        ref = _this.mazeModel.players;
+        for (j = 0, len = ref.length; j < len; j++) {
+          player = ref[j];
+          if (player.state !== PlayerState.DISABLED) {
+            player.state = PlayerState.IDLE;
+          }
+        }
+        _this.currentPlayer.state = PlayerState.TURN;
+        return _this.updateMaze(function() {
+          return _this.requestPlayerPosition(_this.currentPlayer);
+        });
       };
-    })(this), 2000);
+    })(this));
   };
 
   MazeGame.prototype.clearMaze = function() {
     return this.drawMaze();
   };
 
-  MazeGame.prototype.updateMaze = function() {
-    var drawOrder, i, j, k, l, len, len1, len2, m, overlay, player, playerIndex, position, ref, ref1, ref2, results, x, y;
+  MazeGame.prototype.updateMaze = function(completionCallback) {
+    var drawOrder, i, j, k, l, len, len1, len2, m, n, o, overlay, player, playerIndex, position, q, ref, ref1, ref2, ref3, ref4, ref5, x, y;
+    if (completionCallback == null) {
+      completionCallback = void 0;
+    }
+    for (y = j = 0, ref = this.mazeModel.height - 1; 0 <= ref ? j <= ref : j >= ref; y = 0 <= ref ? ++j : --j) {
+      for (x = k = 0, ref1 = this.mazeModel.width - 1; 0 <= ref1 ? k <= ref1 : k >= ref1; x = 0 <= ref1 ? ++k : --k) {
+        this.tileAlphaMap[y][x] = 0.0;
+      }
+    }
     if (this.mazeModel.players != null) {
       drawOrder = (function() {
-        var j, ref, results;
+        var l, ref2, results;
         results = [];
-        for (i = j = 0, ref = this.mazeModel.players.length - 1; 0 <= ref ? j <= ref : j >= ref; i = 0 <= ref ? ++j : --j) {
+        for (i = l = 0, ref2 = this.mazeModel.players.length - 1; 0 <= ref2 ? l <= ref2 : l >= ref2; i = 0 <= ref2 ? ++l : --l) {
           results.push(i);
         }
         return results;
       }).call(this);
       drawOrder.splice(this.currentPlayer.index, 1);
       drawOrder.push(this.currentPlayer.index);
-      for (j = 0, len = drawOrder.length; j < len; j++) {
-        playerIndex = drawOrder[j];
+      for (l = 0, len = drawOrder.length; l < len; l++) {
+        playerIndex = drawOrder[l];
         player = this.mazeModel.players[playerIndex];
         if (player.state === PlayerState.DISABLED) {
           continue;
         }
-        ref = this.mazeModel.positionsReachableFromPosition(player.position, player.reachDistance + 2);
-        for (k = 0, len1 = ref.length; k < len1; k++) {
-          position = ref[k];
+        ref2 = this.mazeModel.positionsReachableFromPosition(player.position, player.reachDistance + 2);
+        for (m = 0, len1 = ref2.length; m < len1; m++) {
+          position = ref2[m];
           this.tileAlphaMap[position.y][position.x] = this.tileAlphaDark;
         }
-        console.log(player.state);
-        ref1 = this.mazeModel.positionsReachableFromPosition(player.position, player.reachDistance);
-        for (l = 0, len2 = ref1.length; l < len2; l++) {
-          position = ref1[l];
+        ref3 = this.mazeModel.positionsReachableFromPosition(player.position, player.reachDistance);
+        for (n = 0, len2 = ref3.length; n < len2; n++) {
+          position = ref3[n];
           this.tileAlphaMap[position.y][position.x] = player.state === PlayerState.TURN ? 1.0 : this.tileAlphaDark;
         }
       }
     }
-    results = [];
-    for (y = m = 0, ref2 = this.mazeModel.height - 1; 0 <= ref2 ? m <= ref2 : m >= ref2; y = 0 <= ref2 ? ++m : --m) {
-      results.push((function() {
-        var n, ref3, results1;
-        results1 = [];
-        for (x = n = 0, ref3 = this.mazeModel.width - 1; 0 <= ref3 ? n <= ref3 : n >= ref3; x = 0 <= ref3 ? ++n : --n) {
-          overlay = this.blackOverlayMap[y][x];
-          results1.push(overlay.style.opacity = 1.0 - this.tileAlphaMap[y][x]);
-        }
-        return results1;
-      }).call(this));
+    for (y = o = 0, ref4 = this.mazeModel.height - 1; 0 <= ref4 ? o <= ref4 : o >= ref4; y = 0 <= ref4 ? ++o : --o) {
+      for (x = q = 0, ref5 = this.mazeModel.width - 1; 0 <= ref5 ? q <= ref5 : q >= ref5; x = 0 <= ref5 ? ++q : --q) {
+        overlay = this.blackOverlayMap[y][x];
+        overlay.style.opacity = 1.0 - this.tileAlphaMap[y][x];
+      }
     }
-    return results;
+    if (completionCallback != null) {
+      return setTimeout((function(_this) {
+        return function() {
+          return completionCallback();
+        };
+      })(this), 1750);
+    }
   };
 
   MazeGame.prototype.drawMaze = function() {
@@ -456,6 +469,10 @@ MazeGame = (function() {
       }).call(this));
     }
     return results;
+  };
+
+  MazeGame.prototype.positionOnScreenInPercentage = function(x, y) {
+    return new Position(x * 100.0 / this.mazeModel.width, y * 100.0 / this.mazeModel.height);
   };
 
   return MazeGame;

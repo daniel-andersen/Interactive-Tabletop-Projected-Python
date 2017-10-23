@@ -70,6 +70,7 @@ class MazeGame
         @tileMapDiv = document.getElementById("tileMap")
         @blackOverlayMapDiv = document.getElementById("blackOverlayMap")
         @titleImage = document.getElementById("title")
+        @transientObjectsOverlay = document.getElementById("transientObjectsOverlay")
 
         # Load tiles
         @tileImages = []
@@ -117,9 +118,10 @@ class MazeGame
         @treasureImage.src = "assets/images/treasure.png"
         @treasureImage.style.opacity = "0"
         @treasureImage.style.transition = "opacity 1s linear"
+        @treasureImage.style.position = "absolute"
         @treasureImage.style.width = (100.0 / @mazeModel.width) + "%"
         @treasureImage.style.height = (100.0 / @mazeModel.height) + "%"
-
+        @transientObjectsOverlay.appendChild(@treasureImage)
 
     waitForStartPositions: ->
         for player in @mazeModel.players
@@ -143,21 +145,34 @@ class MazeGame
         player.reachDistance = playerDefaultReachDistance
 
         # Set player turn if first player
-        otherPlayerTurn = false
+        firstPlayer = true
         for aPlayer in @mazeModel.players
             if aPlayer.state == PlayerState.TURN
-                otherPlayerTurn = true
+                firstPlayer = false
 
-        if not otherPlayerTurn?
+        if firstPlayer
             player.state = PlayerState.TURN
 
-        # Update MAZE
-        @updateMaze()
+        # Hide logo and show treasure
+        if firstPlayer
 
-        # Start brick move reporter
-        setTimeout(() =>
-            @requestPlayerPosition(player)
-        , 1500)
+            # Fade logo away
+            @titleImage.style.opacity = '0'
+
+            # Show treasure
+            p = @positionOnScreenInPercentage(@mazeModel.treasurePosition.x, @mazeModel.treasurePosition.y)
+            @treasureImage.style.left = p.x + "%"
+            @treasureImage.style.top = p.y + "%"
+
+            setTimeout(() =>
+                @treasureImage.style.opacity = "1"
+            , 2000)
+
+        # Update MAZE
+        @updateMaze(() =>
+            if firstPlayer
+                @requestPlayerPosition(player)
+        )
 
     playerMovedInitialBrick: (player, position) ->
 
@@ -169,18 +184,6 @@ class MazeGame
         # Get starting playing game
         @gameState = GameState.PLAYING_GAME
 
-        # Fade logo away
-        @titleImage.style.opacity = '0'
-
-        # Show treasure
-        p = @positionOnMap(@mazeModel.treasurePosition.x, @mazeModel.treasurePosition.y)
-        @treasureImage.style.left = (p.x * 100.0 / @mazeModel.width) + "%"
-        @treasureImage.style.top = (p.y * 100.0 / @mazeModel.height) + "%"
-
-        setTimeout(() =>
-            @treasureImage.style.opacity = "1"
-        , 1000)
-
         # Move player
         player.state = PlayerState.TURN
         @currentPlayer = player
@@ -190,46 +193,46 @@ class MazeGame
     playerMovedBrick: (position) ->
 
         # Cancel all running requests
-        @client.cancelRequests()
+        @client.cancelRequests(() =>
 
-        # Move player
-        oldPosition = @currentPlayer.position
-        @currentPlayer.position = position
-        @updateMaze()
+            # Move player
+            oldPosition = @currentPlayer.position
+            @currentPlayer.position = position
 
-        # Check finished
-        if @currentPlayer.position.equals(@mazeModel.treasurePosition)
-            @playerDidFindTreasure(oldPosition)
-        else
-            @nextPlayerTurn()
+            # Check finished
+            if @currentPlayer.position.equals(@mazeModel.treasurePosition)
+                @playerDidFindTreasure(oldPosition)
+            else
+                @nextPlayerTurn()
+        )
 
     playerDidFindTreasure: (fromPosition) ->
 
-        # Animate treasure to former position
-        setTimeout(() =>
-            p = @positionOnMap(fromPosition.x, fromPosition.y)
-        , 1000)
+        @updateMaze(() =>
 
-        # Disappear
-        setTimeout(() =>
+            # Animate treasure to former position
+            setTimeout(() =>
+                p = @positionOnScreenInPercentage(fromPosition.x, fromPosition.y)
+            , 1000)
 
-            # Disable players
-            for player in @mazeModel.players
-                player.state = PlayerState.DISABLED
+            # Disappear
+            setTimeout(() =>
 
-            # Fade treasure
-            @treasureImage.style.opacity = "0"
+                # Disable players
+                for player in @mazeModel.players
+                    player.state = PlayerState.DISABLED
 
-            # Clear maze
-            @clearMaze()
-            @updateMaze()
-        , 4000)
+                # Fade treasure
+                @treasureImage.style.opacity = "0"
 
-        # Restart game
-        setTimeout(() =>
-            @startNewGame()
-            @reset()
-        , 7000)
+                # Clear maze
+                @clearMaze()
+                @updateMaze(() =>
+                    @startNewGame()
+                    @reset()
+                )
+            , 4000)
+        )
 
     requestPlayerInitialPosition: (player) ->
         positions = ([position.x, position.y] for position in @mazeModel.positionsReachableFromPosition(player.position, player.reachDistance + 2))
@@ -284,32 +287,43 @@ class MazeGame
 
     nextPlayerTurn: ->
 
-        # Find next player
-        index = @currentPlayer.index
-
-        while true
-            index = (index + 1) % @mazeModel.players.length
-            if @mazeModel.players[index].state != PlayerState.DISABLED
-                @currentPlayer = @mazeModel.players[index]
-                break
-
-        for player in @mazeModel.players
-            if player.state != PlayerState.DISABLED
-                player.state = PlayerState.IDLE
-        @currentPlayer.state = PlayerState.TURN
-
         # Update maze
-        @updateMaze()
+        @updateMaze(() =>
 
-        # Start brick move reporter
-        setTimeout(() =>
-            @requestPlayerPosition(@currentPlayer)
-        , 2000)
+            # Find next player
+            index = @currentPlayer.index
+
+            while true
+                index = (index + 1) % @mazeModel.players.length
+                if @mazeModel.players[index].state != PlayerState.DISABLED
+                    @currentPlayer = @mazeModel.players[index]
+                    break
+
+            # Idle all players
+            for player in @mazeModel.players
+                if player.state != PlayerState.DISABLED
+                    player.state = PlayerState.IDLE
+
+            # Next player
+            @currentPlayer.state = PlayerState.TURN
+
+            # Update maze
+            @updateMaze(() =>
+
+                # Start brick move reporter
+                @requestPlayerPosition(@currentPlayer)
+            )
+        )
 
     clearMaze: ->
         @drawMaze()
 
-    updateMaze: ->
+    updateMaze: (completionCallback = undefined) ->
+
+        # Tilemap black as default
+        for y in [0..@mazeModel.height - 1]
+            for x in [0..@mazeModel.width - 1]
+                @tileAlphaMap[y][x] = 0.0
 
         # Check if any players are active
         if @mazeModel.players?
@@ -327,7 +341,6 @@ class MazeGame
                 for position in @mazeModel.positionsReachableFromPosition(player.position, player.reachDistance + 2)
                     @tileAlphaMap[position.y][position.x] = @tileAlphaDark
 
-                console.log(player.state)
                 for position in @mazeModel.positionsReachableFromPosition(player.position, player.reachDistance)
                     @tileAlphaMap[position.y][position.x] = if player.state == PlayerState.TURN then 1.0 else @tileAlphaDark
 
@@ -337,10 +350,18 @@ class MazeGame
                 overlay = @blackOverlayMap[y][x]
                 overlay.style.opacity = 1.0 - @tileAlphaMap[y][x]
 
-    drawMaze: ->
+        # Completion callback
+        if completionCallback?
+            setTimeout(() =>
+                completionCallback()
+            , 1750)
 
+    drawMaze: ->
         for y in [0..@mazeModel.height - 1]
             for x in [0..@mazeModel.width - 1]
                 entry = @mazeModel.entryAtCoordinate(x, y)
                 tile = @tileMap[y][x]
                 tile.src = @tileImages[entry.tileIndex].src
+
+    positionOnScreenInPercentage: (x, y) ->
+        return new Position(x * 100.0 / @mazeModel.width, y * 100.0 / @mazeModel.height)

@@ -94,9 +94,9 @@ class Server(WebSocket):
         """
         Cancels a request made to the server.
 
-        requestId: Request ID
+        id: Request ID
         """
-        self.cancel_thread(request_id=payload["requestId"])
+        self.cancel_thread(request_id=payload["id"])
         return "OK", {}, self.request_id_from_payload(payload)
 
     def cancel_requests(self, payload):
@@ -380,7 +380,7 @@ class Server(WebSocket):
             valid_positions,
             initial_position,
             target_position,
-            callback_function=lambda from_position, to_position: self.stop_thread(thread,
+            callback_function=lambda to_position, from_position: self.stop_thread(thread,
                                                                                   result="OK",
                                                                                   action="detectTiledBrickMovement",
                                                                                   payload={"position": to_position,
@@ -452,7 +452,8 @@ class Server(WebSocket):
 
     def cancel_threads(self):
         with self.threads_lock:
-            for request_id in self.threads.keys():
+            thread_keys = list(self.threads.keys())  # Original dict modified during iteration
+            for request_id in thread_keys:
                 self.cancel_thread(request_id)
             self.threads = {}
 

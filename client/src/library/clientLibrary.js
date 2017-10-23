@@ -61,18 +61,31 @@ Client = (function() {
     return requestId;
   };
 
-  "cancelRequest: Cancels a request.\n\nrequestId: Request ID of request to cancel.";
+  "cancelRequest: Cancels a request.\n\nid: Request ID of request to cancel.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
 
-  Client.prototype.cancelRequest = function(requestId) {
+  Client.prototype.cancelRequest = function(id, completionCallback) {
+    var requestId;
+    if (completionCallback == null) {
+      completionCallback = void 0;
+    }
+    requestId = this.addCompletionCallback(completionCallback);
     return this.sendMessage("cancelRequest", {
+      "id": id,
       "requestId": requestId
     });
   };
 
-  "cancelRequests: Cancels all requests made to server.";
+  "cancelRequests: Cancels all requests made to server.\n\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
 
-  Client.prototype.cancelRequests = function() {
-    return this.sendMessage("cancelRequest", {});
+  Client.prototype.cancelRequests = function(completionCallback) {
+    var requestId;
+    if (completionCallback == null) {
+      completionCallback = void 0;
+    }
+    requestId = this.addCompletionCallback(completionCallback);
+    return this.sendMessage("cancelRequests", {
+      "requestId": requestId
+    });
   };
 
   "reset: Resets the server.\n\nresolution: (Optional) Camera resolution to use in form [width, height].\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
