@@ -41,35 +41,29 @@ MazeGame = (function() {
     return this.mazeDebug.setDebugCameraImage("assets/images/board_calibration.png", (function(_this) {
       return function(action, payload) {
         return _this.client.calibrateBoard(function(action, payload) {
-          return _this.initializeTiledBoardArea();
+          return _this.startNewGame();
         });
       };
     })(this));
   };
 
-  MazeGame.prototype.initializeTiledBoardArea = function() {
-    this.boardArea = 0;
-    return this.client.initializeTiledBoardArea(this.mazeModel.width, this.mazeModel.height, 0.0, 0.0, 1.0, 1.0, this.boardArea, (function(_this) {
-      return function(action, payload) {
-        return _this.startNewGame();
+  MazeGame.prototype.startNewGame = function() {
+    return this.client.clearState((function(_this) {
+      return function() {
+        _this.boardArea = 0;
+        return _this.client.initializeTiledBoardArea(_this.mazeModel.width, _this.mazeModel.height, 0.0, 0.0, 1.0, 1.0, _this.boardArea, function(action, payload) {
+          _this.gameState = GameState.INITIALIZING;
+          setTimeout(function() {
+            _this.mazeDebug.resetTileMap();
+            _this.resetMaze();
+            return _this.ready();
+          }, 1500);
+          return setTimeout(function() {
+            return _this.titleImage.style.opacity = '1';
+          }, 1500);
+        });
       };
     })(this));
-  };
-
-  MazeGame.prototype.startNewGame = function() {
-    this.gameState = GameState.INITIALIZING;
-    setTimeout((function(_this) {
-      return function() {
-        _this.mazeDebug.resetTileMap();
-        _this.resetMaze();
-        return _this.ready();
-      };
-    })(this), 1500);
-    return setTimeout((function(_this) {
-      return function() {
-        return _this.titleImage.style.opacity = '1';
-      };
-    })(this), 1500);
   };
 
   MazeGame.prototype.setupUi = function() {
@@ -281,8 +275,7 @@ MazeGame = (function() {
           _this.treasureImage.style.opacity = "0";
           _this.clearMaze();
           return _this.updateMaze(function() {
-            _this.startNewGame();
-            return _this.reset();
+            return _this.startNewGame();
           });
         }, 4000);
       };

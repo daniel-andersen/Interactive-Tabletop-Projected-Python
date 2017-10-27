@@ -1,6 +1,5 @@
 import time
 
-from server import globals
 from server.threads.server_thread import ServerThread
 
 
@@ -23,6 +22,10 @@ class TiledBrickDetectorThreadBase(ServerThread):
                 time.sleep(0.01)
 
             first_run = True
+
+            # Check if stopped
+            if self.stopped:
+                return
 
             # Check if we have a board area image
             if self.board_area.area_image() is not None:

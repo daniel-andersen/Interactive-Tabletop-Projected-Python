@@ -43,7 +43,7 @@ MazeModel = (function() {
     this.numberOfPlayers = 4;
     this.width = 32;
     this.height = 20;
-    this.granularity = 2;
+    this.granularity = 1;
   }
 
   MazeModel.prototype.createRandomMaze = function() {

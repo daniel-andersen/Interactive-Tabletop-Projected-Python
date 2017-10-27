@@ -33,32 +33,35 @@ class MazeGame
     calibrateBoard: ->
         @mazeDebug.setDebugCameraImage("assets/images/board_calibration.png", (action, payload) =>
             @client.calibrateBoard((action, payload) =>
-                @initializeTiledBoardArea()
+                @startNewGame()
             )
-        )
-
-    initializeTiledBoardArea: ->
-        @boardArea = 0
-        @client.initializeTiledBoardArea(@mazeModel.width, @mazeModel.height, 0.0, 0.0, 1.0, 1.0, @boardArea, (action, payload) =>
-            @startNewGame()
         )
 
     startNewGame: ->
 
-        # Prepare game state
-        @gameState = GameState.INITIALIZING
+        # Clear current server state
+        @client.clearState(() =>
 
-        # Prepare map
-        setTimeout(() =>
-            @mazeDebug.resetTileMap()
-            @resetMaze()
-            @ready()
-        , 1500)
+            # Initialize board area
+            @boardArea = 0
+            @client.initializeTiledBoardArea(@mazeModel.width, @mazeModel.height, 0.0, 0.0, 1.0, 1.0, @boardArea, (action, payload) =>
 
-        # Fade logo
-        setTimeout(() =>
-            @titleImage.style.opacity = '1'
-        , 1500)
+                # Prepare game state
+                @gameState = GameState.INITIALIZING
+
+                # Prepare map
+                setTimeout(() =>
+                    @mazeDebug.resetTileMap()
+                    @resetMaze()
+                    @ready()
+                , 1500)
+
+                # Fade logo
+                setTimeout(() =>
+                    @titleImage.style.opacity = '1'
+                , 1500)
+            )
+        )
 
     setupUi: ->
 
@@ -229,7 +232,6 @@ class MazeGame
                 @clearMaze()
                 @updateMaze(() =>
                     @startNewGame()
-                    @reset()
                 )
             , 4000)
         )

@@ -88,7 +88,7 @@ Client = (function() {
     });
   };
 
-  "reset: Resets the server.\n\nresolution: (Optional) Camera resolution to use in form [width, height].\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+  "reset: Resets the server to initial state.\n\nresolution: (Optional) Camera resolution to use in form [width, height].\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
 
   Client.prototype.reset = function(resolution, completionCallback) {
     var json, requestId;
@@ -107,6 +107,22 @@ Client = (function() {
       json["resolution"] = resolution;
     }
     this.sendMessage("reset", json);
+    return requestId;
+  };
+
+  "clearState: Cancels all requests, resets board areas, etc., but does not clear board detection and camera state.\n\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+
+  Client.prototype.clearState = function(completionCallback) {
+    var json, requestId;
+    if (completionCallback == null) {
+      completionCallback = void 0;
+    }
+    this.requests = {};
+    requestId = this.addCompletionCallback(completionCallback);
+    json = {
+      "requestId": requestId
+    };
+    this.sendMessage("clearState", json);
     return requestId;
   };
 

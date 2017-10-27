@@ -91,7 +91,7 @@ class Client
         })
 
     """
-    reset: Resets the server.
+    reset: Resets the server to initial state.
 
     resolution: (Optional) Camera resolution to use in form [width, height].
     completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
@@ -102,6 +102,18 @@ class Client
         json = {"requestId": requestId}
         if resolution? then json["resolution"] = resolution
         @sendMessage("reset", json)
+        return requestId
+
+    """
+    clearState: Cancels all requests, resets board areas, etc., but does not clear board detection and camera state.
+
+    completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
+    """
+    clearState: (completionCallback = undefined) ->
+        @requests = {}
+        requestId = @addCompletionCallback(completionCallback)
+        json = {"requestId": requestId}
+        @sendMessage("clearState", json)
         return requestId
 
     """

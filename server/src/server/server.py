@@ -40,6 +40,7 @@ class Server(WebSocket):
         self.action_to_function_dict = {'cancelRequest': self.cancel_request,
                                         'cancelRequests': self.cancel_requests,
                                         'reset': self.reset,
+                                        'clearState': self.clear_state,
                                         'enableDebug': self.enable_debug,
                                         'takeScreenshot': self.take_screenshot,
                                         'setDebugCameraImage': self.set_debug_camera_image,
@@ -108,7 +109,7 @@ class Server(WebSocket):
 
     def reset(self, payload):
         """
-        Resets the board.
+        Resets to initial state.
 
         requestId: (Optional) Request ID
         cameraResolution: (Optional) Camera resolution in [width, height]. Default: [640, 480].
@@ -118,6 +119,19 @@ class Server(WebSocket):
         self.cancel_threads()
         globals.reset()
         self.initialize_video(resolution)
+
+        return "OK", {}, self.request_id_from_payload(payload)
+
+    def clear_state(self, payload):
+        """
+        Cancels all requests, resets board areas, etc., but does not clear board detection and camera state.
+
+        requestId: (Optional) Request ID
+        """
+        self.cancel_threads()
+
+        globals.get_state().reset_board_areas()
+        globals.get_state().reset_detectors()
 
         return "OK", {}, self.request_id_from_payload(payload)
 
