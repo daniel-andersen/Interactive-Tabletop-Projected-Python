@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Disable screen blanking and screen saver
+xset s off
+xset s noblank
+xset -dpms
+
 # Show splash
 feh -F ~/itp/server/src/resources/splash.png & feh_pid=$!
 
