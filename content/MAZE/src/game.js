@@ -38,11 +38,9 @@ MazeGame = (function() {
   };
 
   MazeGame.prototype.calibrateBoard = function() {
-    return this.mazeDebug.setDebugCameraImage("assets/images/board_calibration.png", (function(_this) {
+    return this.client.calibrateBoard((function(_this) {
       return function(action, payload) {
-        return _this.client.calibrateBoard(function(action, payload) {
-          return _this.startNewGame();
-        });
+        return _this.startNewGame();
       };
     })(this));
   };

@@ -31,10 +31,8 @@ class MazeGame
         )
 
     calibrateBoard: ->
-        @mazeDebug.setDebugCameraImage("assets/images/board_calibration.png", (action, payload) =>
-            @client.calibrateBoard((action, payload) =>
-                @startNewGame()
-            )
+        @client.calibrateBoard((action, payload) =>
+            @startNewGame()
         )
 
     startNewGame: ->

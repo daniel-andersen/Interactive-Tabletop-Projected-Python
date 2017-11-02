@@ -7,6 +7,7 @@ MazeDebug = (function() {
     this.canvasHeight = canvasHeight;
     this.tileMapWidth = tileMapWidth;
     this.tileMapHeight = tileMapHeight;
+    this.enabled = false;
     this.setupCameraCanvas();
     this.setupClickListener();
   }
@@ -16,9 +17,22 @@ MazeDebug = (function() {
     capturedSelf = this;
     return document.addEventListener("click", (function(_this) {
       return function(event) {
-        return capturedSelf.toggleTile(event.clientX, event.clientY);
+        return capturedSelf.didClick(event.clientX, event.clientY);
       };
     })(this));
+  };
+
+  MazeDebug.prototype.didClick = function(x, y) {
+    if (this.enabled) {
+      return this.toggleTile(x, y);
+    } else {
+      return this.enableDebug();
+    }
+  };
+
+  MazeDebug.prototype.enableDebug = function() {
+    this.enabled = true;
+    return this.setDebugCameraImage("assets/images/board_calibration.png");
   };
 
   MazeDebug.prototype.setupCameraCanvas = function() {

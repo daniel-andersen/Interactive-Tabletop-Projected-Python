@@ -1,11 +1,23 @@
 class MazeDebug
     constructor: (@client, @canvasWidth, @canvasHeight, @tileMapWidth, @tileMapHeight) ->
+        @enabled = false
+
         @setupCameraCanvas()
         @setupClickListener()
 
     setupClickListener: ->
         capturedSelf = this
-        document.addEventListener("click", (event) => capturedSelf.toggleTile(event.clientX, event.clientY))
+        document.addEventListener("click", (event) => capturedSelf.didClick(event.clientX, event.clientY))
+
+    didClick: (x, y) ->
+        if @enabled
+            @toggleTile(x, y)
+        else
+            @enableDebug()
+
+    enableDebug: ->
+        @enabled = true
+        @setDebugCameraImage("assets/images/board_calibration.png")
 
     setupCameraCanvas: ->
         @canvas = document.createElement("CANVAS")
