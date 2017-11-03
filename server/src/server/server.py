@@ -13,7 +13,7 @@ import numpy as np
 from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
 
 from server import globals
-from server.threads.board_detector_calibration_thread import BoardDetectorCalibrationThread
+from server.threads.board_calibration_thread import BoardCalibrationThread
 from server.threads.hand_detector_calibration_thread import HandDetectorCalibrationThread
 from server.threads.images_detector_thread import ImagesDetectorThread
 from server.threads.tiled_brick_detector_threads import TiledBrickDetectorThread, TiledBrickMovementDetectorThread, \
@@ -191,15 +191,15 @@ class Server(WebSocket):
 
         requestId: (Optional) Request ID
         """
-        thread = BoardDetectorCalibrationThread(self.request_id_from_payload(payload),
-                                                callback_function=lambda: self.stop_thread(thread,
-                                                                                           result="OK",
-                                                                                           action="calibrateBoard",
-                                                                                           payload={}),
-                                                timeout_function=lambda: self.stop_thread(thread,
-                                                                                          result="CALIBRATION TIMEOUT",
-                                                                                          action="calibrateBoard",
-                                                                                          payload={}))
+        thread = BoardCalibrationThread(self.request_id_from_payload(payload),
+                                        callback_function=lambda: self.stop_thread(thread,
+                                                                                   result="OK",
+                                                                                   action="calibrateBoard",
+                                                                                   payload={}),
+                                        timeout_function=lambda: self.stop_thread(thread,
+                                                                                  result="CALIBRATION TIMEOUT",
+                                                                                  action="calibrateBoard",
+                                                                                  payload={}))
         self.start_thread(self.request_id_from_payload(payload), thread)
 
         return None

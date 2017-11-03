@@ -1,6 +1,7 @@
 import cv2
+
 from test.base_test import BaseTest
-from tracking.board.board_detector import BoardDetector, State
+from tracking.calibrators.board_calibrator import BoardCalibrator, State
 
 
 class BoardDetectionTest(BaseTest):
@@ -19,7 +20,7 @@ class BoardDetectionTest(BaseTest):
             ['test/resources/board_detection/board_detection_4.jpg', State.DETECTED]
         ]
 
-        board_detector = BoardDetector(board_image_filename='test/resources/board_detection/board_detection_source.png')
+        board_calibrator = BoardCalibrator(board_image_filename='test/resources/board_detection/board_detection_source.png')
 
         # Run tests
         success_count = 0
@@ -29,7 +30,7 @@ class BoardDetectionTest(BaseTest):
             self.print_number(current=i + 1, total=len(test_images))
 
             image = cv2.imread(image_filename)
-            corners = board_detector.detect_corners(image, debug=debug)
+            corners = board_calibrator.detect(image, debug=debug)
             detected_state = State.DETECTED if corners is not None else State.NOT_DETECTED
 
             if detected_state == expected_state:

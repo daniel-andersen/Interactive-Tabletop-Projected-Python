@@ -1,8 +1,9 @@
 import cv2
+
 from test.base_test import BaseTest
-from tracking.board.board_detector import BoardDetector, State
-from tracking.board.board_descriptor import BoardDescriptor
 from tracking.board.board_area import BoardArea
+from tracking.board.board_descriptor import BoardDescriptor
+from tracking.calibrators.board_calibrator import BoardCalibrator, State
 from tracking.detectors.hand_detector import HandDetector
 
 
@@ -19,7 +20,7 @@ class HandDetectionTest(BaseTest):
         ]
 
         # Initial board detection
-        board_detector = BoardDetector(board_image_filename='test/resources/hand_detection/board_detection_source.png')
+        board_calibrator = BoardCalibrator(board_image_filename='test/resources/hand_detection/board_detection_source.png')
         board_descriptor = BoardDescriptor()
 
         # Run tests
@@ -38,15 +39,15 @@ class HandDetectionTest(BaseTest):
 
             # Detect board
             board_image = cv2.imread(board_filename)
-            corners = board_detector.detect_corners(board_image)
+            corners = board_calibrator.detect(board_image)
             if corners is None:
                 failed_count += 1
                 print('%s FAILED. Could not detect board' % image_filename)
                 continue
 
             # Force update board descriptor to recognize board immediately
-            board_descriptor.get_board_detector().update(board_image)
-            board_descriptor.get_board_detector().state = State.DETECTED
+            board_descriptor.get_board_calibrator().update(board_image)
+            board_descriptor.get_board_calibrator().state = State.DETECTED
 
             # Update board descriptor with test image
             test_image = cv2.imread(test_filename)

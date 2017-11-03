@@ -2,7 +2,7 @@ import time
 
 from server import globals
 from server.threads.server_thread import ServerThread
-from tracking.board.board_detector import State
+from tracking.board.board_area import BoardAreaId_FULL_BOARD
 
 
 class HandDetectorCalibrationThread(ServerThread):
@@ -22,19 +22,15 @@ class HandDetectorCalibrationThread(ServerThread):
             if self.stopped:
                 return
 
-            # Get board detector
-            board_detector = globals.get_state().get_board_descriptor().get_board_detector()
+            # Get whole board area
+            board_area = globals.get_state().get_board_area(BoardAreaId_FULL_BOARD)
+            if board_area is None:
+                continue
 
-            # Update board calibrator with camera image
-            with globals.get_state().camera_lock:
-                camera = globals.get_state().get_camera()
-                if camera is not None:
-                    image = camera.read()
-                    if image is not None:
-                        board_detector.update(image)
+            # Detect hand
 
             # Check calibrated
-            if board_detector.get_state() == State.DETECTED:
-                print('Board calibrated')
-                self.callback_function()
-                return
+            #if board_calibrator.get_state() == State.DETECTED:
+            #    print('Board calibrated')
+            #    self.callback_function()
+            #    return

@@ -1,30 +1,20 @@
-import time
 import numpy as np
 import cv2
-from threading import RLock
-from util import enum
+
+from tracking.calibrators.calibrator import Calibrator, State
 
 
-State = enum.Enum('NOT_DETECTED', 'DETECTED')
-
-
-class BoardDetector(object):
+class BoardCalibrator(Calibrator):
     """
-    Class capable of detecting board.
+    Class capable of detecting and calibrating board.
     """
     def __init__(self, board_image_filename, min_matches=50):
+        super().__init__()
 
         self.min_matches = min_matches
 
         # Initialize instance variables
-        self.lock = RLock()
-
-        self.detect_min_stable_time = 2.0
-        self.detect_min_count = 2
-
         self.tracking_accept_distance_ratio = 1.0
-
-        self.detect_history = []  # {timestamp, corners}
 
         # Load board calibrator image
         self.board_image = cv2.imread(board_image_filename)
@@ -45,60 +35,11 @@ class BoardDetector(object):
         # Find features in marker image
         self.kp1, self.des1 = self.sift.detectAndCompute(self.board_image, None)
 
-    def reset(self):
-        self.detect_history = []
-
-    def update(self, image):
-        """
-        Updates detection state with image.
-
-        :param image: Input image
-        :return: Current detection state
-        """
-
-        # Perform detection
-        corners = self.detect_corners(image)
-
-        # Update history
-        if corners is not None:
-            with self.lock:
-                self.detect_history.append({"timestamp": time.time(), "corners": corners})
-
-        # Return detected state
-        return self.get_state()
-
-    def get_state(self):
-        with self.lock:
-
-            # Check sufficient amount of detections
-            if len(self.detect_history) < self.detect_min_count:
-                return State.NOT_DETECTED
-
-            # Check sufficient time ellapsed
-            if self.detect_history[-1]["timestamp"] - self.detect_history[0]["timestamp"] < self.detect_min_stable_time:
-                return State.NOT_DETECTED
-
-            # Check corner deviation
-            #corner_deviation = [[0.0, 0.0] for _ in range(0, 4)]
-            #for _, state, corners in self.detect_history:
-            #    for i, p in enumerate(corners):
-            #        corner_deviation[i][0] += p[0]
-            #        corner_deviation[i][1] += p[1]
-
-            return State.DETECTED
-
     def get_corners(self):
         with self.lock:
-            return self.detect_history[-1]["corners"] if self.get_state() == State.DETECTED else None
+            return self.detect_history[-1]["result"] if self.get_state() == State.DETECTED else None
 
-    def detect_corners(self, image, debug=False):
-        """
-        Performs a single detection of corners with the given image.
-
-        :param image: Input image
-        :param debug: Enable debug output
-        :return: Detected corners, if any
-        """
+    def detect(self, image, debug=False):
 
         # Detect image
         with self.lock:

@@ -31,19 +31,19 @@ class GlobalState:
             self._camera = camera
 
     """
-    Board detector
+    Board calibrator
     """
 
-    _board_detector = None
-    board_detector_lock = RLock()
+    _board_calibrator = None
+    board_calibrator_lock = RLock()
 
-    def get_board_detector(self):
-        with self.board_detector_lock:
-            return self._board_detector
+    def get_board_calibrator(self):
+        with self.board_calibrator_lock:
+            return self._board_calibrator
 
-    def set_board_detector(self, board_detector):
-        with self.board_detector_lock:
-            self._board_detector = board_detector
+    def set_board_calibrator(self, board_calibrator):
+        with self.board_calibrator_lock:
+            self._board_calibrator = board_calibrator
 
     """
     Board descriptor
