@@ -1,4 +1,4 @@
-class BoardDetectionExample
+class HandDetectionExample
 
     constructor: () ->
         @client = new Client()
@@ -28,6 +28,13 @@ class BoardDetectionExample
     calibrateBoard: ->
         @setDebugCameraImage("calibration/board_calibration.png", (action, payload) =>
             @client.calibrateBoard((action, payload) =>
-                console.log('Calibrated board!')
+                @calibrateHandDetection()
+            )
+        )
+
+    calibrateHandDetection: ->
+        @setDebugCameraImage("hand_initial.png", (action, payload) =>
+            @client.calibrateHandDetection((action, payload) =>
+                console.log("Hand detection initialized!")
             )
         )

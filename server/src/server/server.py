@@ -13,7 +13,8 @@ import numpy as np
 from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
 
 from server import globals
-from server.threads.board_detector_thread import BoardDetectorThread
+from server.threads.board_detector_calibration_thread import BoardDetectorCalibrationThread
+from server.threads.hand_detector_calibration_thread import HandDetectorCalibrationThread
 from server.threads.images_detector_thread import ImagesDetectorThread
 from server.threads.tiled_brick_detector_threads import TiledBrickDetectorThread, TiledBrickMovementDetectorThread, \
     TiledBricksDetectorThread
@@ -45,6 +46,7 @@ class Server(WebSocket):
                                         'takeScreenshot': self.take_screenshot,
                                         'setDebugCameraImage': self.set_debug_camera_image,
                                         'calibrateBoard': self.calibrate_board,
+                                        'calibrateHandDetection': self.calibrate_hand_detection,
                                         'initializeTiledBoardArea': self.initialize_tiled_board_area,
                                         'detectTiledBrick': self.detect_tiled_brick,
                                         'detectTiledBricks': self.detect_tiled_bricks,
@@ -189,15 +191,30 @@ class Server(WebSocket):
 
         requestId: (Optional) Request ID
         """
-        thread = BoardDetectorThread(self.request_id_from_payload(payload),
-                                     callback_function=lambda: self.stop_thread(thread,
-                                                                                result="OK",
-                                                                                action="calibrateBoard",
-                                                                                payload={}),
-                                     timeout_function=lambda: self.stop_thread(thread,
-                                                                               result="CALIBRATION TIMEOUT",
-                                                                               action="calibrateBoard",
-                                                                               payload={}))
+        thread = BoardDetectorCalibrationThread(self.request_id_from_payload(payload),
+                                                callback_function=lambda: self.stop_thread(thread,
+                                                                                           result="OK",
+                                                                                           action="calibrateBoard",
+                                                                                           payload={}),
+                                                timeout_function=lambda: self.stop_thread(thread,
+                                                                                          result="CALIBRATION TIMEOUT",
+                                                                                          action="calibrateBoard",
+                                                                                          payload={}))
+        self.start_thread(self.request_id_from_payload(payload), thread)
+
+        return None
+
+    def calibrate_hand_detection(self, payload):
+        """
+        Calibrates hand detection.
+
+        requestId: (Optional) Request ID
+        """
+        thread = HandDetectorCalibrationThread(self.request_id_from_payload(payload),
+                                               callback_function=lambda: self.stop_thread(thread,
+                                                                                          result="OK",
+                                                                                          action="calibrateHandDetection",
+                                                                                          payload={}))
         self.start_thread(self.request_id_from_payload(payload), thread)
 
         return None

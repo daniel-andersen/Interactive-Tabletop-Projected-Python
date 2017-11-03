@@ -191,7 +191,7 @@ class Client
         document.body.appendChild(@boardCalibrationDiv)
 
         image = document.createElement('img')
-        image.src = 'assets/images/board_calibration.png'
+        image.src = 'assets/images/calibration/board_calibration.png'
         image.style.objectFit = 'contain'
         image.style.position = 'fixed'
         image.style.left = '0%'
@@ -215,6 +215,61 @@ class Client
         setTimeout(() =>
             document.body.removeChild(@boardCalibrationDiv)
             @boardCalibrationDiv = undefined
+            if completionCallback?
+                completionCallback()
+        , 1000)
+
+    """
+    calibrateHandDetection: Calibrates the hand detection algorithm by presenting user with touch point.
+
+    completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
+    """
+    calibrateHandDetection: (completionCallback = undefined) ->
+        requestId = @addCompletionCallback(() => @hideHandDetectionCalibratorImage(completionCallback))
+        @showHandDetectionCalibratorImage(() =>
+            json = {"requestId": requestId}
+            @sendMessage("calibrateHandDetection", json)
+        )
+        return requestId
+
+    showHandDetectionCalibratorImage: (completionCallback) ->
+        @handDetectionCalibrationDiv = document.createElement('div')
+        @handDetectionCalibrationDiv.style.background = '#000000'
+        @handDetectionCalibrationDiv.style.position = 'fixed'
+        @handDetectionCalibrationDiv.style.left = '0%'
+        @handDetectionCalibrationDiv.style.top = '0%'
+        @handDetectionCalibrationDiv.style.width = '100%'
+        @handDetectionCalibrationDiv.style.height = '100%'
+        @handDetectionCalibrationDiv.style.opacity = '0'
+        @handDetectionCalibrationDiv.style.transition = 'opacity 1s linear'
+        @handDetectionCalibrationDiv.style.zIndex = 1000
+        document.body.appendChild(@handDetectionCalibrationDiv)
+
+        image = document.createElement('img')
+        image.src = 'assets/images/calibration/hand_calibration.png'
+        image.style.objectFit = 'contain'
+        image.style.position = 'fixed'
+        image.style.left = '0%'
+        image.style.top = '0%'
+        image.style.width = '100%'
+        image.style.height = '100%'
+        @handDetectionCalibrationDiv.appendChild(image)
+
+        setTimeout(() =>
+            @handDetectionCalibrationDiv.style.opacity = '1'
+        , 1)
+
+        setTimeout(() =>
+            if completionCallback?
+                completionCallback()
+        , 1000)
+
+    hideHandDetectionCalibratorImage: (completionCallback) ->
+        @handDetectionCalibrationDiv.style.opacity = '0'
+
+        setTimeout(() =>
+            document.body.removeChild(@handDetectionCalibrationDiv)
+            @handDetectionCalibrationDiv = undefined
             if completionCallback?
                 completionCallback()
         , 1000)

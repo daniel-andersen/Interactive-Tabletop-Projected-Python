@@ -5,11 +5,11 @@ from server.threads.server_thread import ServerThread
 from tracking.board.board_detector import State
 
 
-class BoardDetectorThread(ServerThread):
+class BoardDetectorCalibrationThread(ServerThread):
     def __init__(self, request_id, callback_function, timeout_function=None, timeout=20.0):
         super().__init__(request_id)
-        self.timeout_function = timeout_function
         self.callback_function = callback_function
+        self.timeout_function = timeout_function
         self.timeout = timeout
 
     def _run(self):

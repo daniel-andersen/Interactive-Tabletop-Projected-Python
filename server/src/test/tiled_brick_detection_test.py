@@ -51,7 +51,7 @@ class TiledBrickDetectionTest(BaseTest):
             board_descriptor.get_board_detector().update(board_image)
             board_descriptor.get_board_detector().state = State.DETECTED
 
-            # Update board descriptor with test brick image
+            # Update board descriptor with test image
             test_image = cv2.imread(test_filename)
             board_descriptor.update(test_image)
 

@@ -224,7 +224,7 @@ Client = (function() {
     this.boardCalibrationDiv.style.zIndex = 1000;
     document.body.appendChild(this.boardCalibrationDiv);
     image = document.createElement('img');
-    image.src = 'assets/images/board_calibration.png';
+    image.src = 'assets/images/calibration/board_calibration.png';
     image.style.objectFit = 'contain';
     image.style.position = 'fixed';
     image.style.left = '0%';
@@ -252,6 +252,79 @@ Client = (function() {
       return function() {
         document.body.removeChild(_this.boardCalibrationDiv);
         _this.boardCalibrationDiv = void 0;
+        if (completionCallback != null) {
+          return completionCallback();
+        }
+      };
+    })(this), 1000);
+  };
+
+  "calibrateHandDetection: Calibrates the hand detection algorithm by presenting user with touch point.\n\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+
+  Client.prototype.calibrateHandDetection = function(completionCallback) {
+    var requestId;
+    if (completionCallback == null) {
+      completionCallback = void 0;
+    }
+    requestId = this.addCompletionCallback((function(_this) {
+      return function() {
+        return _this.hideHandDetectionCalibratorImage(completionCallback);
+      };
+    })(this));
+    this.showHandDetectionCalibratorImage((function(_this) {
+      return function() {
+        var json;
+        json = {
+          "requestId": requestId
+        };
+        return _this.sendMessage("calibrateHandDetection", json);
+      };
+    })(this));
+    return requestId;
+  };
+
+  Client.prototype.showHandDetectionCalibratorImage = function(completionCallback) {
+    var image;
+    this.handDetectionCalibrationDiv = document.createElement('div');
+    this.handDetectionCalibrationDiv.style.background = '#000000';
+    this.handDetectionCalibrationDiv.style.position = 'fixed';
+    this.handDetectionCalibrationDiv.style.left = '0%';
+    this.handDetectionCalibrationDiv.style.top = '0%';
+    this.handDetectionCalibrationDiv.style.width = '100%';
+    this.handDetectionCalibrationDiv.style.height = '100%';
+    this.handDetectionCalibrationDiv.style.opacity = '0';
+    this.handDetectionCalibrationDiv.style.transition = 'opacity 1s linear';
+    this.handDetectionCalibrationDiv.style.zIndex = 1000;
+    document.body.appendChild(this.handDetectionCalibrationDiv);
+    image = document.createElement('img');
+    image.src = 'assets/images/calibration/hand_calibration.png';
+    image.style.objectFit = 'contain';
+    image.style.position = 'fixed';
+    image.style.left = '0%';
+    image.style.top = '0%';
+    image.style.width = '100%';
+    image.style.height = '100%';
+    this.handDetectionCalibrationDiv.appendChild(image);
+    setTimeout((function(_this) {
+      return function() {
+        return _this.handDetectionCalibrationDiv.style.opacity = '1';
+      };
+    })(this), 1);
+    return setTimeout((function(_this) {
+      return function() {
+        if (completionCallback != null) {
+          return completionCallback();
+        }
+      };
+    })(this), 1000);
+  };
+
+  Client.prototype.hideHandDetectionCalibratorImage = function(completionCallback) {
+    this.handDetectionCalibrationDiv.style.opacity = '0';
+    return setTimeout((function(_this) {
+      return function() {
+        document.body.removeChild(_this.handDetectionCalibrationDiv);
+        _this.handDetectionCalibrationDiv = void 0;
         if (completionCallback != null) {
           return completionCallback();
         }

@@ -11,7 +11,7 @@ class BoardDescriptor(object):
     def __init__(self):
         self.lock = RLock()
 
-        self.board_detector = BoardDetector(board_image_filename='resources/board_calibration.png')
+        self.board_detector = BoardDetector(board_image_filename='resources/calibration/board_calibration.png')
 
         self.board_snapshot = BoardSnapshot()
         self.board_snapshot.status = SnapshotStatus.NOT_RECOGNIZED
