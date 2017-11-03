@@ -101,7 +101,7 @@ class GlobalState:
     Detectors
     """
 
-    _detectors= {}
+    _detectors = {}
     detectors_lock = RLock()
 
     def reset_detectors(self):
@@ -112,9 +112,9 @@ class GlobalState:
         with self.detectors_lock:
             return self._detectors[detector_id] if detector_id in self._detectors else None
 
-    def set_detector(self, detector_id, detector):
+    def set_detector(self, detector):
         with self.detectors_lock:
-            self._detectors[detector_id] = detector
+            self._detectors[detector.detector_id] = detector
 
     def remove_detector(self, detector_id):
         with self.detectors_lock:

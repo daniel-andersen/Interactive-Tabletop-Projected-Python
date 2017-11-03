@@ -3,19 +3,21 @@ from tracking.board.board_snapshot import SnapshotSize
 from tracking.detectors.detector import Detector
 
 
+handDetectorId = "handDetector"
+
+
 class HandDetector(Detector):
     """
     Class implementing hand detector.
     """
-
-    def __init__(self, detector_id, board_area):
+    def __init__(self, detector_id, medians=[]):
         """
         :param detector_id: Detector ID
         :param board_area: Board area
         """
         super().__init__(detector_id)
 
-        self.board_area = board_area
+        self.medians = medians
 
     def preferred_input_image_resolution(self):
         """

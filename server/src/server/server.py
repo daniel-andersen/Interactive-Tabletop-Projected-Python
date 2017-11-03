@@ -229,7 +229,7 @@ class Server(WebSocket):
         """
         detector = TensorflowDetector(detector_id=payload["detectorId"], model_name=payload["modelName"])
 
-        globals.get_state().set_detector(detector.detector_id, detector)
+        globals.get_state().set_detector(detector)
 
         return "OK", {}, self.request_id_from_payload(payload)
 

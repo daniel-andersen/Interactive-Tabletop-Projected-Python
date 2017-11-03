@@ -3,6 +3,9 @@ import time
 from server import globals
 from server.threads.server_thread import ServerThread
 from tracking.board.board_area import BoardAreaId_FULL_BOARD
+from tracking.calibrators.calibrator import State
+from tracking.calibrators.hand_calibrator import HandCalibrator
+from tracking.detectors.hand_detector import HandDetector, handDetectorId
 
 
 class HandDetectorCalibrationThread(ServerThread):
@@ -11,6 +14,9 @@ class HandDetectorCalibrationThread(ServerThread):
         self.callback_function = callback_function
 
     def _run(self):
+
+        # Create hand calibrator
+        hand_calibrator = HandCalibrator()
 
         # Update hand calibration
         while True:
@@ -27,10 +33,14 @@ class HandDetectorCalibrationThread(ServerThread):
             if board_area is None:
                 continue
 
-            # Detect hand
-
             # Check calibrated
-            #if board_calibrator.get_state() == State.DETECTED:
-            #    print('Board calibrated')
-            #    self.callback_function()
-            #    return
+            if hand_calibrator.get_state() == State.DETECTED:
+
+                # Create new hand detector
+                hand_detector = HandDetector(detector_id=handDetectorId, medians=hand_calibrator.get_medians())
+                globals.get_state().set_detector(hand_detector)
+
+                # Callback
+                print('Hand calibrated')
+                self.callback_function()
+                return
