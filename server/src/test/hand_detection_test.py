@@ -4,6 +4,7 @@ from test.base_test import BaseTest
 from tracking.board.board_area import BoardArea
 from tracking.board.board_descriptor import BoardDescriptor
 from tracking.calibrators.board_calibrator import BoardCalibrator, State
+from tracking.calibrators.hand_calibrator import HandCalibrator
 from tracking.detectors.hand_detector import HandDetector
 
 
@@ -17,6 +18,7 @@ class HandDetectionTest(BaseTest):
         tests = [  # [Filename prefix, [(expected x, expected y), ...]]
             ['test/resources/hand_detection/hand_detection_1', [(0.5, 0.5)]],
             ['test/resources/hand_detection/hand_detection_2', [(0.5, 0.5)]],
+            ['test/resources/hand_detection/hand_detection_3', [(0.5, 0.5)]],
         ]
 
         # Initial board detection
@@ -31,11 +33,11 @@ class HandDetectionTest(BaseTest):
             self.print_number(current=i + 1, total=len(tests))
 
             board_filename = "%s_board.png" % image_filename
+            calibrator_filename = "%s_calibration.png" % image_filename
             test_filename = "%s_test.png" % image_filename
 
             # Create board area
             board_area = BoardArea(0, board_descriptor)
-            hand_detector = HandDetector(0, board_area)
 
             # Detect board
             board_image = cv2.imread(board_filename)
@@ -53,8 +55,20 @@ class HandDetectionTest(BaseTest):
             test_image = cv2.imread(test_filename)
             board_descriptor.update(test_image)
 
+            # Calibrate hand detector
+            calibrator_image = cv2.imread(calibrator_filename)
+
+            hand_detector_calibrator = HandCalibrator()
+            medians = hand_detector_calibrator.detect(calibrator_image)
+            if medians is None:
+                failed_count += 1
+                print('%s FAILED. Could not calibrate hand' % image_filename)
+                continue
+
+            hand_detector = HandDetector(0, medians)
+
             # Detect hands
-            detected_positions = hand_detector.detect_in_image(test_image)
+            result = hand_detector.detect_in_image(test_image)
 
             # Print result
             """
