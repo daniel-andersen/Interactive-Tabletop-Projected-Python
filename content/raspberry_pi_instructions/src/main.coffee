@@ -1,4 +1,4 @@
-class HandDetectionExample
+class RaspberryPiInstructions
 
     constructor: () ->
         @client = new Client()
@@ -20,21 +20,12 @@ class HandDetectionExample
 
     onMessage: (json) ->
 
-    setDebugCameraImage: (filename, completionCallback) ->
-        image = new Image()
-        image.onload = () => @client.setDebugCameraImage(image, completionCallback)
-        image.src = "assets/images/" + filename
-
     calibrateBoard: ->
-        @setDebugCameraImage("calibration/board_calibration.png", (action, payload) =>
-            @client.calibrateBoard((action, payload) =>
-                @calibrateHandDetection()
-            )
+        @client.calibrateBoard((action, payload) =>
+            @calibrateHandDetection()
         )
 
     calibrateHandDetection: ->
-        @setDebugCameraImage("hand_initial.png", (action, payload) =>
-            @client.calibrateHandDetection((action, payload) =>
-                console.log("Hand detection initialized!")
-            )
+        @client.calibrateHandDetection((action, payload) =>
+            console.log("Hand detection initialized!")
         )

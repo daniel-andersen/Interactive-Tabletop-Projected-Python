@@ -14,8 +14,8 @@ class HandCalibrator(Calibrator):
 
         self.center_extract_pct = [0.7, 0.8]
         self.thresholds = [
-            [{"lower": (0, 10, 60), "upper": (20, 150, 255)}],
-            [{"lower": (0, 48, 80), "upper": (20, 150, 255)}],
+            [{"lower": (0, 10, 60), "upper": (20, 180, 255)}],
+            #[{"lower": (0, 48, 80), "upper": (20, 150, 255)}],
         ]
 
     def get_medians(self):
@@ -24,10 +24,16 @@ class HandCalibrator(Calibrator):
 
     def detect(self, image, debug=False):
 
+        cv2.imwrite("debug.png", image)
+
+        #image = cv2.imread("debug.png")
+        #gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        #_, threshold_image = cv2.threshold(gray_image, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+        #cv2.imshow("test", threshold_image)
+        #cv2.waitKey(0)
+
         # Prepare image
         image = self.prepare_image(image)
-
-        image_height, image_width = image.shape[:2]
 
         # Try different thresholds one after one
         for hand_thresholds in self.thresholds:
@@ -35,14 +41,20 @@ class HandCalibrator(Calibrator):
             # Threshold image
             threshold_image = self.threshold_image(image, hand_thresholds)
 
+            # Debug
+            #if True:
+            #    cv2.destroyAllWindows()
+            #    cv2.imshow("Image", threshold_image)
+            #    cv2.waitKey(0)
+
             # Find contours
             contours, hierarchy = cv2.findContours(threshold_image.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)[-2:]
             if len(contours) == 0:
                 continue
 
             # Find hands in contours
-            for contour in contours:
-                if self.are_hand_conditions_satisfied_for_contour(contour, threshold_image):
+            for i in range(0, len(contours)):
+                if self.are_hand_conditions_satisfied_for_contour(i, contours, hierarchy, threshold_image):
                     return True
 
             #cv2.imshow("debug_board %s" % hand_thresholds, threshold_image)
@@ -52,6 +64,9 @@ class HandCalibrator(Calibrator):
         return None
 
     def threshold_image(self, image, hand_thresholds):
+
+        #_, threshold_image = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+        #return threshold_image
 
         image_height, image_width = image.shape[:2]
 
@@ -87,23 +102,35 @@ class HandCalibrator(Calibrator):
         center_extract_image = image[y1:y2, x1:x2]
 
         # Blur image
-        blur_image = cv2.GaussianBlur(center_extract_image, (5, 5), 0)
+        blur_image = cv2.GaussianBlur(center_extract_image, (7, 7), 0)
+
+        # Grayscale image
+        #grayscale_image = cv2.cvtColor(blur_image, cv2.COLOR_BGR2GRAY)
+        #return grayscale_image
 
         # Extract HSV image
         hsv_image = cv2.cvtColor(blur_image, cv2.COLOR_BGR2HSV)
-
         return hsv_image
 
-    def are_hand_conditions_satisfied_for_contour(self, contour, image):
+    def are_hand_conditions_satisfied_for_contour(self, index, contours, hierarchy, image):
 
-        image_height, image_width = image.shape[:2]
+        # Check hierarchy
+        if hierarchy[0][index][3] != -1:
+            #print("Contour cannot have a parent!")
+            return False
 
-        calibration_center_point = [image_width / 2.0, image_height / 2.0]
-        calibration_center_max_distance = min(image_width, image_height) * 0.05
-        calibration_convexity_defect_max_length = min(image_width, image_height) * 0.35
+        # Extract contour
+        contour = contours[index]
 
         # Simplify contour
         approxed_contour = cv2.approxPolyDP(contour, cv2.arcLength(contour, True) * 0.02, True)
+
+        # Prepare constants
+        image_height, image_width = image.shape[:2]
+
+        calibration_center_point = [image_width / 2.0, image_height / 2.0]
+        calibration_center_max_distance = min(image_width, image_height) * 0.1
+        calibration_convexity_defect_max_length = min(image_width, image_height) * 0.7
 
         # Check area
         area = cv2.contourArea(approxed_contour, False)
@@ -112,19 +139,21 @@ class HandCalibrator(Calibrator):
         max_hand_area = (image_width * 0.5) * (image_height * 0.5)
 
         if area < min_hand_area:
-            #print("Area too small: %f vs %f" % (area, min_marker_size))
+            #print("Area too small: %f vs %f" % (area, min_hand_area))
             return False
 
         if area > max_hand_area:
-            #print("Area too big: %f vs %f" % (area, max_marker_size))
+            #print("Area too big: %f vs %f" % (area, max_hand_area))
             return False
 
         # Check convexity defects
         convex_hull_contour = cv2.convexHull(approxed_contour, returnPoints=False)
-        if len(convex_hull_contour) == 0:
+        if convex_hull_contour is None or len(convex_hull_contour) == 0:
             return False
 
         convexity_defects = cv2.convexityDefects(approxed_contour, convex_hull_contour)
+        if convexity_defects is None or len(convexity_defects) == 0:
+            return False
 
         for i in range(0, len(convexity_defects)):
             s, e, f, d = convexity_defects[i, 0]
@@ -133,6 +162,7 @@ class HandCalibrator(Calibrator):
 
             # Check convexity defect length
             if misc_math.line_length(start, end) > calibration_convexity_defect_max_length:
+                #print("Convexity defect length too large: %s vs %s" % (misc_math.line_length(start, end), calibration_convexity_defect_max_length))
                 continue
 
             # Check convexity defect start/end distance from calibration center
@@ -140,24 +170,25 @@ class HandCalibrator(Calibrator):
             dist_end = misc_math.distance(calibration_center_point, end)
 
             if min(dist_start, dist_end) > calibration_center_max_distance:
+                #print("Convexity defect distance to center too large: %s vs %s" % (min(dist_start, dist_end), calibration_center_max_distance))
                 continue
+
+            # Debug
+            if False:
+                debug_image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+                for i in range(convexity_defects.shape[0]):
+                    s, e, f, d = convexity_defects[i, 0]
+                    start = tuple(approxed_contour[s][0])
+                    end = tuple(approxed_contour[e][0])
+                    far = tuple(approxed_contour[f][0])
+                    cv2.line(debug_image, start, end, [0, 255, 0], 2)
+                    cv2.circle(debug_image, far, 5, [0, 0, 255], -1)
+
+                cv2.destroyAllWindows()
+                cv2.imshow("Convexity hulls", debug_image)
+                cv2.waitKey(0)
 
             # Hand detected
             return True
-
-        # Debug
-        if False:
-            image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-            for i in range(convexity_defects.shape[0]):
-                s, e, f, d = convexity_defects[i, 0]
-                start = tuple(approxed_contour[s][0])
-                end = tuple(approxed_contour[e][0])
-                far = tuple(approxed_contour[f][0])
-                cv2.line(image, start, end, [0, 255, 0], 2)
-                cv2.circle(image, far, 5, [0, 0, 255], -1)
-
-            cv2.destroyAllWindows()
-            cv2.imshow("Contour", image)
-            cv2.waitKey(0)
 
         return False
