@@ -91,13 +91,8 @@ class ImageDetector(Detector):
         contour = np.int32(dst)
 
         # Calculate width and height
-        delta_x = contour[1][0][0] - contour[0][0][0]
-        delta_y = contour[1][0][1] - contour[0][0][1]
-        size_1 = math.sqrt((delta_x * delta_x) + (delta_y * delta_y))
-
-        delta_x = contour[2][0][0] - contour[1][0][0]
-        delta_y = contour[2][0][1] - contour[1][0][1]
-        size_2 = math.sqrt((delta_x * delta_x) + (delta_y * delta_y))
+        size_1 = misc_math.line_length(contour[1][0], contour[0][0])
+        size_2 = misc_math.line_length(contour[2][0], contour[1][0])
 
         max_size = max(size_1, size_2)
         min_size = min(size_1, size_2)

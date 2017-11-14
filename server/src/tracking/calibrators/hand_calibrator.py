@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 
 from tracking.calibrators.calibrator import Calibrator, State
+from tracking.util import misc_math
 
 
 class HandCalibrator(Calibrator):
@@ -14,8 +15,7 @@ class HandCalibrator(Calibrator):
         self.center_extract_pct = [0.7, 0.8]
         self.thresholds = [
             [{"lower": (0, 10, 60), "upper": (20, 150, 255)}],
-            #[{"lower": (0, 48, 80), "upper": (20, 150, 255)}],
-            #[{"lower": (0, 55, 90), "upper": (28, 175, 230)}],
+            [{"lower": (0, 48, 80), "upper": (20, 150, 255)}],
         ]
 
     def get_medians(self):
@@ -41,10 +41,9 @@ class HandCalibrator(Calibrator):
                 continue
 
             # Find hands in contours
-            hands = []
             for contour in contours:
                 if self.are_hand_conditions_satisfied_for_contour(contour, threshold_image):
-                    hands.append(contour)
+                    return True
 
             #cv2.imshow("debug_board %s" % hand_thresholds, threshold_image)
 
@@ -99,6 +98,10 @@ class HandCalibrator(Calibrator):
 
         image_height, image_width = image.shape[:2]
 
+        calibration_center_point = [image_width / 2.0, image_height / 2.0]
+        calibration_center_max_distance = min(image_width, image_height) * 0.05
+        calibration_convexity_defect_max_length = min(image_width, image_height) * 0.35
+
         # Simplify contour
         approxed_contour = cv2.approxPolyDP(contour, cv2.arcLength(contour, True) * 0.02, True)
 
@@ -116,27 +119,45 @@ class HandCalibrator(Calibrator):
             #print("Area too big: %f vs %f" % (area, max_marker_size))
             return False
 
-        # Convex hulled contour must be approximately twice as big
+        # Check convexity defects
         convex_hull_contour = cv2.convexHull(approxed_contour, returnPoints=False)
         if len(convex_hull_contour) == 0:
-            print("No convex hulls")
             return False
 
-        # Get convexity defects
         convexity_defects = cv2.convexityDefects(approxed_contour, convex_hull_contour)
 
-        image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-        #cv2.drawContours(image, [approxed_contour], -1, (255, 0, 255), 2)
-        for i in range(convexity_defects.shape[0]):
+        for i in range(0, len(convexity_defects)):
             s, e, f, d = convexity_defects[i, 0]
             start = tuple(approxed_contour[s][0])
             end = tuple(approxed_contour[e][0])
-            far = tuple(approxed_contour[f][0])
-            cv2.line(image, start, end, [0, 255, 0], 2)
-            cv2.circle(image, far, 5, [0, 0, 255], -1)
 
-        cv2.destroyAllWindows()
-        cv2.imshow("Contour", image)
-        cv2.waitKey(0)
+            # Check convexity defect length
+            if misc_math.line_length(start, end) > calibration_convexity_defect_max_length:
+                continue
 
-        return True
+            # Check convexity defect start/end distance from calibration center
+            dist_start = misc_math.distance(calibration_center_point, start)
+            dist_end = misc_math.distance(calibration_center_point, end)
+
+            if min(dist_start, dist_end) > calibration_center_max_distance:
+                continue
+
+            # Hand detected
+            return True
+
+        # Debug
+        if False:
+            image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+            for i in range(convexity_defects.shape[0]):
+                s, e, f, d = convexity_defects[i, 0]
+                start = tuple(approxed_contour[s][0])
+                end = tuple(approxed_contour[e][0])
+                far = tuple(approxed_contour[f][0])
+                cv2.line(image, start, end, [0, 255, 0], 2)
+                cv2.circle(image, far, 5, [0, 0, 255], -1)
+
+            cv2.destroyAllWindows()
+            cv2.imshow("Contour", image)
+            cv2.waitKey(0)
+
+        return False

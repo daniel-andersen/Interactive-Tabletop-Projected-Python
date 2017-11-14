@@ -15,10 +15,13 @@ class HandDetectionTest(BaseTest):
         ]
 
     def detection_test(self, debug=False):
-        tests = [  # [Filename prefix, [(expected x, expected y), ...]]
-            ['test/resources/hand_detection/hand_detection_1', [(0.5, 0.5)]],
-            ['test/resources/hand_detection/hand_detection_2', [(0.5, 0.5)]],
-            ['test/resources/hand_detection/hand_detection_3', [(0.5, 0.5)]],
+        tests = [  # [Filename prefix, board calibration successful, [{expected x, expected y}, ...]]
+            ['test/resources/hand_detection/hand_detection_1', True, [{"gesture": "OPEN_PALM", "x": 0.5, "y": 0.5}]],
+            ['test/resources/hand_detection/hand_detection_2', True, [{"gesture": "POINTING", "x": 0.5, "y": 0.5}]],
+            ['test/resources/hand_detection/hand_detection_3', True, [{"gesture": "POINTING", "x": 0.5, "y": 0.5}]],
+            ['test/resources/hand_detection/hand_detection_4', True, [{"gesture": "POINTING", "x": 0.5, "y": 0.5}]],
+            ['test/resources/hand_detection/hand_detection_5', True, [{"gesture": "POINTING", "x": 0.5, "y": 0.5}]],
+            ['test/resources/hand_detection/hand_detection_6', False, []],
         ]
 
         # Initial board detection
@@ -29,18 +32,22 @@ class HandDetectionTest(BaseTest):
         success_count = 0
         failed_count = 0
 
-        for i, (image_filename, expected_positions) in enumerate(tests):
+        for i, (image_filename, board_calibration_success, expected_positions) in enumerate(tests):
             self.print_number(current=i + 1, total=len(tests))
 
             board_filename = "%s_board.png" % image_filename
+            board_image = cv2.imread(board_filename)
+
             calibrator_filename = "%s_calibration.png" % image_filename
+            calibrator_image = cv2.imread(calibrator_filename)
+
             test_filename = "%s_test.png" % image_filename
+            test_image = cv2.imread(test_filename)
 
             # Create board area
             board_area = BoardArea(0, board_descriptor)
 
             # Detect board
-            board_image = cv2.imread(board_filename)
             corners = board_calibrator.detect(board_image)
             if corners is None:
                 failed_count += 1
@@ -51,32 +58,32 @@ class HandDetectionTest(BaseTest):
             board_descriptor.get_board_calibrator().update(board_image)
             board_descriptor.get_board_calibrator().state = State.DETECTED
 
-            # Update board descriptor with test image
-            test_image = cv2.imread(test_filename)
-            board_descriptor.update(test_image)
-
             # Calibrate hand detector
-            calibrator_image = cv2.imread(calibrator_filename)
-
             hand_detector_calibrator = HandCalibrator()
             medians = hand_detector_calibrator.detect(calibrator_image)
-            if medians is None:
+
+            if medians is None and not board_calibration_success:
+                success_count += 1
+                continue
+
+            if medians is None and board_calibration_success:
                 failed_count += 1
                 print('%s FAILED. Could not calibrate hand' % image_filename)
                 continue
 
-            hand_detector = HandDetector(0, medians)
+            if medians is not None and not board_calibration_success:
+                failed_count += 1
+                print('%s FAILED. Hand calibration mistakely found hand!' % image_filename)
+                continue
+
+            # Update board descriptor with calibrator image
+            #board_descriptor.update(calibrator_image)
 
             # Detect hands
-            result = hand_detector.detect_in_image(test_image)
+            hand_detector = HandDetector(0, medians)
+            #result = hand_detector.detect_in_image(test_image)
 
-            # Print result
-            """
-            if detected_count == len(expected_positions):
-                success_count += 1
-            else:
-                failed_count += 1
-                print('%s FAILED. %i bricks out of %i not detected!' % (image_filename, len(expected_positions) - detected_count, len(expected_positions) - detected_count))
-            """
+            # Success
+            success_count += 1
 
         return success_count, failed_count

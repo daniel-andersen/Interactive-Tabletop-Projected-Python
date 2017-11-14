@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
 import math
-import util.misc_math
+
+from tracking.util import misc_math
 
 
 def contour_center(contour):
@@ -122,6 +123,7 @@ def draw_points(image=None, scaled_image=None, points=None, scale=3, points_colo
     cv2.imshow(name, scaled_image)
 
     return scaled_image
+
 
 def draw_line(image=None, scaled_image=None, points=None, scale=3, line_color=(255, 0, 255), line_width=2, name="Contour"):
     contour = [np.int32(points).reshape(-1, 1, 2) * scale]
