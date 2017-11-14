@@ -14,7 +14,8 @@ class HandCalibrator(Calibrator):
 
         self.center_extract_pct = [0.7, 0.8]
         self.thresholds = [
-            [{"lower": (0, 10, 60), "upper": (20, 180, 255)}],
+            [{"lower": (0, 10, 60), "upper": (20, 255, 255)}],
+            #[{"lower": (0, 10, 60), "upper": (20, 180, 255)}],
             #[{"lower": (0, 48, 80), "upper": (20, 150, 255)}],
         ]
 
@@ -42,10 +43,9 @@ class HandCalibrator(Calibrator):
             threshold_image = self.threshold_image(image, hand_thresholds)
 
             # Debug
-            #if True:
-            #    cv2.destroyAllWindows()
-            #    cv2.imshow("Image", threshold_image)
-            #    cv2.waitKey(0)
+            if False:
+                cv2.imshow("Image", threshold_image)
+                cv2.waitKey(0)
 
             # Find contours
             contours, hierarchy = cv2.findContours(threshold_image.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)[-2:]
@@ -64,10 +64,6 @@ class HandCalibrator(Calibrator):
         return None
 
     def threshold_image(self, image, hand_thresholds):
-
-        #_, threshold_image = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
-        #return threshold_image
-
         image_height, image_width = image.shape[:2]
 
         # Merge colorspaces into one mask
@@ -104,12 +100,9 @@ class HandCalibrator(Calibrator):
         # Blur image
         blur_image = cv2.GaussianBlur(center_extract_image, (7, 7), 0)
 
-        # Grayscale image
-        #grayscale_image = cv2.cvtColor(blur_image, cv2.COLOR_BGR2GRAY)
-        #return grayscale_image
-
         # Extract HSV image
         hsv_image = cv2.cvtColor(blur_image, cv2.COLOR_BGR2HSV)
+
         return hsv_image
 
     def are_hand_conditions_satisfied_for_contour(self, index, contours, hierarchy, image):
@@ -123,7 +116,7 @@ class HandCalibrator(Calibrator):
         contour = contours[index]
 
         # Simplify contour
-        approxed_contour = cv2.approxPolyDP(contour, cv2.arcLength(contour, True) * 0.02, True)
+        approxed_contour = cv2.approxPolyDP(contour, cv2.arcLength(contour, True) * 0.01, True)
 
         # Prepare constants
         image_height, image_width = image.shape[:2]
@@ -136,14 +129,14 @@ class HandCalibrator(Calibrator):
         area = cv2.contourArea(approxed_contour, False)
 
         min_hand_area = (image_width * 0.2) * (image_height * 0.2)
-        max_hand_area = (image_width * 0.5) * (image_height * 0.5)
+        max_hand_area = (image_width * 0.75) * (image_height * 0.75)
 
         if area < min_hand_area:
             #print("Area too small: %f vs %f" % (area, min_hand_area))
             return False
 
         if area > max_hand_area:
-            #print("Area too big: %f vs %f" % (area, max_hand_area))
+        #    #print("Area too big: %f vs %f" % (area, max_hand_area))
             return False
 
         # Check convexity defects
@@ -154,6 +147,9 @@ class HandCalibrator(Calibrator):
         convexity_defects = cv2.convexityDefects(approxed_contour, convex_hull_contour)
         if convexity_defects is None or len(convexity_defects) == 0:
             return False
+
+        # Find finger by averating convexity defects nearby center
+        finger_positions = []
 
         for i in range(0, len(convexity_defects)):
             s, e, f, d = convexity_defects[i, 0]
@@ -173,6 +169,14 @@ class HandCalibrator(Calibrator):
                 #print("Convexity defect distance to center too large: %s vs %s" % (min(dist_start, dist_end), calibration_center_max_distance))
                 continue
 
+            # Finger detected
+            finger_positions.append(start if dist_start < dist_end else end)
+
+        # Finger detected
+        if len(finger_positions) > 0:
+            finger_position = (int(sum([p[0] for p in finger_positions]) / float(len(finger_positions))),
+                               int(sum([p[1] for p in finger_positions]) / float(len(finger_positions))))
+
             # Debug
             if False:
                 debug_image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
@@ -182,13 +186,12 @@ class HandCalibrator(Calibrator):
                     end = tuple(approxed_contour[e][0])
                     far = tuple(approxed_contour[f][0])
                     cv2.line(debug_image, start, end, [0, 255, 0], 2)
-                    cv2.circle(debug_image, far, 5, [0, 0, 255], -1)
+                    cv2.circle(debug_image, far, 2, [0, 0, 255], -1)
+                cv2.circle(debug_image, finger_position, 5, [255, 0, 255], -1)
 
-                cv2.destroyAllWindows()
                 cv2.imshow("Convexity hulls", debug_image)
                 cv2.waitKey(0)
 
-            # Hand detected
             return True
 
         return False
