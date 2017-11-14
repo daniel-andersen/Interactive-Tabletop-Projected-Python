@@ -227,14 +227,16 @@ class Server(WebSocket):
 
         detectorId: Detector ID to use as a reference
         imageBase64: Source Image to detect
-        minMatches: Minimum number of matches for detection to be considered successful
+        minMatches: (Optional) Minimum number of matches for detection to be considered successful
         requestId: (Optional) Request ID
         """
         raw_image = base64.b64decode(payload["imageBase64"])
         raw_bytes = np.asarray(bytearray(raw_image), dtype=np.uint8)
         image = cv2.imdecode(raw_bytes, cv2.IMREAD_UNCHANGED)
 
-        detector = ImageDetector(detector_id=payload["detectorId"], source_image=image, min_matches=payload["minMatches"] if "minMatches" in payload else ())
+        detector = ImageDetector(detector_id=payload["detectorId"], source_image=image)
+        if "minMatches" in payload:
+            detector.min_matches = payload["minMatches"]
 
         globals.get_state().set_detector(detector)
 

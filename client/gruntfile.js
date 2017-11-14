@@ -33,13 +33,18 @@ module.exports = function(grunt) {
         projects: {
           "../content/examples/board_detection": "default"
         }
-      },*/
+      },
       example_hand_detection: {
         projects: {
           "../content/examples/hand_detection": "default"
         }
-      }/*,
-      example_tensorflow_brick_detection: {
+      },*/
+      example_image_detection: {
+        projects: {
+          "../content/examples/image_detection": "default"
+        }
+      },
+      /*example_tensorflow_brick_detection: {
         projects: {
           "../content/examples/tensorflow_brick_detection": "default"
         }
@@ -65,13 +70,21 @@ module.exports = function(grunt) {
           {expand: true, cwd: "../content/examples/board_detection/lib", src: "**", dest: "target/content/examples/board_detection/lib"},
           {expand: true, cwd: "../content/examples/board_detection/", src: "*.html", dest: "target/content/examples/board_detection/"}
         ]
-      },*/
+      },
       example_hand_detection: {
         files: [
           {expand: true, cwd: "../content/examples/hand_detection/assets", src: "**", dest: "target/content/examples/hand_detection/assets"},
           {expand: true, cwd: "../content/examples/hand_detection/src", src: "**", dest: "target/content/examples/hand_detection/src"},
           {expand: true, cwd: "../content/examples/hand_detection/lib", src: "**", dest: "target/content/examples/hand_detection/lib"},
           {expand: true, cwd: "../content/examples/hand_detection/", src: "*.html", dest: "target/content/examples/hand_detection/"}
+        ]
+      },*/
+      example_image_detection: {
+        files: [
+          {expand: true, cwd: "../content/examples/image_detection/assets", src: "**", dest: "target/content/examples/image_detection/assets"},
+          {expand: true, cwd: "../content/examples/image_detection/src", src: "**", dest: "target/content/examples/image_detection/src"},
+          {expand: true, cwd: "../content/examples/image_detection/lib", src: "**", dest: "target/content/examples/image_detection/lib"},
+          {expand: true, cwd: "../content/examples/image_detection/", src: "*.html", dest: "target/content/examples/image_detection/"}
         ]
       }/*,
       example_tensorflow_brick_detection: {

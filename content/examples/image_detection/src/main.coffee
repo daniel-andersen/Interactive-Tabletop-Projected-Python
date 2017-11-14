@@ -1,4 +1,4 @@
-class TensorflowBrickDetectionExample
+class ImageDetectionExample
 
     constructor: () ->
         @client = new Client()
@@ -28,15 +28,17 @@ class TensorflowBrickDetectionExample
         image.src = "assets/images/" + filename
 
     calibrateBoard: ->
-        @client.calibrateBoard((action, payload) => @setupTensorflowDetector())
+        @client.calibrateBoard((action, payload) => @setupImageDetector())
 
-    setupTensorflowDetector: ->
-        @client.setupTensorflowDetector(0, "brick", (action, payload) => @detectBricks())
+    setupImageDetector: ->
+        image = new Image()
+        image.onload = () => @client.setupImageDetector(0, image, undefined, (action, payload) => @detectImages())
+        image.src = "assets/images/image_source.png"
 
-    detectBricks: ->
-        @setDebugCameraImage("brick_detection.png", (action, payload) =>
+    detectImages: ->
+        @setDebugCameraImage("image_detection.png", (action, payload) =>
             @client.detectImages(@client.boardAreaId_fullBoard, 0, (action, payload) =>
-                console.log("Bricks detected!")
+                console.log("Images detected!")
                 console.log(payload)
             )
         )

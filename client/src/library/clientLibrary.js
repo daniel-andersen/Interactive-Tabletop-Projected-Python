@@ -332,6 +332,34 @@ Client = (function() {
     })(this), 1000);
   };
 
+  "setupImageDetector: Sets up an image detector.\n\ndetectorId: Detector ID to use as a reference.\nsourceImage: Image to detect\nminMatches: (Optional) Minimum number of matches for detection to be considered successful\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+
+  Client.prototype.setupImageDetector = function(detectorId, sourceImage, minMatches, completionCallback) {
+    var requestId;
+    if (minMatches == null) {
+      minMatches = void 0;
+    }
+    if (completionCallback == null) {
+      completionCallback = void 0;
+    }
+    requestId = this.addCompletionCallback(completionCallback);
+    ClientUtil.convertImageToDataURL(sourceImage, (function(_this) {
+      return function(base64Image) {
+        var json;
+        json = {
+          "requestId": requestId,
+          "detectorId": detectorId,
+          "imageBase64": base64Image
+        };
+        if (minMatches != null) {
+          json["minMatches"] = minMatches;
+        }
+        return _this.sendMessage("setupImageDetector", json);
+      };
+    })(this));
+    return requestId;
+  };
+
   "setupTensorflowDetector: Sets up a tensorflow detector.\n\ndetectorId: Detector ID to use as a reference.\nmodelName: Name of model to use.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
 
   Client.prototype.setupTensorflowDetector = function(detectorId, modelName, completionCallback) {
@@ -574,291 +602,6 @@ Client = (function() {
       json["targetPosition"] = targetPosition;
     }
     this.sendMessage("detectTiledBrickMovement", json);
-    return requestId;
-  };
-
-  "initializeImageMarker: Initializes an image marker.\n\nmarkerId: Marker ID.\nimage: Source marker image.\nminMatches: (Optional) Minimum number of matches required. (8 is recommended minimum).\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
-
-  Client.prototype.initializeImageMarker = function(markerId, image, minMatches, completionCallback) {
-    var requestId;
-    if (minMatches == null) {
-      minMatches = void 0;
-    }
-    if (completionCallback == null) {
-      completionCallback = void 0;
-    }
-    requestId = this.addCompletionCallback(completionCallback);
-    this.convertImageToDataURL(image, (function(_this) {
-      return function(base64Image) {
-        var json;
-        json = {
-          "requestId": requestId,
-          "markerId": markerId,
-          "imageBase64": base64Image
-        };
-        if (minMatches != null) {
-          json["minMatches"] = minMatches;
-        }
-        return _this.sendMessage("initializeImageMarker", json);
-      };
-    })(this));
-    return requestId;
-  };
-
-  "initializeHaarClassifierMarker: Initializes a Haar Classifier with the given filename.\n\nmarkerId: Marker ID.\nfilename: Filename of Haar Classifier.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
-
-  Client.prototype.initializeHaarClassifierMarker = function(markerId, filename, completionCallback) {
-    var requestId;
-    if (completionCallback == null) {
-      completionCallback = void 0;
-    }
-    requestId = this.addCompletionCallback(completionCallback);
-    this.readFileBase64(filename, (function(_this) {
-      return function(base64Data) {
-        return _this.sendMessage("initializeHaarClassifierMarker", {
-          "requestId": requestId,
-          "markerId": markerId,
-          "dataBase64": base64Data
-        });
-      };
-    })(this));
-    return requestId;
-  };
-
-  "initializeShapeMarkerWithContour: Initializes a shape marker with the given contour.\n\nmarkerId: Marker ID.\ncontour: Contour of shape in form [[x, y], [x, y], ...].\nminArea: (Optional) Minimum area in percentage [0..1] of board area image size.\nmaxArea: (Optional) Maximum area in percentage [0..1] of board area image size.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
-
-  Client.prototype.initializeShapeMarkerWithContour = function(markerId, contour, minArea, maxArea, completionCallback) {
-    var json, requestId;
-    if (minArea == null) {
-      minArea = void 0;
-    }
-    if (maxArea == null) {
-      maxArea = void 0;
-    }
-    if (completionCallback == null) {
-      completionCallback = void 0;
-    }
-    requestId = this.addCompletionCallback(completionCallback);
-    json = {
-      "requestId": requestId,
-      "markerId": markerId,
-      "shape": contour
-    };
-    if (minArea != null) {
-      json["minArea"] = minArea;
-    }
-    if (maxArea != null) {
-      json["maxArea"] = maxArea;
-    }
-    this.sendMessage("initializeShapeMarker", json);
-    return requestId;
-  };
-
-  "initializeShapeMarkerWithImage: Initializes a shape marker with shape extracted from the given image.\n\nmarkerId: Marker ID.\nimage: Marker image. Must be black contour on white image.\nminArea: (Optional) Minimum area in percentage [0..1] of board area image size.\nmaxArea: (Optional) Maximum area in percentage [0..1] of board area image size.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
-
-  Client.prototype.initializeShapeMarkerWithImage = function(markerId, image, minArea, maxArea, completionCallback) {
-    var requestId;
-    if (minArea == null) {
-      minArea = void 0;
-    }
-    if (maxArea == null) {
-      maxArea = void 0;
-    }
-    if (completionCallback == null) {
-      completionCallback = void 0;
-    }
-    requestId = this.addCompletionCallback(completionCallback);
-    this.convertImageToDataURL(image, (function(_this) {
-      return function(base64Image) {
-        var json;
-        json = {
-          "requestId": requestId,
-          "markerId": markerId,
-          "imageBase64": base64Image
-        };
-        if (minArea != null) {
-          json["minArea"] = minArea;
-        }
-        if (maxArea != null) {
-          json["maxArea"] = maxArea;
-        }
-        return _this.sendMessage("initializeShapeMarker", json);
-      };
-    })(this));
-    return requestId;
-  };
-
-  "initializeArUcoMarker: Initializes an ArUco marker with given properties.\n\nmarkerId: Marker ID.\narUcoMarkerId: ArUco marker ID. Number in range [0..dictionarySize-1].\nmarkerSize: Marker size. Any of 4, 5, 6, 7.\ndictionarySize: (Optional) Dictionary size. Any of 100, 250, 1000.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
-
-  Client.prototype.initializeArUcoMarker = function(markerId, arUcoMarkerId, markerSize, dictionarySize, completionCallback) {
-    var json, requestId;
-    if (dictionarySize == null) {
-      dictionarySize = void 0;
-    }
-    if (completionCallback == null) {
-      completionCallback = void 0;
-    }
-    requestId = this.addCompletionCallback(completionCallback);
-    json = {
-      "requestId": requestId,
-      "markerId": markerId,
-      "arUcoMarkerId": arUcoMarkerId,
-      "markerSize": markerSize
-    };
-    if (dictionarySize != null) {
-      json["dictionarySize"] = dictionarySize;
-    }
-    this.sendMessage("initializeArUcoMarker", json);
-    return requestId;
-  };
-
-  "reportBackWhenMarkerFound: Keeps searching for marker and reports back when found.\n\nareaId: Area ID to search for marker in.\nmarkerId: Marker ID to search for.\nid: (Optional) Reporter ID.\nstabilityLevel: (Optional) Minimum stability level of board area before returning result.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
-
-  Client.prototype.reportBackWhenMarkerFound = function(areaId, markerId, id, stabilityLevel, completionCallback) {
-    var json, requestId;
-    if (id == null) {
-      id = void 0;
-    }
-    if (stabilityLevel == null) {
-      stabilityLevel = void 0;
-    }
-    if (completionCallback == null) {
-      completionCallback = void 0;
-    }
-    requestId = this.addCompletionCallback(completionCallback);
-    json = {
-      "requestId": requestId,
-      "areaId": areaId,
-      "markerId": markerId
-    };
-    if (id != null) {
-      json["id"] = id;
-    }
-    if (stabilityLevel != null) {
-      json["stabilityLevel"] = stabilityLevel;
-    }
-    this.sendMessage("reportBackWhenMarkerFound", json);
-    return requestId;
-  };
-
-  "requestMarkers: Returns which markers among the given list of markers that are currently visible in the given area.\n\nareaId: Area ID to search for markers in.\nmarkerIds: Marker IDs to search for in form [id, id, ...].\nid: (Optional) Reporter ID.\nstabilityLevel: (Optional) Minimum stability level of board area before returning result.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
-
-  Client.prototype.requestMarkers = function(areaId, markerIds, id, stabilityLevel, completionCallback) {
-    var json, requestId;
-    if (id == null) {
-      id = void 0;
-    }
-    if (stabilityLevel == null) {
-      stabilityLevel = void 0;
-    }
-    if (completionCallback == null) {
-      completionCallback = void 0;
-    }
-    requestId = this.addCompletionCallback(completionCallback);
-    json = {
-      "requestId": requestId,
-      "areaId": areaId,
-      "markerIds": markerIds
-    };
-    if (id != null) {
-      json["id"] = id;
-    }
-    if (stabilityLevel != null) {
-      json["stabilityLevel"] = stabilityLevel;
-    }
-    this.sendMessage("requestMarkers", json);
-    return requestId;
-  };
-
-  "requestArUcoMarkers: Returns a list of all visible ArUco markers of given size in given area.\n\nareaId: Area ID to search for markers in.\nmarkerSize: ArUco marker size. Any of 4, 5, 6, 7.\nid: (Optional) Reporter ID.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
-
-  Client.prototype.requestArUcoMarkers = function(areaId, markerSize, id, completionCallback) {
-    var json, requestId;
-    if (id == null) {
-      id = void 0;
-    }
-    if (completionCallback == null) {
-      completionCallback = void 0;
-    }
-    requestId = this.addCompletionCallback(completionCallback);
-    json = {
-      "requestId": requestId,
-      "areaId": areaId,
-      "markerSize": markerSize
-    };
-    if (id != null) {
-      json["id"] = id;
-    }
-    this.sendMessage("requestArUcoMarkers", json);
-    return requestId;
-  };
-
-  "startTrackingMarker: Continously tracks a marker in the given area. Continously reports back.\n\nareaId: Area ID to track marker in.\nmarkerId: Marker ID to track.\nid: (Optional) Reporter ID.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
-
-  Client.prototype.startTrackingMarker = function(areaId, markerId, id, completionCallback) {
-    var json, requestId;
-    if (id == null) {
-      id = void 0;
-    }
-    if (completionCallback == null) {
-      completionCallback = void 0;
-    }
-    requestId = this.addCompletionCallback(completionCallback);
-    json = {
-      "requestId": requestId,
-      "areaId": areaId,
-      "markerId": markerId
-    };
-    if (id != null) {
-      json["id"] = id;
-    }
-    this.sendMessage("startTrackingMarker", json);
-    return requestId;
-  };
-
-  "requestContours: Returns a list of all visible contours in given area.\n\nareaId: Area ID to search for markers in.\napproximation: (Optional) Contour approximation constant. This is the maximum distance between the original curve and its approximation.\nid: (Optional) Reporter ID.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
-
-  Client.prototype.requestContours = function(areaId, approximation, id, completionCallback) {
-    var json, requestId;
-    if (id == null) {
-      id = void 0;
-    }
-    if (completionCallback == null) {
-      completionCallback = void 0;
-    }
-    requestId = this.addCompletionCallback(completionCallback);
-    json = {
-      "requestId": requestId,
-      "areaId": areaId
-    };
-    if (id != null) {
-      json["id"] = id;
-    }
-    if (approximation != null) {
-      json["approximation"] = approximation;
-    }
-    this.sendMessage("requestContours", json);
-    return requestId;
-  };
-
-  "requestHumanHeadPositions: Returns human head positions as a 3D vector with (0, 0, 0) representing board center.\n\nid: (Optional) Reporter ID.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
-
-  Client.prototype.requestHumanHeadPositions = function(id, completionCallback) {
-    var json, requestId;
-    if (id == null) {
-      id = void 0;
-    }
-    if (completionCallback == null) {
-      completionCallback = void 0;
-    }
-    requestId = this.addCompletionCallback(completionCallback);
-    json = {
-      "requestId": requestId
-    };
-    if (id != null) {
-      json["id"] = id;
-    }
-    this.sendMessage("requestHumanHeadPositions", json);
     return requestId;
   };
 
