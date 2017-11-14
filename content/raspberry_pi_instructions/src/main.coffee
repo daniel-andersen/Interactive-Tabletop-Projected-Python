@@ -27,5 +27,15 @@ class RaspberryPiInstructions
 
     calibrateHandDetection: ->
         @client.calibrateHandDetection((action, payload) =>
-            console.log("Hand detection initialized!")
+            @setupImageDetector()
         )
+
+    setupImageDetector: ->
+        @raspberryPiDetectorId = 0
+
+        image = new Image()
+        image.onload = () => @client.setupImageDetector(@raspberryPiDetectorId, image, undefined, (action, payload) => @start())
+        image.src = "assets/images/raspberry_pi_source.png"
+
+    start: ->
+        console.log("Ready!")

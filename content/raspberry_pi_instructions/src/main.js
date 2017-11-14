@@ -43,9 +43,27 @@ RaspberryPiInstructions = (function() {
   RaspberryPiInstructions.prototype.calibrateHandDetection = function() {
     return this.client.calibrateHandDetection((function(_this) {
       return function(action, payload) {
-        return console.log("Hand detection initialized!");
+        return _this.setupImageDetector();
       };
     })(this));
+  };
+
+  RaspberryPiInstructions.prototype.setupImageDetector = function() {
+    var image;
+    this.raspberryPiDetectorId = 0;
+    image = new Image();
+    image.onload = (function(_this) {
+      return function() {
+        return _this.client.setupImageDetector(_this.raspberryPiDetectorId, image, void 0, function(action, payload) {
+          return _this.start();
+        });
+      };
+    })(this);
+    return image.src = "assets/images/raspberry_pi_source.png";
+  };
+
+  RaspberryPiInstructions.prototype.start = function() {
+    return console.log("Ready!");
   };
 
   return RaspberryPiInstructions;
