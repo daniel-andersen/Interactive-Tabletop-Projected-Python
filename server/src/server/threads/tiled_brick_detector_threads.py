@@ -19,7 +19,7 @@ class TiledBrickDetectorThreadBase(ServerThread):
 
             # Sleep a while
             if not first_run:
-                time.sleep(0.01)
+                time.sleep(self.fixed_update_delay)
 
             first_run = True
 

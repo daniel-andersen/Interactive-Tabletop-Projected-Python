@@ -23,7 +23,7 @@ class HandDetectorCalibrationThread(ServerThread):
         while True:
 
             # Sleep a while
-            time.sleep(0.01)
+            time.sleep(self.fixed_update_delay)
 
             # Check if stopped
             if self.stopped:

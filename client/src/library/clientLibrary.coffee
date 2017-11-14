@@ -275,6 +275,27 @@ class Client
         , 1000)
 
     """
+    setupImageDetector: Sets up an image detector.
+
+    detectorId: Detector ID to use as a reference.
+    sourceImage: Image to detect
+    minMatches: Minimum number of matches for detection to be considered successful
+    completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
+    """
+    setupImageDetector: (detectorId, sourceImage, minMatches, completionCallback = undefined) ->
+        requestId = @addCompletionCallback(completionCallback)
+        @convertImageToDataURL(sourceImage, (base64Image) =>
+            json = {
+                "requestId": requestId,
+                "detectorId": detectorId,
+                "imageBase64": base64Image
+            }
+            if minMatches? then json["minMatches"] = minMatches
+            @sendMessage("setupImageDetector", json)
+        )
+        return requestId
+
+    """
     setupTensorflowDetector: Sets up a tensorflow detector.
 
     detectorId: Detector ID to use as a reference.

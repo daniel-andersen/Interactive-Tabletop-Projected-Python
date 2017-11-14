@@ -1,5 +1,6 @@
 import sys
 from test.board_detection_test import BoardDetectionTest
+from test.image_detection_test import ImageDetectionTest
 from test.tiled_brick_detection_test import TiledBrickDetectionTest
 from test.hand_detection_test import HandDetectionTest
 
@@ -9,6 +10,7 @@ tests = [
     {'test': BoardDetectionTest(), 'filter': ['BOARD_DETECTION', 'ALL', 'BASIC']},
     {'test': TiledBrickDetectionTest(), 'filter': ['BRICK_DETECTION', 'ALL', 'BASIC']},
     {'test': HandDetectionTest(), 'filter': ['HAND_DETECTION', 'ALL', 'BASIC']},
+    {'test': ImageDetectionTest(), 'filter': ['IMAGE_DETECTION', 'ALL', 'BASIC']},
 ]
 
 # Parse arguments

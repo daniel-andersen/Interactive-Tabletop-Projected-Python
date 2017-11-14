@@ -20,6 +20,7 @@ from server.threads.tiled_brick_detector_threads import TiledBrickDetectorThread
     TiledBricksDetectorThread
 from tracking.board.board_area import BoardArea
 from tracking.board.tiled_board_area import TiledBoardArea
+from tracking.detectors.image_detector import ImageDetector
 from tracking.detectors.tensorflow_detector import TensorflowDetector
 from util import misc_util
 
@@ -51,6 +52,7 @@ class Server(WebSocket):
                                         'detectTiledBrick': self.detect_tiled_brick,
                                         'detectTiledBricks': self.detect_tiled_bricks,
                                         'detectTiledBrickMovement': self.detect_tiled_brick_movement,
+                                        'setupImageDetector': self.setup_image_detector,
                                         'setupTensorflowDetector': self.setup_tensorflow_detector,
                                         'detectImages': self.detect_images}
 
@@ -113,8 +115,8 @@ class Server(WebSocket):
         """
         Resets to initial state.
 
-        requestId: (Optional) Request ID
         cameraResolution: (Optional) Camera resolution in [width, height]. Default: [640, 480].
+        requestId: (Optional) Request ID
         """
         resolution = payload["resolution"] if "resolution" in payload else [640, 480]
 
@@ -151,8 +153,8 @@ class Server(WebSocket):
         """
         Takes a screenshot and saves it to disk.
 
-        requestId: (Optional) Request ID
         filename: (Optional) Screenshot filename
+        requestId: (Optional) Request ID
         """
         camera = globals.get_state().get_camera()
         if camera is not None:
@@ -219,6 +221,25 @@ class Server(WebSocket):
 
         return None
 
+    def setup_image_detector(self, payload):
+        """
+        Sets up an image detector.
+
+        detectorId: Detector ID to use as a reference
+        imageBase64: Source Image to detect
+        minMatches: Minimum number of matches for detection to be considered successful
+        requestId: (Optional) Request ID
+        """
+        raw_image = base64.b64decode(payload["imageBase64"])
+        raw_bytes = np.asarray(bytearray(raw_image), dtype=np.uint8)
+        image = cv2.imdecode(raw_bytes, cv2.IMREAD_UNCHANGED)
+
+        detector = ImageDetector(detector_id=payload["detectorId"], source_image=image, min_matches=payload["minMatches"] if "minMatches" in payload else ())
+
+        globals.get_state().set_detector(detector)
+
+        return "OK", {}, self.request_id_from_payload(payload)
+
     def setup_tensorflow_detector(self, payload):
         """
         Sets up a tensorflow detector.
@@ -237,12 +258,12 @@ class Server(WebSocket):
         """
         Initializes board area with given parameters.
 
-        requestId: (Optional) Request ID
         id: (Optional) Area id
         x1: X1 in percentage of board size.
         y1: Y1 in percentage of board size.
         x2: X2 in percentage of board size.
         y2: Y2 in percentage of board size.
+        requestId: (Optional) Request ID
         """
         with globals.get_state().board_descriptor_lock:
             board_descriptor = globals.get_state().get_board_descriptor()
@@ -260,7 +281,6 @@ class Server(WebSocket):
         """
         Initializes tiled board area with given parameters.
 
-        requestId: (Optional) Request ID
         id: (Optional) Area id
         tileCountX: Number of horizontal tiles.
         tileCountY: Number of vertical tiles.
@@ -268,6 +288,7 @@ class Server(WebSocket):
         y1: Y1 in percentage of board size.
         x2: X2 in percentage of board size.
         y2: Y2 in percentage of board size.
+        requestId: (Optional) Request ID
         """
         with globals.get_state().board_descriptor_lock, globals.get_state().board_areas_lock:
             board_descriptor = globals.get_state().get_board_descriptor()
@@ -311,7 +332,8 @@ class Server(WebSocket):
         Detects images on the board using the given detector.
 
         areaId: ID of area to detect images in
-        detectorId: Detector ID to use as a reference
+        detectorId: ID of detector to use
+        keepRunning: (Optional) Keep returning results. Defaults to False
         requestId: (Optional) Request ID
         """
         board_area = globals.get_state().get_board_area(payload["areaId"])
@@ -323,7 +345,9 @@ class Server(WebSocket):
             return "DETECTOR_NOT_FOUND", {}, self.request_id_from_payload(payload)
 
         thread = ImagesDetectorThread(self.request_id_from_payload(payload),
-                                      detector, board_area,
+                                      detector,
+                                      board_area,
+                                      keep_running=payload["keepRunning"] if "keepRunning" in payload else False,
                                       callback_function=lambda result: self.stop_thread(thread,
                                                                                         result="OK",
                                                                                         action="detectImages",
