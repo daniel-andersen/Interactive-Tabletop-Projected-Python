@@ -22,6 +22,7 @@ class HandDetectionTest(BaseTest):
             ['test/resources/hand_detection/hand_detection_4', True, [{"gesture": "POINTING", "x": 0.5, "y": 0.5}]],
             ['test/resources/hand_detection/hand_detection_5', True, [{"gesture": "POINTING", "x": 0.5, "y": 0.5}]],
             ['test/resources/hand_detection/hand_detection_6', False, []],
+            ['test/resources/hand_detection/hand_detection_7', False, []],
         ]
 
         # Initial board detection
