@@ -11,7 +11,7 @@ class ImageDetector(Detector):
     """
     Class implementing hand detector.
     """
-    def __init__(self, detector_id, source_image, min_matches=8):
+    def __init__(self, detector_id, source_image, min_matches=8, input_resolution=SnapshotSize.SMALL):
         """
         :param detector_id: Detector ID
         :param source_image: Image to detect
@@ -21,6 +21,7 @@ class ImageDetector(Detector):
 
         self.source_image = source_image
         self.min_matches = min_matches
+        self.input_resolution = input_resolution
 
         self.lock = RLock()
 
@@ -46,14 +47,14 @@ class ImageDetector(Detector):
 
         :return: Input resolution (of type SnapshotSize enum)
         """
-        return SnapshotSize.SMALL
+        return self.input_resolution
 
     def detect_in_image(self, image):
         """
         Run detector in image.
 
         :param image: Image
-        :return: List of detected hands each containing {boundingRect: {x1, y1, x2, y2}}
+        :return: List of detected images {detectorId, matches: [{x, y, width, height, angle}]}
         """
 
         # TODO! Multiple matches!

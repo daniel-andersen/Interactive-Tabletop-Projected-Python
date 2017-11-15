@@ -23,7 +23,7 @@ class Detector(object):
 
         :param image: Image
         :param board_area: Board area
-        :return: List of detected features each containing at least {detectorId, centerX, centerY, width, height, angle}
+        :return: Detector-dependant output
         """
         if image is not None:
             return self.detect_in_image(image)
