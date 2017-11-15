@@ -16,6 +16,7 @@ from server import globals
 from server.threads.board_calibration_thread import BoardCalibrationThread
 from server.threads.hand_detector_calibration_thread import HandDetectorCalibrationThread
 from server.threads.images_detector_thread import ImagesDetectorThread
+from server.threads.nonobstructed_area_detector_thread import NonobstructedAreaDetectorThread
 from server.threads.tiled_brick_detector_threads import TiledBrickDetectorThread, TiledBrickMovementDetectorThread, \
     TiledBricksDetectorThread
 from tracking.board.board_area import BoardArea
@@ -54,7 +55,8 @@ class Server(WebSocket):
                                         'detectTiledBrickMovement': self.detect_tiled_brick_movement,
                                         'setupImageDetector': self.setup_image_detector,
                                         'setupTensorflowDetector': self.setup_tensorflow_detector,
-                                        'detectImages': self.detect_images}
+                                        'detectImages': self.detect_images,
+                                        'detectNonobstructedArea': self.detect_nonobstructed_area}
 
         self.detectors = {}
         self.detectors_lock = RLock()
@@ -226,7 +228,8 @@ class Server(WebSocket):
         Sets up an image detector.
 
         detectorId: Detector ID to use as a reference
-        imageBase64: Source Image to detect
+        imageBase64: Source image to detect
+        imageResolution: Image resolution to use when detecting (of type tracking.board.board_snapshot.SnapshotSize)
         minMatches: (Optional) Minimum number of matches for detection to be considered successful
         requestId: (Optional) Request ID
         """
@@ -235,6 +238,8 @@ class Server(WebSocket):
         image = cv2.imdecode(raw_bytes, cv2.IMREAD_UNCHANGED)
 
         detector = ImageDetector(detector_id=payload["detectorId"], source_image=image)
+        if "imageResolution" in payload:
+            detector.input_resolution = payload["imageResolution"]
         if "minMatches" in payload:
             detector.min_matches = payload["minMatches"]
 
@@ -354,6 +359,34 @@ class Server(WebSocket):
                                                                                         result="OK",
                                                                                         action="detectImages",
                                                                                         payload=result))
+
+        self.start_thread(self.request_id_from_payload(payload), thread)
+
+        return None
+
+    def detect_nonobstructed_area(self, payload):
+        """
+        Detects nonobstructed area on the board.
+
+        areaId: ID of area to detect nonobstructed area in
+        targetSize: Size of area to fit (width, height)
+        targetPoint: (Optional) Find area closest possible to target point (x, y). Defaults to [0.5, 0.5].
+        keepRunning: (Optional) Keep returning results. Defaults to False
+        requestId: (Optional) Request ID
+        """
+        board_area = globals.get_state().get_board_area(payload["areaId"])
+        if board_area is None:
+            return "BOARD_AREA_NOT_FOUND", {}, self.request_id_from_payload(payload)
+
+        thread = NonobstructedAreaDetectorThread(self.request_id_from_payload(payload),
+                                                 board_area,
+                                                 payload["targetSize"],
+                                                 target_point=payload["targetPoint"] if "targetPoint" in payload else [0.5, 0.5],
+                                                 keep_running=payload["keepRunning"] if "keepRunning" in payload else False,
+                                                 callback_function=lambda result: self.stop_thread(thread,
+                                                                                                   result="OK",
+                                                                                                   action="detectNonobstructedArea",
+                                                                                                   payload=result))
 
         self.start_thread(self.request_id_from_payload(payload), thread)
 

@@ -513,17 +513,52 @@ Client = (function() {
 
   "detectImages: Detect images in the given area.\n\nareaId: Area ID of tiled board area.\ndetectorId: The ID of the detector to use.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
 
-  Client.prototype.detectImages = function(areaId, detectorId, completionCallback) {
-    var requestId;
+  Client.prototype.detectImages = function(areaId, detectorId, keepRunning, completionCallback) {
+    var json, requestId;
+    if (keepRunning == null) {
+      keepRunning = false;
+    }
     if (completionCallback == null) {
       completionCallback = void 0;
     }
     requestId = this.addCompletionCallback(completionCallback);
-    this.sendMessage("detectImages", {
+    json = {
+      "requestId": requestId,
+      "areaId": areaId
+    };
+    if (keepRunning != null) {
+      json["keepRunning"] = keepRunning;
+    }
+    this.sendMessage("detectImages", json);
+    return requestId;
+  };
+
+  "detectNonobstructedArea: Detects nonobstructed area on the board.\n\nareaId: ID of area to detect nonobstructed area in.\ntargetSize: Size of area to fit (width, height).\ntargetPoint: (Optional) Find area closest possible to target point (x, y). Defaults to [0.5, 0.5].\nkeepRunning: (Optional) Keep returning results. Defaults to False.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+
+  Client.prototype.detectNonobstructedArea = function(areaId, targetSize, targetPoint, keepRunning, completionCallback) {
+    var json, requestId;
+    if (targetPoint == null) {
+      targetPoint = void 0;
+    }
+    if (keepRunning == null) {
+      keepRunning = false;
+    }
+    if (completionCallback == null) {
+      completionCallback = void 0;
+    }
+    requestId = this.addCompletionCallback(completionCallback);
+    json = {
       "requestId": requestId,
       "areaId": areaId,
-      "detectorId": detectorId
-    });
+      "targetSize": targetSize
+    };
+    if (keepRunning != null) {
+      json["keepRunning"] = keepRunning;
+    }
+    if (targetPoint != null) {
+      json["targetPoint"] = targetPoint;
+    }
+    this.sendMessage("detectNonobstructedArea", json);
     return requestId;
   };
 

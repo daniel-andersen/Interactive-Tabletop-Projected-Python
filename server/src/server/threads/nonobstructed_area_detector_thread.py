@@ -4,16 +4,15 @@ from tracking.detectors.nonobstructed_area_detector import NonobstructedAreaDete
 
 
 class NonobstructedAreaDetectorThread(ServerThread):
-    def __init__(self, request_id, detector_id, board_area, rectangle, target_point, keep_running, callback_function):
+    def __init__(self, request_id, board_area, target_size, target_point, keep_running, callback_function):
         super().__init__(request_id)
-        self.detector_id = detector_id
         self.board_area = board_area
-        self.rectangle = rectangle
+        self.target_size = target_size
         self.target_point = target_point
         self.keep_running = keep_running
         self.callback_function = callback_function
 
-        self.nonobstructedRectangleDetector = NonobstructedAreaDetector(self.detector_id, self.rectangle, self.target_point)
+        self.nonobstructedRectangleDetector = NonobstructedAreaDetector(self.target_size, self.target_point)
 
     def _run(self):
 

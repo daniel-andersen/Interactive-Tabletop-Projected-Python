@@ -102,6 +102,13 @@ class BoardCalibrator(Calibrator):
             # Get corners
             detected_corners = [[int(p[0][0]), int(p[0][1])] for p in dst_points]
 
+            # Validity check corners
+            image_height, image_width = image.shape[:2]
+            min_area = (image_width * 0.5) * (image_height * 0.5)
+
+            if cv2.contourArea(dst_points, False) < min_area:
+                return None
+
             # Debug output
             if debug:
                 img = image.copy()

@@ -15,10 +15,26 @@ class RaspberryPiInstructions
     reset: ->
         @client.reset([1600, 1200], (action, payload) =>
             @client.enableDebug()
-            @calibrateBoard()
+            @setupImageDetectors()
         )
 
     onMessage: (json) ->
+
+    setupImageDetectors: ->
+        @raspberry_pi_detector_id = 0
+
+        @image_detectors = []
+
+        raspberry_pi_source_image = new Image()
+        raspberry_pi_source_image.onload = () => @client.setupImageDetector(0, raspberry_pi_source_image, undefined, (action, payload) => @didSetupImageDetector(@raspberry_pi_detector_id))
+        raspberry_pi_source_image.src = "assets/images/raspberry_pi_source.png"
+
+    didSetupImageDetector: (id) ->
+        @image_detectors.push(id)
+
+        return if @raspberry_pi_detector_id not in @image_detectors
+
+        @calibrateBoard()
 
     calibrateBoard: ->
         @client.calibrateBoard((action, payload) =>
@@ -27,15 +43,18 @@ class RaspberryPiInstructions
 
     calibrateHandDetection: ->
         @client.calibrateHandDetection((action, payload) =>
-            @setupImageDetector()
+            @ready()
         )
 
-    setupImageDetector: ->
-        @raspberryPiDetectorId = 0
-
-        image = new Image()
-        image.onload = () => @client.setupImageDetector(@raspberryPiDetectorId, image, undefined, (action, payload) => @start())
-        image.src = "assets/images/raspberry_pi_source.png"
-
-    start: ->
+    ready: ->
         console.log("Ready!")
+
+        @client.cancelRequests((action, payload) ->
+            @detectRaspberryPi()
+        )
+
+    detectRaspberryPi: ->
+        @client.detectImages(@client.boardAreaId_fullBoard, @raspberry_pi_detector_id, true, (action, payload) =>
+            console.log("Found Raspberry Pi!")
+            console.log(payload)
+        )

@@ -29,7 +29,7 @@ class NonobstructedAreaDetectionTest(BaseTest):
             test_image = cv2.imread(test_filename)
 
             # Find nonobstructed area
-            nonobstructed_area_detector = NonobstructedAreaDetector(0, target_size, target_point)
+            nonobstructed_area_detector = NonobstructedAreaDetector(target_size, target_point)
 
             result = nonobstructed_area_detector.detect(test_image)
             if result is None and expected_result["shouldFindArea"]:

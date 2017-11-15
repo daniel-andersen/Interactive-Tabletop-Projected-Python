@@ -426,13 +426,35 @@ class Client
     detectorId: The ID of the detector to use.
     completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
     """
-    detectImages: (areaId, detectorId, completionCallback = undefined) ->
+    detectImages: (areaId, detectorId, keepRunning = false, completionCallback = undefined) ->
         requestId = @addCompletionCallback(completionCallback)
-        @sendMessage("detectImages", {
+        json = {
+            "requestId": requestId,
+            "areaId": areaId
+        }
+        if keepRunning? then json["keepRunning"] = keepRunning
+        @sendMessage("detectImages", json)
+        return requestId
+
+    """
+    detectNonobstructedArea: Detects nonobstructed area on the board.
+
+    areaId: ID of area to detect nonobstructed area in.
+    targetSize: Size of area to fit (width, height).
+    targetPoint: (Optional) Find area closest possible to target point (x, y). Defaults to [0.5, 0.5].
+    keepRunning: (Optional) Keep returning results. Defaults to False.
+    completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
+    """
+    detectNonobstructedArea: (areaId, targetSize, targetPoint = undefined, keepRunning = false, completionCallback = undefined) ->
+        requestId = @addCompletionCallback(completionCallback)
+        json = {
             "requestId": requestId,
             "areaId": areaId,
-            "detectorId": detectorId
-        })
+            "targetSize": targetSize
+        }
+        if keepRunning? then json["keepRunning"] = keepRunning
+        if targetPoint? then json["targetPoint"] = targetPoint
+        @sendMessage("detectNonobstructedArea", json)
         return requestId
 
     """

@@ -3,7 +3,7 @@ from tracking.board.board_snapshot import SnapshotSize
 
 class Detector(object):
 
-    def __init__(self, detector_id):
+    def __init__(self, detector_id=None):
         """
         :param detector_id: Detector ID
         """

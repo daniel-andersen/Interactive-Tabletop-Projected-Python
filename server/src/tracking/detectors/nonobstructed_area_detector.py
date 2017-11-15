@@ -10,13 +10,12 @@ class NonobstructedAreaDetector(Detector):
     """
     Class implementing nonobstructed area detector.
     """
-    def __init__(self, detector_id, target_size, target_point=[0.5, 0.5]):
+    def __init__(self, target_size, target_point=[0.5, 0.5]):
         """
-        :param detector_id: Detector ID
         :param size: Size to fit (width, height)
         :param target_point: Optional target point for which to find nonobstructed space
         """
-        super().__init__(detector_id)
+        super().__init__()
 
         self.target_size = target_size
         self.target_point = target_point
