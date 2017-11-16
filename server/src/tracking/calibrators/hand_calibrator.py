@@ -12,6 +12,8 @@ class HandCalibrator(Calibrator):
     def __init__(self):
         super().__init__()
 
+        self.detect_min_stable_time = 1.0
+
         self.center_extract_pct = [0.7, 0.8]
         self.thresholds = [
             [{"lower": (0, 10, 60), "upper": (20, 255, 255)}],
@@ -25,7 +27,7 @@ class HandCalibrator(Calibrator):
 
     def detect(self, image, debug=False):
 
-        cv2.imwrite("debug.png", image)
+        cv2.imwrite("debug_hand_calibration.png", image)
 
         #image = cv2.imread("debug.png")
         #gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)

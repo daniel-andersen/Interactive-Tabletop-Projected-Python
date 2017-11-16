@@ -55,6 +55,9 @@ class RaspberryPiInstructions
 
     detectRaspberryPi: ->
         @client.detectImages(@client.boardAreaId_fullBoard, @raspberry_pi_detector_id, true, (action, payload) =>
-            console.log("Found Raspberry Pi!")
             console.log(payload)
+            if payload?
+                document.getElementById('detection_state').style.backgroundColor = 'green'
+            else
+                document.getElementById('detection_state').style.backgroundColor = 'red'
         )

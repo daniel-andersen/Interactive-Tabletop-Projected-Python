@@ -83,8 +83,12 @@ RaspberryPiInstructions = (function() {
   RaspberryPiInstructions.prototype.detectRaspberryPi = function() {
     return this.client.detectImages(this.client.boardAreaId_fullBoard, this.raspberry_pi_detector_id, true, (function(_this) {
       return function(action, payload) {
-        console.log("Found Raspberry Pi!");
-        return console.log(payload);
+        console.log(payload);
+        if (payload != null) {
+          return document.getElementById('detection_state').style.backgroundColor = 'green';
+        } else {
+          return document.getElementById('detection_state').style.backgroundColor = 'red';
+        }
       };
     })(this));
   };
