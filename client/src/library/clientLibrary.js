@@ -236,14 +236,14 @@ Client = (function() {
       return function() {
         return _this.boardCalibrationDiv.style.opacity = '1';
       };
-    })(this), 1);
+    })(this), 100);
     return setTimeout((function(_this) {
       return function() {
         if (completionCallback != null) {
           return completionCallback();
         }
       };
-    })(this), 1000);
+    })(this), 1100);
   };
 
   Client.prototype.hideBoardCalibratorImage = function(completionCallback) {
@@ -309,17 +309,18 @@ Client = (function() {
       return function() {
         return _this.handDetectionCalibrationDiv.style.opacity = '1';
       };
-    })(this), 1);
+    })(this), 100);
     return setTimeout((function(_this) {
       return function() {
         if (completionCallback != null) {
           return completionCallback();
         }
       };
-    })(this), 1000);
+    })(this), 1100);
   };
 
   Client.prototype.hideHandDetectionCalibratorImage = function(completionCallback) {
+    this.handDetectionCalibrationDiv.style.transition = 'opacity 0.3s linear';
     this.handDetectionCalibrationDiv.style.opacity = '0';
     return setTimeout((function(_this) {
       return function() {
@@ -524,7 +525,8 @@ Client = (function() {
     requestId = this.addCompletionCallback(completionCallback);
     json = {
       "requestId": requestId,
-      "areaId": areaId
+      "areaId": areaId,
+      "detectorId": detectorId
     };
     if (keepRunning != null) {
       json["keepRunning"] = keepRunning;

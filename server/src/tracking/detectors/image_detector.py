@@ -11,7 +11,7 @@ class ImageDetector(Detector):
     """
     Class implementing hand detector.
     """
-    def __init__(self, detector_id, source_image, min_matches=8, input_resolution=SnapshotSize.SMALL):
+    def __init__(self, detector_id, source_image, min_matches=20, input_resolution=SnapshotSize.ORIGINAL):
         """
         :param detector_id: Detector ID
         :param source_image: Image to detect
@@ -78,18 +78,24 @@ class ImageDetector(Detector):
 
         # Check number of matches
         if len(good_matches) < self.min_matches:
+            cv2.imwrite("debug_image_detector.png", image)
             return None
 
-        # Find homography between matches
-        src_pts = np.float32([self.kp1[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
-        dst_pts = np.float32([     kp2[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
+        try:
+            # Find homography between matches
+            src_pts = np.float32([self.kp1[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
+            dst_pts = np.float32([     kp2[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
 
-        M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
+            M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
 
-        # Transform points to board area
-        pts = np.float32([[0, 0], [0, self.query_image_height - 1], [self.query_image_width - 1, self.query_image_height - 1], [self.query_image_width - 1, 0]]).reshape(-1,1,2)
-        dst = cv2.perspectiveTransform(pts, M)
-        contour = np.int32(dst)
+            # Transform points to board area
+            pts = np.float32([[0, 0], [0, self.query_image_height - 1], [self.query_image_width - 1, self.query_image_height - 1], [self.query_image_width - 1, 0]]).reshape(-1,1,2)
+            dst = cv2.perspectiveTransform(pts, M)
+            contour = np.int32(dst)
+
+        except Exception as e:
+            print("Exception in image detector: %s" % str(e))
+            return None
 
         # Calculate width and height
         size_1 = misc_math.line_length(contour[1][0], contour[0][0])
@@ -105,10 +111,14 @@ class ImageDetector(Detector):
             width = min_size
             height = max_size
 
-        # Return result
+        # Sanity check
         image_height, image_width = image.shape[:2]
         box = cv2.minAreaRect(contour)
 
+        if width > image_width or height > image_height:
+            return None
+
+        # Return result
         return {"detectorId": self.detector_id,
                 "matches": [
                     {"x": float(box[0][0]) / float(image_width),

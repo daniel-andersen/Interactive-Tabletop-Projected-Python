@@ -185,7 +185,7 @@ class Server(WebSocket):
 
         camera.set_debug_image(image)
 
-        cv2.imwrite("debug.png", image)
+        #cv2.imwrite("debug.png", image)
 
         return "OK", {}, self.request_id_from_payload(payload)
 
@@ -196,14 +196,14 @@ class Server(WebSocket):
         requestId: (Optional) Request ID
         """
         thread = BoardCalibrationThread(self.request_id_from_payload(payload),
-                                        callback_function=lambda: self.stop_thread(thread,
-                                                                                   result="OK",
-                                                                                   action="calibrateBoard",
-                                                                                   payload={}),
-                                        timeout_function=lambda: self.stop_thread(thread,
-                                                                                  result="CALIBRATION TIMEOUT",
-                                                                                  action="calibrateBoard",
-                                                                                  payload={}))
+                                        callback_function=lambda: self.send_thread_result(thread,
+                                                                                          result="OK",
+                                                                                          action="calibrateBoard",
+                                                                                          payload={}),
+                                        timeout_function=lambda: self.send_thread_result(thread,
+                                                                                         result="CALIBRATION TIMEOUT",
+                                                                                         action="calibrateBoard",
+                                                                                         payload={}))
         self.start_thread(self.request_id_from_payload(payload), thread)
 
         return None
@@ -215,10 +215,10 @@ class Server(WebSocket):
         requestId: (Optional) Request ID
         """
         thread = HandDetectorCalibrationThread(self.request_id_from_payload(payload),
-                                               callback_function=lambda: self.stop_thread(thread,
-                                                                                          result="OK",
-                                                                                          action="calibrateHandDetection",
-                                                                                          payload={}))
+                                               callback_function=lambda: self.send_thread_result(thread,
+                                                                                                 result="OK",
+                                                                                                 action="calibrateHandDetection",
+                                                                                                 payload={}))
         self.start_thread(self.request_id_from_payload(payload), thread)
 
         return None
@@ -355,10 +355,11 @@ class Server(WebSocket):
                                       detector,
                                       board_area,
                                       keep_running=payload["keepRunning"] if "keepRunning" in payload else False,
-                                      callback_function=lambda result: self.stop_thread(thread,
-                                                                                        result="OK",
-                                                                                        action="detectImages",
-                                                                                        payload=result))
+                                      callback_function=lambda result: self.send_thread_result(thread,
+                                                                                               result="OK",
+                                                                                               action="detectImages",
+                                                                                               payload=result,
+                                                                                               keep_alive=thread.keep_running))
 
         self.start_thread(self.request_id_from_payload(payload), thread)
 
@@ -383,10 +384,11 @@ class Server(WebSocket):
                                                  payload["targetSize"],
                                                  target_point=payload["targetPoint"] if "targetPoint" in payload else [0.5, 0.5],
                                                  keep_running=payload["keepRunning"] if "keepRunning" in payload else False,
-                                                 callback_function=lambda result: self.stop_thread(thread,
-                                                                                                   result="OK",
-                                                                                                   action="detectNonobstructedArea",
-                                                                                                   payload=result))
+                                                 callback_function=lambda result: self.send_thread_result(thread,
+                                                                                                          result="OK",
+                                                                                                          action="detectNonobstructedArea",
+                                                                                                          payload=result,
+                                                                                                          keep_alive=thread.keep_running))
 
         self.start_thread(self.request_id_from_payload(payload), thread)
 
@@ -413,10 +415,10 @@ class Server(WebSocket):
             valid_positions,
             target_position,
             wait_for_position,
-            callback_function=lambda tile: self.stop_thread(thread,
-                                                            result="OK",
-                                                            action="detectTiledBrick",
-                                                            payload={"tile": tile} if tile else {}))
+            callback_function=lambda tile: self.send_thread_result(thread,
+                                                                   result="OK",
+                                                                   action="detectTiledBrick",
+                                                                   payload={"tile": tile} if tile else {}))
 
         self.start_thread(self.request_id_from_payload(payload), thread)
 
@@ -440,10 +442,10 @@ class Server(WebSocket):
             board_area,
             valid_positions,
             wait_for_position,
-            callback_function=lambda tiles: self.stop_thread(thread,
-                                                             result="OK",
-                                                             action="detectTiledBricks",
-                                                             payload={"tiles": tiles}))
+            callback_function=lambda tiles: self.send_thread_result(thread,
+                                                                    result="OK",
+                                                                    action="detectTiledBricks",
+                                                                    payload={"tiles": tiles}))
 
         self.start_thread(self.request_id_from_payload(payload), thread)
 
@@ -470,11 +472,11 @@ class Server(WebSocket):
             valid_positions,
             initial_position,
             target_position,
-            callback_function=lambda to_position, from_position: self.stop_thread(thread,
-                                                                                  result="OK",
-                                                                                  action="detectTiledBrickMovement",
-                                                                                  payload={"position": to_position,
-                                                                                           "initialPosition": from_position}))
+            callback_function=lambda to_position, from_position: self.send_thread_result(thread,
+                                                                                         result="OK",
+                                                                                         action="detectTiledBrickMovement",
+                                                                                         payload={"position": to_position,
+                                                                                                  "initialPosition": from_position}))
 
         self.start_thread(self.request_id_from_payload(payload), thread)
 
@@ -491,7 +493,7 @@ class Server(WebSocket):
         """
         message = {"result": result,
                    "action": action,
-                   "payload": payload,
+                   "payload": payload if payload is not None else {},
                    "requestId": request_id}
         self.sendMessage(json.dumps(message, ensure_ascii=False))
 
@@ -530,8 +532,9 @@ class Server(WebSocket):
             print("Exception in start_thread: %s" % str(e))
             traceback.print_exc(file=sys.stdout)
 
-    def stop_thread(self, thread, result, action, payload):
-        self.cancel_thread(thread.request_id)
+    def send_thread_result(self, thread, result, action, payload, keep_alive=False):
+        if not keep_alive:
+            self.cancel_thread(thread.request_id)
         self.send_message(result, action, payload, thread.request_id)
 
     def cancel_thread(self, request_id):

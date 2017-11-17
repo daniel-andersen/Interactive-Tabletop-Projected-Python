@@ -35,9 +35,10 @@ class NonobstructedAreaDetectorThread(ServerThread):
 
                 # Find rectangle
                 rect = self.nonobstructedRectangleDetector.detect(board_area=self.board_area)
+                self.callback_function(rect)
 
-                if rect is not None or not self.keep_running:
-                    self.callback_function(rect)
+                # Stop running
+                if not self.keep_running:
                     return
 
             # No board area image

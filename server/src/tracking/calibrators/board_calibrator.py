@@ -79,6 +79,7 @@ class BoardCalibrator(Calibrator):
 
         # Check number of matches
         if len(good_matches) < self.min_matches:
+            cv2.imwrite("debug_board_calibration.png", image)
             return None
 
         # Catch potential transformation exceptions
@@ -117,7 +118,6 @@ class BoardCalibrator(Calibrator):
                 cv2.imshow('Corners', img)
                 cv2.waitKey(0)
 
-            cv2.imwrite("debug_board_detection.png", image)
             return detected_corners
 
         except Exception as e:

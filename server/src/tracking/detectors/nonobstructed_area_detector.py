@@ -56,8 +56,8 @@ class NonobstructedAreaDetector(Detector):
         max_y = image_height - rect_height
 
         # Calculate step
-        step_x = int(rect_width / 2)
-        step_y = int(rect_height / 2)
+        step_x = int(rect_width / 4)
+        step_y = int(rect_height / 4)
 
         # Calculate target in image
         target_in_image = [int(self.target_point[0] * image_width), int(self.target_point[1] * image_height)]

@@ -202,12 +202,12 @@ class Client
 
         setTimeout(() =>
             @boardCalibrationDiv.style.opacity = '1'
-        , 1)
+        , 100)
 
         setTimeout(() =>
             if completionCallback?
                 completionCallback()
-        , 1000)
+        , 1100)
 
     hideBoardCalibratorImage: (completionCallback) ->
         @boardCalibrationDiv.style.opacity = '0'
@@ -257,14 +257,15 @@ class Client
 
         setTimeout(() =>
             @handDetectionCalibrationDiv.style.opacity = '1'
-        , 1)
+        , 100)
 
         setTimeout(() =>
             if completionCallback?
                 completionCallback()
-        , 1000)
+        , 1100)
 
     hideHandDetectionCalibratorImage: (completionCallback) ->
+        @handDetectionCalibrationDiv.style.transition = 'opacity 0.3s linear'
         @handDetectionCalibrationDiv.style.opacity = '0'
 
         setTimeout(() =>
@@ -430,7 +431,8 @@ class Client
         requestId = @addCompletionCallback(completionCallback)
         json = {
             "requestId": requestId,
-            "areaId": areaId
+            "areaId": areaId,
+            "detectorId": detectorId,
         }
         if keepRunning? then json["keepRunning"] = keepRunning
         @sendMessage("detectImages", json)
