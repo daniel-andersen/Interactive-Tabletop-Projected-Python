@@ -10,15 +10,19 @@ class NonobstructedAreaDetector(Detector):
     """
     Class implementing nonobstructed area detector.
     """
-    def __init__(self, target_size, target_point=[0.5, 0.5]):
+    def __init__(self, target_size, target_position=[0.5, 0.5], current_position=None, padding=[0.0, 0.0]):
         """
-        :param size: Size to fit (width, height)
-        :param target_point: Optional target point for which to find nonobstructed space
+        :param target_size: Size to fit (width, height)
+        :param target_position: Optional target point for which to find nonobstructed space
+        :param current_position: (Optional) Excludes current position area minus half padding
+        :param padding: Optional area padding
         """
         super().__init__()
 
         self.target_size = target_size
-        self.target_point = target_point
+        self.target_point = target_position
+        self.current_position = current_position
+        self.padding = padding
 
     def preferred_input_image_resolution(self):
         """
@@ -36,14 +40,26 @@ class NonobstructedAreaDetector(Detector):
         :return: List of detected nonobstructed areas {detectorId, matches: [{x1, y1, x2, y2}]}
         """
 
-        # Prepare image
-        image = self.prepare_image(image)
-
         # Calculate sizes
         image_height, image_width = image.shape[:2]
 
-        rect_width = int(self.target_size[0] * float(image_width))
-        rect_height = int(self.target_size[1] * float(image_height))
+        pct_width = self.target_size[0] + (self.padding[0] * 2.0)
+        pct_height = self.target_size[1] + (self.padding[1] * 2.0)
+
+        rect_width = int(pct_width * float(image_width))
+        rect_height = int(pct_height * float(image_height))
+
+        # Adjust target point to fit screen
+        self.target_point[0] = max(pct_width / 2.0, self.target_point[0])
+        self.target_point[0] = min(1.0 - (pct_width / 2.0), self.target_point[0])
+
+        self.target_point[1] = max(pct_height / 2.0, self.target_point[1])
+        self.target_point[1] = min(1.0 - (pct_height / 2.0), self.target_point[1])
+
+        # Prepare image
+        image = self.prepare_image(image)
+
+        cv2.imwrite("nonobstructed_area_detector.png", image)
 
         # Debug
         if False:
@@ -101,24 +117,18 @@ class NonobstructedAreaDetector(Detector):
         # Grayscale image
         grayscale_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-        # Blur image
-        blur_image = cv2.GaussianBlur(grayscale_image, (7, 7), 0)
-
         # Threshold image
-        _, threshold_image = cv2.threshold(blur_image, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+        threshold_image = cv2.adaptiveThreshold(grayscale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 5, 7)
 
-        # Remove noise
-        dilate_image = cv2.dilate(threshold_image, (3, 3))
-        erode_image = cv2.erode(dilate_image, (3, 3))
+        # Remove area itself
+        if self.current_position is not None:
+            rect_width = int((self.target_size[0] + (self.padding[0] * 1.5)) * float(image_width))
+            rect_height = int((self.target_size[1] + (self.padding[1] * 1.5)) * float(image_height))
+            rect_x = int((self.current_position[0] * float(image_width)) - (rect_width / 2.0))
+            rect_y = int((self.current_position[1] * float(image_height)) - (rect_height / 2.0))
+            threshold_image = cv2.rectangle(threshold_image, (rect_x, rect_y), (rect_x + rect_width, rect_y + rect_height), color=(0, 0, 0), thickness=-1)
 
-        # Invert image if necessary
-        percentage_white = np.count_nonzero(erode_image) / (image_width * image_height)
-        if percentage_white > 0.5:
-            corrected_image = np.bitwise_not(erode_image)
-        else:
-            corrected_image = erode_image
-
-        return corrected_image
+        return threshold_image
 
     def check_rectangle(self, image, x, y, width, height):
 

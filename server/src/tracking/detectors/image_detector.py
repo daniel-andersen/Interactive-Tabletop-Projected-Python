@@ -11,7 +11,7 @@ class ImageDetector(Detector):
     """
     Class implementing hand detector.
     """
-    def __init__(self, detector_id, source_image, min_matches=20, input_resolution=SnapshotSize.ORIGINAL):
+    def __init__(self, detector_id, source_image, min_matches=8, input_resolution=SnapshotSize.ORIGINAL):
         """
         :param detector_id: Detector ID
         :param source_image: Image to detect
@@ -33,8 +33,8 @@ class ImageDetector(Detector):
 
         # Initialize FLANN matcher
         FLANN_INDEX_KDTREE = 0
-        index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
-        search_params = dict(checks=50)
+        index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=4)
+        search_params = dict(checks=32)
 
         self.flann = cv2.FlannBasedMatcher(index_params, search_params)
 
@@ -68,23 +68,41 @@ class ImageDetector(Detector):
 
         # Find matches
         with self.lock:
-            matches = self.flann.knnMatch(self.des1, des2, k=2)
+            matches = self.flann.knnMatch(des2, self.des1, k=2)
 
         # Sort out bad matches
         good_matches = []
         for m, n in matches:
-            if m.distance < 0.666 * n.distance:
+            if m.distance < 0.6 * n.distance:
                 good_matches.append(m)
 
+        # Find inliers
+        try:
+            src_pts = np.float32([kp2[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
+            dst_pts = np.float32([self.kp1[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
+            M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
+
+            matches_mask = mask.ravel().tolist()
+        except Exception:
+            matches_mask = [0 for i in range(0, len(matches))]
+
+        inliers_count = sum([i for i in matches_mask])
+
         # Check number of matches
+        if inliers_count < 4:
+            print("Not enough inliers: %i vs 4" % inliers_count)
+            cv2.imwrite("debug_image_detector.png", image)
+            return None
+
         if len(good_matches) < self.min_matches:
+            print("Not enough matches: %i vs %i" % (len(good_matches), self.min_matches))
             cv2.imwrite("debug_image_detector.png", image)
             return None
 
         try:
             # Find homography between matches
-            src_pts = np.float32([self.kp1[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
-            dst_pts = np.float32([     kp2[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
+            src_pts = np.float32([self.kp1[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
+            dst_pts = np.float32([     kp2[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
 
             M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
 
@@ -93,23 +111,23 @@ class ImageDetector(Detector):
             dst = cv2.perspectiveTransform(pts, M)
             contour = np.int32(dst)
 
+            # Calculate width and height
+            size_1 = misc_math.line_length(contour[1][0], contour[0][0])
+            size_2 = misc_math.line_length(contour[2][0], contour[1][0])
+
+            max_size = max(size_1, size_2)
+            min_size = min(size_1, size_2)
+
+            if self.query_image_width > self.query_image_height:
+                width = max_size
+                height = min_size
+            else:
+                width = min_size
+                height = max_size
+
         except Exception as e:
             print("Exception in image detector: %s" % str(e))
             return None
-
-        # Calculate width and height
-        size_1 = misc_math.line_length(contour[1][0], contour[0][0])
-        size_2 = misc_math.line_length(contour[2][0], contour[1][0])
-
-        max_size = max(size_1, size_2)
-        min_size = min(size_1, size_2)
-
-        if self.query_image_width > self.query_image_height:
-            width = max_size
-            height = min_size
-        else:
-            width = min_size
-            height = max_size
 
         # Sanity check
         image_height, image_width = image.shape[:2]

@@ -35,7 +35,6 @@ class RaspberryPiInstructions
         @instruction_steps = document.getElementById('instruction_steps')
         @instruction_connect_to_monitor = document.getElementById('instruction_connect_to_monitor')
         @instruction_connect_power = document.getElementById('instruction_connect_power')
-
         @all_elements = [
             @instruction_place_raspberry_pi_on_table,
             @instruction_steps,
@@ -45,9 +44,13 @@ class RaspberryPiInstructions
 
         @current_instruction = @instruction_connect_to_monitor
 
-        @element_padding = 0.2
+        @current_place_raspberry_pi_on_table_position = undefined
+        @current_steps_position = undefined
+        @current_instructions_position = undefined
 
-        @raspberryPiPosition = undefined
+        @element_padding = 0.05
+
+        @raspberry_pi_position = undefined
 
 
     setupImageDetectors: ->
@@ -72,9 +75,10 @@ class RaspberryPiInstructions
         )
 
     calibrateHandDetection: ->
-        @client.calibrateHandDetection((action, payload) =>
-            @ready()
-        )
+        @ready()
+        #@client.calibrateHandDetection((action, payload) =>
+        #    @ready()
+        #)
 
     ready: ->
         console.log("Ready!")
@@ -97,7 +101,7 @@ class RaspberryPiInstructions
         detected = "matches" of payload
 
         if detected
-            @raspberryPiPosition = payload['matches'][0]
+            @raspberry_pi_position = payload['matches'][0]
 
         document.getElementById('detection_state').style.backgroundColor = if detected then 'green' else 'red'
 
@@ -137,13 +141,14 @@ class RaspberryPiInstructions
 
     showPlaceRaspberryPiOnTable: ->
         [width, height] = [242.0 / 1280.0, 70.0 / 800.0]
-        @client.detectNonobstructedArea(@client.boardAreaId_fullBoard, [width + @element_padding, height + @element_padding], [0.5, 0.0], false, (action, payload) =>
-            if "matches" of payload
-                match = payload['matches'][0]
-                @instruction_place_raspberry_pi_on_table.style.left = ((match['center'][0] - (width / 2.0)) * 100.0) + '%'
-                @instruction_place_raspberry_pi_on_table.style.top = ((match['center'][1] - (height / 2.0)) * 100.0) + '%'
-                @instruction_place_raspberry_pi_on_table.style.opacity = 1
-            else
+        @client.detectNonobstructedArea(@client.boardAreaId_fullBoard, [width, height], [0.5, 0.0], @current_place_raspberry_pi_on_table_position, [@element_padding, @element_padding], 0.5, false, (action, payload) =>
+            if @state == State.PlaceRaspberryPiOnTable
+                if "matches" of payload
+                    match = payload['matches'][0]
+                    @current_place_raspberry_pi_on_table_position = match['center']
+                    @instruction_place_raspberry_pi_on_table.style.left = ((match['center'][0] - (width / 2.0)) * 100.0) + '%'
+                    @instruction_place_raspberry_pi_on_table.style.top = ((match['center'][1] - (height / 2.0)) * 100.0) + '%'
+                    @instruction_place_raspberry_pi_on_table.style.opacity = 1
                 @showPlaceRaspberryPiOnTable()
         )
 
@@ -153,10 +158,11 @@ class RaspberryPiInstructions
 
     updateInstructionStepsPosition: ->
         [width, height] = [223.0 / 1280.0, 78.0 / 800.0]
-        @client.detectNonobstructedArea(@client.boardAreaId_fullBoard, [width + @element_padding, height + @element_padding], [0.0, 0.0], false, (action, payload) =>
+        @client.detectNonobstructedArea(@client.boardAreaId_fullBoard, [width, height], [0.0, 0.0], @current_steps_position, [@element_padding, @element_padding], 0.5, false, (action, payload) =>
             if @state == State.Instructions
-                if "matches" of payload and @raspberryPiDetectionHistory.length > 0 and @raspberryPiDetectionHistory[@raspberryPiDetectionHistory.length - 1]["detected"]
+                if "matches" of payload
                     match = payload['matches'][0]
+                    @current_steps_position = match['center']
                     @instruction_steps.style.left = ((match['center'][0] - (width / 2.0)) * 100.0) + '%'
                     @instruction_steps.style.top = ((match['center'][1] - (height / 2.0)) * 100.0) + '%'
                     @instruction_steps.style.opacity = 1
@@ -166,10 +172,11 @@ class RaspberryPiInstructions
         element_target_position = @elementTargetPosition()
 
         [width, height] = [250.0 / 1280.0, 150.0 / 800.0]
-        @client.detectNonobstructedArea(@client.boardAreaId_fullBoard, [width, height], element_target_position, false, (action, payload) =>
+        @client.detectNonobstructedArea(@client.boardAreaId_fullBoard, [width, height], element_target_position, @current_instructions_position, [@element_padding, @element_padding], 0.5, false, (action, payload) =>
             if @state == State.Instructions
                 if "matches" of payload and @raspberryPiDetectionHistory.length > 0 and @raspberryPiDetectionHistory[@raspberryPiDetectionHistory.length - 1]["detected"]
                     match = payload['matches'][0]
+                    @current_instructions_position = match['center']
                     @current_instruction.style.left = ((match['center'][0] - (width / 2.0)) * 100.0) + '%'
                     @current_instruction.style.top = ((match['center'][1] - (height / 2.0)) * 100.0) + '%'
                     @current_instruction.style.opacity = 1
@@ -180,10 +187,14 @@ class RaspberryPiInstructions
         for element in @all_elements
             element.style.opacity = 0
 
+        @current_place_raspberry_pi_on_table_position = undefined
+        @current_steps_position = undefined
+        @current_instructions_position = undefined
+
         setTimeout(() =>
             completionCallback()
         , 300)
 
-    elementTargetPosition: -> if @raspberryPiPosition? then [@raspberryPiPosition['x'], @raspberryPiPosition['y']] else [0.5, 0.5]
+    elementTargetPosition: -> if @raspberry_pi_position? then [@raspberry_pi_position['x'], @raspberry_pi_position['y']] else [0.5, 0.5]
 
     currentTimeSeconds: -> new Date().getTime() / 1000.0

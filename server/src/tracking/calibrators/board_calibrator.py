@@ -27,8 +27,8 @@ class BoardCalibrator(Calibrator):
 
         # Initialize FLANN matcher
         FLANN_INDEX_KDTREE = 0
-        index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
-        search_params = dict(checks=50)
+        index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=4)
+        search_params = dict(checks=32)
 
         self.flann = cv2.FlannBasedMatcher(index_params, search_params)
 
@@ -40,6 +40,8 @@ class BoardCalibrator(Calibrator):
             return self.detect_history[-1]["result"] if self.get_state() == State.DETECTED else None
 
     def detect(self, image, debug=False):
+
+        cv2.imwrite("debug_board_calibration.png", image)
 
         # Detect image
         with self.lock:
@@ -79,7 +81,6 @@ class BoardCalibrator(Calibrator):
 
         # Check number of matches
         if len(good_matches) < self.min_matches:
-            cv2.imwrite("debug_board_calibration.png", image)
             return None
 
         # Catch potential transformation exceptions

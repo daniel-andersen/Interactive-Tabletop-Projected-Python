@@ -39,8 +39,8 @@ class HandDetectionTest(BaseTest):
             test_image = cv2.imread(test_filename)
 
             # Calibrate hand detector
-            hand_detector_calibrator = HandCalibrator()
-            medians = hand_detector_calibrator.detect(calibrator_image)
+            hand_calibrator = HandCalibrator()
+            medians = hand_calibrator.detect(calibrator_image)
 
             if medians is None and not board_calibration_success:
                 success_count += 1

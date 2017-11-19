@@ -443,19 +443,25 @@ class Client
 
     areaId: ID of area to detect nonobstructed area in.
     targetSize: Size of area to fit (width, height).
-    targetPoint: (Optional) Find area closest possible to target point (x, y). Defaults to [0.5, 0.5].
+    targetPosition: (Optional) Find area closest possible to target targetPosition (x, y). Defaults to [0.5, 0.5].
+    currentPosition: (Optional) Excludes current position area minus half padding.
+    padding: (Optional) Area padding.
+    stableTime: (Optional) Time to wait for result to stabilize. Defaults to 0.5.
     keepRunning: (Optional) Keep returning results. Defaults to False.
     completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
     """
-    detectNonobstructedArea: (areaId, targetSize, targetPoint = undefined, keepRunning = false, completionCallback = undefined) ->
+    detectNonobstructedArea: (areaId, targetSize, targetPosition = undefined, currentPosition = undefined, padding = [0.05, 0.05], stableTime = 0.5, keepRunning = false, completionCallback = undefined) ->
         requestId = @addCompletionCallback(completionCallback)
         json = {
             "requestId": requestId,
             "areaId": areaId,
             "targetSize": targetSize
         }
+        if targetPosition? then json["targetPosition"] = targetPosition
+        if currentPosition? then json["currentPosition"] = currentPosition
+        if padding? then json["padding"] = padding
+        if stableTime? then json["stableTime"] = stableTime
         if keepRunning? then json["keepRunning"] = keepRunning
-        if targetPoint? then json["targetPoint"] = targetPoint
         @sendMessage("detectNonobstructedArea", json)
         return requestId
 

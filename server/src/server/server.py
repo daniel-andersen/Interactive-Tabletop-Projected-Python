@@ -371,7 +371,10 @@ class Server(WebSocket):
 
         areaId: ID of area to detect nonobstructed area in
         targetSize: Size of area to fit (width, height)
-        targetPoint: (Optional) Find area closest possible to target point (x, y). Defaults to [0.5, 0.5].
+        targetPosition: (Optional) Find area closest possible to target position (x, y). Defaults to [0.5, 0.5].
+        currentPosition: (Optional) Excludes current position area minus half padding.
+        stableTime: (Optional) Time to wait for result to stabilize. Defaults to 0.5.
+        padding: (Optional) Area padding.
         keepRunning: (Optional) Keep returning results. Defaults to False
         requestId: (Optional) Request ID
         """
@@ -382,7 +385,10 @@ class Server(WebSocket):
         thread = NonobstructedAreaDetectorThread(self.request_id_from_payload(payload),
                                                  board_area,
                                                  payload["targetSize"],
-                                                 target_point=payload["targetPoint"] if "targetPoint" in payload else [0.5, 0.5],
+                                                 target_position=payload["targetPosition"] if "targetPosition" in payload else [0.5, 0.5],
+                                                 current_position=payload["currentPosition"] if "currentPosition" in payload else None,
+                                                 padding=payload["padding"] if "padding" in payload else [0.0, 0.0],
+                                                 stable_time=payload["stableTime"] if "stableTime" in payload else 0.5,
                                                  keep_running=payload["keepRunning"] if "keepRunning" in payload else False,
                                                  callback_function=lambda result: self.send_thread_result(thread,
                                                                                                           result="OK",
