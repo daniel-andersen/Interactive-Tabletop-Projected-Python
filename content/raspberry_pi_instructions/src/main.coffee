@@ -191,7 +191,7 @@ class RaspberryPiInstructions
         else
             @element_palm_overlay_1.style.opacity = 0
 
-        if hands.length > 1 and hands[0]['gesture'] == 1
+        if hands.length > 1 and hands[1]['gesture'] == 2
             hand = hands[1]
             [width, height] = [45.0 / 1280.0, 45.0 / 800.0]
             @element_palm_overlay_2.style.left = ((hand['palmCenter']['x'] - (width / 2.0)) * 100.0) + '%'
