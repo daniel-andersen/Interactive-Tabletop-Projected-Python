@@ -333,10 +333,16 @@ Client = (function() {
     })(this), 1000);
   };
 
-  "setupImageDetector: Sets up an image detector.\n\ndetectorId: Detector ID to use as a reference.\nsourceImage: Image to detect\nminMatches: (Optional) Minimum number of matches for detection to be considered successful\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+  "setupImageDetector: Sets up an image detector. Either sourceImage or sourceImages must be used.\n\ndetectorId: Detector ID to use as a reference.\nsourceImage: (Optional) Image to detect.\nsourceImages: (Optional) List of images to detect. Best match is returned.\nminMatches: (Optional) Minimum number of matches for detection to be considered successful.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
 
-  Client.prototype.setupImageDetector = function(detectorId, sourceImage, minMatches, completionCallback) {
-    var requestId;
+  Client.prototype.setupImageDetector = function(detectorId, sourceImage, sourceImages, minMatches, completionCallback) {
+    var image, images, requestId;
+    if (sourceImage == null) {
+      sourceImage = void 0;
+    }
+    if (sourceImages == null) {
+      sourceImages = void 0;
+    }
     if (minMatches == null) {
       minMatches = void 0;
     }
@@ -344,13 +350,28 @@ Client = (function() {
       completionCallback = void 0;
     }
     requestId = this.addCompletionCallback(completionCallback);
-    ClientUtil.convertImageToDataURL(sourceImage, (function(_this) {
-      return function(base64Image) {
+    images = [];
+    if (sourceImage != null) {
+      images.push(sourceImage);
+    }
+    if (sourceImages != null) {
+      images.push((function() {
+        var i, len, results;
+        results = [];
+        for (i = 0, len = sourceImages.length; i < len; i++) {
+          image = sourceImages[i];
+          results.push(image);
+        }
+        return results;
+      })());
+    }
+    ClientUtil.convertImagesToDataURLs(images, (function(_this) {
+      return function(base64Images) {
         var json;
         json = {
           "requestId": requestId,
           "detectorId": detectorId,
-          "imageBase64": base64Image
+          "imagesBase64": base64Images
         };
         if (minMatches != null) {
           json["minMatches"] = minMatches;

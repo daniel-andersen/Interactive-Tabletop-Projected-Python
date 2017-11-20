@@ -52,7 +52,7 @@ class NonobstructedAreaDetector(Detector):
         # Prepare image
         image = self.prepare_image(image)
 
-        cv2.imwrite("nonobstructed_area_detector.png", image)
+        #cv2.imwrite("nonobstructed_area_detector.png", image)
 
         # Debug
         if False:

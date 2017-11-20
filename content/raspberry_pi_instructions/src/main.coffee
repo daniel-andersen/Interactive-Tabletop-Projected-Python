@@ -62,9 +62,20 @@ class RaspberryPiInstructions
 
         @image_detectors = []
 
-        raspberry_pi_source_image = new Image()
-        raspberry_pi_source_image.onload = () => @client.setupImageDetector(0, raspberry_pi_source_image, undefined, (action, payload) => @didSetupImageDetector(@raspberry_pi_detector_id))
-        raspberry_pi_source_image.src = "assets/images/raspberry_pi_source.png"
+        raspberry_pi_source_images = []
+        loaded_count = 0
+        total_count = 1
+
+        for i in [1..total_count]
+            raspberry_pi_source_image = new Image()
+            raspberry_pi_source_images.push(raspberry_pi_source_image)
+
+            raspberry_pi_source_image.onload = () =>
+                loaded_count += 1
+                if loaded_count == total_count
+                    @client.setupImageDetector(0, undefined, raspberry_pi_source_images, undefined, (action, payload) => @didSetupImageDetector(@raspberry_pi_detector_id))
+
+            raspberry_pi_source_image.src = "assets/images/raspberry_pi_source_" + i +  ".png"
 
     didSetupImageDetector: (id) ->
         @image_detectors.push(id)
@@ -140,9 +151,9 @@ class RaspberryPiInstructions
             @raspberry_pi_angle = Math.round(angle)
 
             # Snap angle to 90 degrees
-            if @raspberry_pi_angle >= 180 - 15
+            if @raspberry_pi_angle >= 180 - 10
                 @raspberry_pi_angle = 180
-            if @raspberry_pi_angle <= -180 + 15
+            if @raspberry_pi_angle <= -180 + 10
                 @raspberry_pi_angle = -180
 
         # Update state
@@ -282,10 +293,11 @@ class RaspberryPiInstructions
             completionCallback()
         , 300)
 
-    isNewPosition: (currentPosition, newPosition) ->  #Math.abs(currentPosition[0] - newPosition[0]) > 10 or Math.abs(currentPosition[1] - newPosition[1]) > 10
+    isNewPosition: (currentPosition, newPosition) ->
         if not currentPosition? or not newPosition?
             return true
-        if Math.abs(currentPosition[0] - newPosition[0]) > 10.0 / 1280.0 or Math.abs(currentPosition[1] - newPosition[1]) > 10
+
+        return Math.abs(currentPosition[0] - newPosition[0]) > 10.0 / 1280.0 or Math.abs(currentPosition[1] - newPosition[1]) > 10.0 / 800.0
 
     isNewAngle: (currentAngle, newAngle) ->
         if not currentAngle? or not newAngle?

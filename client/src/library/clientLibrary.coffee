@@ -276,20 +276,25 @@ class Client
         , 1000)
 
     """
-    setupImageDetector: Sets up an image detector.
+    setupImageDetector: Sets up an image detector. Either sourceImage or sourceImages must be used.
 
     detectorId: Detector ID to use as a reference.
-    sourceImage: Image to detect
-    minMatches: (Optional) Minimum number of matches for detection to be considered successful
+    sourceImage: (Optional) Image to detect.
+    sourceImages: (Optional) List of images to detect. Best match is returned.
+    minMatches: (Optional) Minimum number of matches for detection to be considered successful.
     completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
     """
-    setupImageDetector: (detectorId, sourceImage, minMatches = undefined, completionCallback = undefined) ->
+    setupImageDetector: (detectorId, sourceImage = undefined, sourceImages = undefined, minMatches = undefined, completionCallback = undefined) ->
         requestId = @addCompletionCallback(completionCallback)
-        ClientUtil.convertImageToDataURL(sourceImage, (base64Image) =>
+        images = []
+        if sourceImage? then images.push(sourceImage)
+        if sourceImages?
+            images.push(image) for image in sourceImages
+        ClientUtil.convertImagesToDataURLs(images, (base64Images) =>
             json = {
                 "requestId": requestId,
                 "detectorId": detectorId,
-                "imageBase64": base64Image
+                "imagesBase64": base64Images
             }
             if minMatches? then json["minMatches"] = minMatches
             @sendMessage("setupImageDetector", json)
