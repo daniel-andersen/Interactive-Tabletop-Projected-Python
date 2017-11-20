@@ -54,6 +54,8 @@ class RaspberryPiInstructions
         @raspberry_pi_position = undefined
         @raspberry_pi_position_current = undefined
         @raspberry_pi_size = undefined
+        @raspberry_pi_angle = undefined
+        @raspberry_pi_angle_current = undefined
 
     setupImageDetectors: ->
         @raspberry_pi_detector_id = 0
@@ -121,6 +123,7 @@ class RaspberryPiInstructions
         # Update position
         position = [0.0, 0.0]
         size = [0.0, 0.0]
+        angle = 0
         count = 0
 
         for entry in @raspberryPiDetectionHistory
@@ -128,11 +131,19 @@ class RaspberryPiInstructions
                 payload = entry['payload']['matches'][0]
                 position = [position[0] + payload['x'], position[1] + payload['y']]
                 size = [size[0] + payload['width'], size[1] + payload['height']]
+                angle = payload['angle']
                 count += 1
 
         if count > 0
             @raspberry_pi_position = [position[0] / count, position[1] / count]
             @raspberry_pi_size = [size[0] / count, size[1] / count]
+            @raspberry_pi_angle = Math.round(angle)
+
+            # Snap angle to 90 degrees
+            if @raspberry_pi_angle >= 180 - 15
+                @raspberry_pi_angle = 180
+            if @raspberry_pi_angle <= -180 + 15
+                @raspberry_pi_angle = -180
 
         # Update state
         if detected_count >= @raspberryPiDetectionHistory.length / 2 and @state != State.Instructions
@@ -238,14 +249,18 @@ class RaspberryPiInstructions
             return
 
         if @raspberry_pi_position?
-            if (@raspberry_pi_position_current? and @isNewPosition(@raspberry_pi_position_current, @raspberry_pi_position)) or not @raspberry_pi_position_current?
-                @raspberry_pi_position_current = @raspberry_pi_position
+            [width, height] = [580.0 / 1280.0, 280.0 / 800.0]
 
-                [width, height] = [580.0 / 1280.0, 280.0 / 800.0]
+            if @isNewPosition(@raspberry_pi_position_current, @raspberry_pi_position)
+                @raspberry_pi_position_current = @raspberry_pi_position
                 @element_raspi_overlay.style.left = ((@raspberry_pi_position[0] - (width * 0.5)) * 100.0) + 'vw'
                 @element_raspi_overlay.style.top = ((@raspberry_pi_position[1] - (height * 0.5)) * 100.0) + 'vh'
-                #@element_raspi_overlay.style.transform = 'scale(0.7, 0.7) rotate(' + 0 + 'deg)'
-                @element_raspi_overlay.style.opacity = 1
+
+            if @isNewAngle(@raspberry_pi_angle_current, @raspberry_pi_angle)
+                @raspberry_pi_angle_current = @raspberry_pi_angle
+                @element_raspi_overlay.style.transform = 'rotate(' + (@raspberry_pi_angle + 180.0) + 'deg)'
+
+            @element_raspi_overlay.style.opacity = 1
 
         setTimeout(() =>
             @updateRaspiOverlayPosition()
@@ -267,6 +282,16 @@ class RaspberryPiInstructions
             completionCallback()
         , 300)
 
-    isNewPosition: (currentPosition, newPosition) -> true  #Math.abs(currentPosition[0] - newPosition[0]) > 10 or Math.abs(currentPosition[1] - newPosition[1]) > 10
+    isNewPosition: (currentPosition, newPosition) ->  #Math.abs(currentPosition[0] - newPosition[0]) > 10 or Math.abs(currentPosition[1] - newPosition[1]) > 10
+        if not currentPosition? or not newPosition?
+            return true
+        if Math.abs(currentPosition[0] - newPosition[0]) > 10.0 / 1280.0 or Math.abs(currentPosition[1] - newPosition[1]) > 10
+
+    isNewAngle: (currentAngle, newAngle) ->
+        if not currentAngle? or not newAngle?
+            return true
+
+        angle_diff = Math.abs(currentAngle - newAngle)
+        return angle_diff >= 5.0 and angle_diff <= 360.0 - 5.0
 
     currentTimeSeconds: -> new Date().getTime() / 1000.0
