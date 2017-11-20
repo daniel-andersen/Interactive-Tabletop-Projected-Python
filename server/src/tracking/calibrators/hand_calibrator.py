@@ -57,7 +57,7 @@ class HandCalibrator(Calibrator):
             # Find hands in contours
             for i in range(0, len(contours)):
                 if self.are_hand_conditions_satisfied_for_contour(i, contours, hierarchy, threshold_image):
-                    return True
+                    return hand_thresholds
 
             #cv2.imshow("debug_board %s" % hand_thresholds, threshold_image)
 

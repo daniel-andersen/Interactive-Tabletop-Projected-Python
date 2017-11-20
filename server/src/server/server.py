@@ -14,6 +14,7 @@ from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
 
 from server import globals
 from server.threads.board_calibration_thread import BoardCalibrationThread
+from server.threads.gesture_detector_thread import GestureDetectorThread
 from server.threads.hand_detector_calibration_thread import HandDetectorCalibrationThread
 from server.threads.images_detector_thread import ImagesDetectorThread
 from server.threads.nonobstructed_area_detector_thread import NonobstructedAreaDetectorThread
@@ -21,6 +22,7 @@ from server.threads.tiled_brick_detector_threads import TiledBrickDetectorThread
     TiledBricksDetectorThread
 from tracking.board.board_area import BoardArea
 from tracking.board.tiled_board_area import TiledBoardArea
+from tracking.detectors.hand_detector import handDetectorId
 from tracking.detectors.image_detector import ImageDetector
 from tracking.detectors.tensorflow_detector import TensorflowDetector
 from util import misc_util
@@ -56,7 +58,8 @@ class Server(WebSocket):
                                         'setupImageDetector': self.setup_image_detector,
                                         'setupTensorflowDetector': self.setup_tensorflow_detector,
                                         'detectImages': self.detect_images,
-                                        'detectNonobstructedArea': self.detect_nonobstructed_area}
+                                        'detectNonobstructedArea': self.detect_nonobstructed_area,
+                                        'detectGestures': self.detect_gestures}
 
         self.detectors = {}
         self.detectors_lock = RLock()
@@ -408,6 +411,37 @@ class Server(WebSocket):
                                                                                                           action="detectNonobstructedArea",
                                                                                                           payload=result,
                                                                                                           keep_alive=thread.keep_running))
+
+        self.start_thread(self.request_id_from_payload(payload), thread)
+
+        return None
+
+    def detect_gestures(self, payload):
+        """
+        Detects hand gestures.
+
+        areaId: ID of area to detect images in
+        gesture: (Optional) Gesture to detect
+        keepRunning: (Optional) Keep returning results. Defaults to False
+        requestId: (Optional) Request ID
+        """
+        board_area = globals.get_state().get_board_area(payload["areaId"])
+        if board_area is None:
+            return "BOARD_AREA_NOT_FOUND", {}, self.request_id_from_payload(payload)
+
+        detector = globals.get_state().get_detector(handDetectorId)
+        if detector is None:
+            return "HAND_DETECTOR_NOT_INITIALIZED", {}, self.request_id_from_payload(payload)
+
+        thread = GestureDetectorThread(self.request_id_from_payload(payload),
+                                       detector,
+                                       board_area,
+                                       keep_running=payload["keepRunning"] if "keepRunning" in payload else False,
+                                       callback_function=lambda result: self.send_thread_result(thread,
+                                                                                                result="OK",
+                                                                                                action="detectGestures",
+                                                                                                payload=result,
+                                                                                                keep_alive=thread.keep_running))
 
         self.start_thread(self.request_id_from_payload(payload), thread)
 

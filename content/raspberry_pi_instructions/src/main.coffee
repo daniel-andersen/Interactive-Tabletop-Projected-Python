@@ -36,12 +36,16 @@ class RaspberryPiInstructions
         @element_gpio_pinout_left = document.getElementById('instructions_gpio_pinout_left')
         @element_gpio_pinout_right = document.getElementById('instructions_gpio_pinout_right')
         @element_raspi_overlay = document.getElementById('instructions_raspi_overlay')
+        @element_palm_overlay_1 = document.getElementById('instructions_palm_overlay_1')
+        @element_palm_overlay_2 = document.getElementById('instructions_palm_overlay_2')
         @all_elements = [
             @element_place_raspberry_pi_on_table,
             @element_gpio_pinout,
             @element_gpio_pinout_left,
             @element_gpio_pinout_right,
             @element_raspi_overlay,
+            @element_palm_overlay_1,
+            @element_palm_overlay_2,
         ]
 
         @current_place_raspberry_pi_on_table_position = undefined
@@ -90,10 +94,10 @@ class RaspberryPiInstructions
         )
 
     calibrateHandDetection: ->
-        @ready()
-        #@client.calibrateHandDetection((action, payload) =>
-        #    @ready()
-        #)
+        #@ready()
+        @client.calibrateHandDetection((action, payload) =>
+            @ready()
+        )
 
     ready: ->
         console.log("Ready!")
@@ -104,6 +108,7 @@ class RaspberryPiInstructions
 
         @client.cancelRequests((action, payload) =>
             @detectRaspberryPi()
+            @detectGestures()
         )
 
     detectRaspberryPi: ->
@@ -112,10 +117,16 @@ class RaspberryPiInstructions
             return false
         )
 
+    detectGestures: ->
+        @client.detectGestures(@client.boardAreaId_fullBoard, undefined, true, (action, payload) =>
+            @updateGesture(payload)
+            return false
+        )
+
     updateRaspberryPiDetection: (payload) ->
         detected = "matches" of payload
 
-        document.getElementById('detection_state').style.backgroundColor = if detected then 'green' else 'red'
+        #document.getElementById('detection_state').style.backgroundColor = if detected then 'green' else 'red'
 
         # Update detection history
         @raspberryPiDetectionHistory.push({
@@ -151,9 +162,9 @@ class RaspberryPiInstructions
             @raspberry_pi_angle = Math.round(angle)
 
             # Snap angle to 90 degrees
-            if @raspberry_pi_angle >= 180 - 10
+            if @raspberry_pi_angle >= 180 - 5
                 @raspberry_pi_angle = 180
-            if @raspberry_pi_angle <= -180 + 10
+            if @raspberry_pi_angle <= -180 + 5
                 @raspberry_pi_angle = -180
 
         # Update state
@@ -162,6 +173,32 @@ class RaspberryPiInstructions
 
         if detected_count == 0 and @state != State.PlaceRaspberryPiOnTable
             @showState(State.PlaceRaspberryPiOnTable)
+
+    updateGesture: (payload) ->
+        if 'hands' not of payload
+            @element_palm_overlay_1.style.opacity = 0
+            @element_palm_overlay_2.style.opacity = 0
+            return
+
+        hands = payload['hands']
+
+        if hands.length > 0 and hands[0]['gesture'] == 2
+            hand = hands[0]
+            [width, height] = [45.0 / 1280.0, 44.0 / 800.0]
+            @element_palm_overlay_1.style.left = ((hand['palmCenter']['x'] - (width / 2.0)) * 100.0) + '%'
+            @element_palm_overlay_1.style.top = ((hand['palmCenter']['y'] - (height / 2.0)) * 100.0) + '%'
+            @element_palm_overlay_1.style.opacity = 1
+        else
+            @element_palm_overlay_1.style.opacity = 0
+
+        if hands.length > 1 and hands[0]['gesture'] == 1
+            hand = hands[1]
+            [width, height] = [45.0 / 1280.0, 45.0 / 800.0]
+            @element_palm_overlay_2.style.left = ((hand['palmCenter']['x'] - (width / 2.0)) * 100.0) + '%'
+            @element_palm_overlay_2.style.top = ((hand['palmCenter']['y'] - (height / 2.0)) * 100.0) + '%'
+            @element_palm_overlay_2.style.opacity = 1
+        else
+            @element_palm_overlay_2.style.opacity = 0
 
     showState: (state, completionCallback = () =>) ->
         if (state == @state)

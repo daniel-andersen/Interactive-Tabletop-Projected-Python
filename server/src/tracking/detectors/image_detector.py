@@ -103,11 +103,11 @@ class ImageDetector(Detector):
 
             # Check number of matches
             if inliers_count < 4:
-                print("Inliers count too low!")
+                #print("Inliers count too low!")
                 continue
 
             if len(good_matches) < self.min_matches:
-                print("Not enough matches!")
+                #print("Not enough matches!")
                 continue
 
             # Check if best match
@@ -117,7 +117,7 @@ class ImageDetector(Detector):
 
         # Check if any matches
         if best_matches is None:
-            print("No best match!")
+            #print("No best match!")
             return None
 
         # Extract best match

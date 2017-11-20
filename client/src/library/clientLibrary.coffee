@@ -430,6 +430,7 @@ class Client
 
     areaId: Area ID of tiled board area.
     detectorId: The ID of the detector to use.
+    keepRunning: (Optional) Keep returning results. Defaults to False.
     completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
     """
     detectImages: (areaId, detectorId, keepRunning = false, completionCallback = undefined) ->
@@ -468,6 +469,24 @@ class Client
         if stableTime? then json["stableTime"] = stableTime
         if keepRunning? then json["keepRunning"] = keepRunning
         @sendMessage("detectNonobstructedArea", json)
+        return requestId
+
+    """
+    detectGestures: Detect gestures in the given area.
+
+    areaId: Area ID of tiled board area.
+    gesture: (Optional) Gesture to detect
+    keepRunning: (Optional) Keep returning results. Defaults to False.
+    completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
+    """
+    detectGestures: (areaId, gesture = undefined, keepRunning = false, completionCallback = undefined) ->
+        requestId = @addCompletionCallback(completionCallback)
+        json = {
+            "requestId": requestId,
+            "areaId": areaId,
+        }
+        if keepRunning? then json["keepRunning"] = keepRunning
+        @sendMessage("detectGestures", json)
         return requestId
 
     """
