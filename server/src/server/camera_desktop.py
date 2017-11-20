@@ -33,6 +33,7 @@ class Camera(object):
         self.camera = cv2.VideoCapture(0)
         self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, resolution[0])
         self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, resolution[1])
+        self.set_normal_brightness()
         self.grab_image()
 
         # Start thread
@@ -63,11 +64,26 @@ class Camera(object):
             current_image = self.grab_image()
             self.call_delegate(current_image)
 
+    def set_low_brightness(self):
+        with self.lock:
+            self.camera.set(cv2.CAP_PROP_BRIGHTNESS, 0.3)
+
+    def set_normal_brightness(self):
+        with self.lock:
+            self.camera.set(cv2.CAP_PROP_BRIGHTNESS, 0.5)
+
+    def set_high_brightness(self):
+        with self.lock:
+            self.camera.set(cv2.CAP_PROP_BRIGHTNESS, 0.8)
+
     def grab_image(self):
         """
         Grabs an image from the camera input.
         """
         _, camera_image = self.camera.read()
+
+        camera_image = cv2.rotate(camera_image, cv2.ROTATE_180)
+
         with self.lock:
             if self.debug_image is None:
                 self.image = camera_image

@@ -59,6 +59,8 @@ class ImageDetector(Detector):
 
         # TODO! Multiple matches!
 
+        cv2.imwrite("debug_image_detector.png", image)
+
         # Find features in image
         with self.lock:
             kp2, des2 = self.sift.detectAndCompute(image, None)
@@ -90,13 +92,11 @@ class ImageDetector(Detector):
 
         # Check number of matches
         if inliers_count < 4:
-            print("Not enough inliers: %i vs 4" % inliers_count)
-            cv2.imwrite("debug_image_detector.png", image)
+            #print("Not enough inliers: %i vs 4" % inliers_count)
             return None
 
         if len(good_matches) < self.min_matches:
-            print("Not enough matches: %i vs %i" % (len(good_matches), self.min_matches))
-            cv2.imwrite("debug_image_detector.png", image)
+            #print("Not enough matches: %i vs %i" % (len(good_matches), self.min_matches))
             return None
 
         try:

@@ -535,12 +535,21 @@ Client = (function() {
     return requestId;
   };
 
-  "detectNonobstructedArea: Detects nonobstructed area on the board.\n\nareaId: ID of area to detect nonobstructed area in.\ntargetSize: Size of area to fit (width, height).\ntargetPoint: (Optional) Find area closest possible to target point (x, y). Defaults to [0.5, 0.5].\nkeepRunning: (Optional) Keep returning results. Defaults to False.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+  "detectNonobstructedArea: Detects nonobstructed area on the board.\n\nareaId: ID of area to detect nonobstructed area in.\ntargetSize: Size of area to fit (width, height).\ntargetPosition: (Optional) Find area closest possible to target targetPosition (x, y). Defaults to [0.5, 0.5].\ncurrentPosition: (Optional) Excludes current position area minus half padding.\npadding: (Optional) Area padding.\nstableTime: (Optional) Time to wait for result to stabilize. Defaults to 0.5.\nkeepRunning: (Optional) Keep returning results. Defaults to False.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
 
-  Client.prototype.detectNonobstructedArea = function(areaId, targetSize, targetPoint, keepRunning, completionCallback) {
+  Client.prototype.detectNonobstructedArea = function(areaId, targetSize, targetPosition, currentPosition, padding, stableTime, keepRunning, completionCallback) {
     var json, requestId;
-    if (targetPoint == null) {
-      targetPoint = void 0;
+    if (targetPosition == null) {
+      targetPosition = void 0;
+    }
+    if (currentPosition == null) {
+      currentPosition = void 0;
+    }
+    if (padding == null) {
+      padding = [0.05, 0.05];
+    }
+    if (stableTime == null) {
+      stableTime = 0.5;
     }
     if (keepRunning == null) {
       keepRunning = false;
@@ -554,11 +563,20 @@ Client = (function() {
       "areaId": areaId,
       "targetSize": targetSize
     };
+    if (targetPosition != null) {
+      json["targetPosition"] = targetPosition;
+    }
+    if (currentPosition != null) {
+      json["currentPosition"] = currentPosition;
+    }
+    if (padding != null) {
+      json["padding"] = padding;
+    }
+    if (stableTime != null) {
+      json["stableTime"] = stableTime;
+    }
     if (keepRunning != null) {
       json["keepRunning"] = keepRunning;
-    }
-    if (targetPoint != null) {
-      json["targetPoint"] = targetPoint;
     }
     this.sendMessage("detectNonobstructedArea", json);
     return requestId;

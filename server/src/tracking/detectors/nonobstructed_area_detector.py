@@ -49,13 +49,6 @@ class NonobstructedAreaDetector(Detector):
         rect_width = int(pct_width * float(image_width))
         rect_height = int(pct_height * float(image_height))
 
-        # Adjust target point to fit screen
-        self.target_point[0] = max(pct_width / 2.0, self.target_point[0])
-        self.target_point[0] = min(1.0 - (pct_width / 2.0), self.target_point[0])
-
-        self.target_point[1] = max(pct_height / 2.0, self.target_point[1])
-        self.target_point[1] = min(1.0 - (pct_height / 2.0), self.target_point[1])
-
         # Prepare image
         image = self.prepare_image(image)
 
@@ -112,23 +105,33 @@ class NonobstructedAreaDetector(Detector):
 
     def prepare_image(self, image):
 
-        image_height, image_width = image.shape[:2]
-
         # Grayscale image
-        grayscale_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
         # Threshold image
-        threshold_image = cv2.adaptiveThreshold(grayscale_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 5, 7)
+        image = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 5, 7)
 
-        # Remove area itself
+        # Remove current area
         if self.current_position is not None:
-            rect_width = int((self.target_size[0] + (self.padding[0] * 1.5)) * float(image_width))
-            rect_height = int((self.target_size[1] + (self.padding[1] * 1.5)) * float(image_height))
-            rect_x = int((self.current_position[0] * float(image_width)) - (rect_width / 2.0))
-            rect_y = int((self.current_position[1] * float(image_height)) - (rect_height / 2.0))
-            threshold_image = cv2.rectangle(threshold_image, (rect_x, rect_y), (rect_x + rect_width, rect_y + rect_height), color=(0, 0, 0), thickness=-1)
+            image = self.remove_current_area(image)
 
-        return threshold_image
+        return image
+
+    def remove_current_area(self, image):
+        image_height, image_width = image.shape[:2]
+
+        # Calculate rectangle
+        rect_width = int((self.target_size[0] + (self.padding[0] * 1.5)) * float(image_width))
+        rect_height = int((self.target_size[1] + (self.padding[1] * 1.5)) * float(image_height))
+
+        rect_x = int((self.current_position[0] * float(image_width)) - (rect_width / 2.0))
+        rect_y = int((self.current_position[1] * float(image_height)) - (rect_height / 2.0))
+
+        # Adjust rectangle to fit screen
+        rect_x = max(0, min(image_width - 1 - rect_width, rect_x))
+        rect_y = max(0, min(image_height - 1 - rect_height, rect_y))
+
+        return cv2.rectangle(image, (rect_x, rect_y), (rect_x + rect_width, rect_y + rect_height), color=(0, 0, 0), thickness=-1)
 
     def check_rectangle(self, image, x, y, width, height):
 

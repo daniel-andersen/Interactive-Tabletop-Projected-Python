@@ -31,27 +31,29 @@ class RaspberryPiInstructions
     initialize: ->
         @state = State.Initializing
 
-        @instruction_place_raspberry_pi_on_table = document.getElementById('instruction_place_raspberry_pi_on_table')
-        @instruction_steps = document.getElementById('instruction_steps')
-        @instruction_connect_to_monitor = document.getElementById('instruction_connect_to_monitor')
-        @instruction_connect_power = document.getElementById('instruction_connect_power')
+        @element_place_raspberry_pi_on_table = document.getElementById('instructions_place_raspberry_pi_on_table')
+        @element_gpio_pinout = document.getElementById('instructions_gpio_pinout')
+        @element_gpio_pinout_left = document.getElementById('instructions_gpio_pinout_left')
+        @element_gpio_pinout_right = document.getElementById('instructions_gpio_pinout_right')
+        @element_raspi_overlay = document.getElementById('instructions_raspi_overlay')
         @all_elements = [
-            @instruction_place_raspberry_pi_on_table,
-            @instruction_steps,
-            @instruction_connect_to_monitor,
-            @instruction_connect_power
+            @element_place_raspberry_pi_on_table,
+            @element_gpio_pinout,
+            @element_gpio_pinout_left,
+            @element_gpio_pinout_right,
+            @element_raspi_overlay,
         ]
 
-        @current_instruction = @instruction_connect_to_monitor
-
         @current_place_raspberry_pi_on_table_position = undefined
-        @current_steps_position = undefined
-        @current_instructions_position = undefined
+        @current_gpio_pinout_position = undefined
+        @current_gpio_pinout_left_position = undefined
+        @current_gpio_pinout_right_position = undefined
 
         @element_padding = 0.05
 
         @raspberry_pi_position = undefined
-
+        @raspberry_pi_position_current = undefined
+        @raspberry_pi_size = undefined
 
     setupImageDetectors: ->
         @raspberry_pi_detector_id = 0
@@ -100,14 +102,13 @@ class RaspberryPiInstructions
     updateRaspberryPiDetection: (payload) ->
         detected = "matches" of payload
 
-        if detected
-            @raspberry_pi_position = payload['matches'][0]
-
         document.getElementById('detection_state').style.backgroundColor = if detected then 'green' else 'red'
 
+        # Update detection history
         @raspberryPiDetectionHistory.push({
             'timestamp': @currentTimeSeconds(),
-            'detected': detected
+            'detected': detected,
+            'payload': payload
         })
         while @raspberryPiDetectionHistory.length > 0 and @raspberryPiDetectionHistory[0]['timestamp'] < @currentTimeSeconds() - 1.0
             @raspberryPiDetectionHistory.shift()
@@ -117,6 +118,23 @@ class RaspberryPiInstructions
             if entry['detected']
                 detected_count += 1
 
+        # Update position
+        position = [0.0, 0.0]
+        size = [0.0, 0.0]
+        count = 0
+
+        for entry in @raspberryPiDetectionHistory
+            if entry['detected']
+                payload = entry['payload']['matches'][0]
+                position = [position[0] + payload['x'], position[1] + payload['y']]
+                size = [size[0] + payload['width'], size[1] + payload['height']]
+                count += 1
+
+        if count > 0
+            @raspberry_pi_position = [position[0] / count, position[1] / count]
+            @raspberry_pi_size = [size[0] / count, size[1] / count]
+
+        # Update state
         if detected_count >= @raspberryPiDetectionHistory.length / 2 and @state != State.Instructions
             @showState(State.Instructions)
 
@@ -141,60 +159,114 @@ class RaspberryPiInstructions
 
     showPlaceRaspberryPiOnTable: ->
         [width, height] = [242.0 / 1280.0, 70.0 / 800.0]
-        @client.detectNonobstructedArea(@client.boardAreaId_fullBoard, [width, height], [0.5, 0.0], @current_place_raspberry_pi_on_table_position, [@element_padding, @element_padding], 0.5, false, (action, payload) =>
+        @client.detectNonobstructedArea(@client.boardAreaId_fullBoard, [width, height], [0.5, 0.0], @current_place_raspberry_pi_on_table_position, [@element_padding, @element_padding], 0.25, false, (action, payload) =>
             if @state == State.PlaceRaspberryPiOnTable
                 if "matches" of payload
                     match = payload['matches'][0]
                     @current_place_raspberry_pi_on_table_position = match['center']
-                    @instruction_place_raspberry_pi_on_table.style.left = ((match['center'][0] - (width / 2.0)) * 100.0) + '%'
-                    @instruction_place_raspberry_pi_on_table.style.top = ((match['center'][1] - (height / 2.0)) * 100.0) + '%'
-                    @instruction_place_raspberry_pi_on_table.style.opacity = 1
+                    @element_place_raspberry_pi_on_table.style.left = ((match['center'][0] - (width / 2.0)) * 100.0) + '%'
+                    @element_place_raspberry_pi_on_table.style.top = ((match['center'][1] - (height / 2.0)) * 100.0) + '%'
+                    @element_place_raspberry_pi_on_table.style.opacity = 1
                 @showPlaceRaspberryPiOnTable()
         )
 
     showInstructions: ->
-        @updateInstructionStepsPosition()
-        @updateCurrentInstructionsPosition()
+        @updateInstructionGpioPinoutPosition()
+        @updateRaspiOverlayPosition()
 
-    updateInstructionStepsPosition: ->
-        [width, height] = [223.0 / 1280.0, 78.0 / 800.0]
-        @client.detectNonobstructedArea(@client.boardAreaId_fullBoard, [width, height], [0.0, 0.0], @current_steps_position, [@element_padding, @element_padding], 0.5, false, (action, payload) =>
+    updateInstructionGpioPinoutPosition: ->
+        [width, height] = [640.0 / 1280.0, 208.0 / 800.0]
+        @client.detectNonobstructedArea(@client.boardAreaId_fullBoard, [width, height], [0.5, 0.0], @current_gpio_pinout_position, [@element_padding, @element_padding], 0.25, false, (action, payload) =>
             if @state == State.Instructions
                 if "matches" of payload
                     match = payload['matches'][0]
-                    @current_steps_position = match['center']
-                    @instruction_steps.style.left = ((match['center'][0] - (width / 2.0)) * 100.0) + '%'
-                    @instruction_steps.style.top = ((match['center'][1] - (height / 2.0)) * 100.0) + '%'
-                    @instruction_steps.style.opacity = 1
-                @updateInstructionStepsPosition()
+                    @current_gpio_pinout_position = match['center']
+                    @element_gpio_pinout.style.left = ((match['center'][0] - (width / 2.0)) * 100.0) + '%'
+                    @element_gpio_pinout.style.top = ((match['center'][1] - (height / 2.0)) * 100.0) + '%'
+                    @element_gpio_pinout.style.opacity = 1
+                    @element_gpio_pinout_left.style.opacity = 0
+                    @element_gpio_pinout_right.style.opacity = 0
+                    setTimeout(() =>
+                        @updateInstructionGpioPinoutPosition()
+                    , 150)
+                else
+                    @current_gpio_pinout_position = undefined
+                    @element_gpio_pinout.style.opacity = 0
+                    setTimeout(() =>
+                        @updateInstructionGpioPinoutLeftPosition()
+                    , 150)
         )
-    updateCurrentInstructionsPosition: ->
-        element_target_position = @elementTargetPosition()
 
-        [width, height] = [250.0 / 1280.0, 150.0 / 800.0]
-        @client.detectNonobstructedArea(@client.boardAreaId_fullBoard, [width, height], element_target_position, @current_instructions_position, [@element_padding, @element_padding], 0.5, false, (action, payload) =>
+    updateInstructionGpioPinoutLeftPosition: ->
+        [width, height] = [232.0 / 1280.0, 150.0 / 800.0]
+        @client.detectNonobstructedArea(@client.boardAreaId_fullBoard, [width, height], [0.0, 0.0], @current_gpio_pinout_left_position, [@element_padding, @element_padding], 0.25, false, (action, payload) =>
             if @state == State.Instructions
-                if "matches" of payload and @raspberryPiDetectionHistory.length > 0 and @raspberryPiDetectionHistory[@raspberryPiDetectionHistory.length - 1]["detected"]
+                if "matches" of payload
                     match = payload['matches'][0]
-                    @current_instructions_position = match['center']
-                    @current_instruction.style.left = ((match['center'][0] - (width / 2.0)) * 100.0) + '%'
-                    @current_instruction.style.top = ((match['center'][1] - (height / 2.0)) * 100.0) + '%'
-                    @current_instruction.style.opacity = 1
-                @updateCurrentInstructionsPosition()
+                    @current_gpio_pinout_left_position = match['center']
+                    @element_gpio_pinout_left.style.left = ((match['center'][0] - (width / 2.0)) * 100.0) + '%'
+                    @element_gpio_pinout_left.style.top = ((match['center'][1] - (height / 2.0)) * 100.0) + '%'
+                    @element_gpio_pinout_left.style.opacity = 1
+                else
+                    @current_gpio_pinout_left_position = undefined
+                    @element_gpio_pinout_left.style.opacity = 0
+            setTimeout(() =>
+                @updateInstructionGpioPinoutRightPosition()
+            , 150)
         )
+
+    updateInstructionGpioPinoutRightPosition: ->
+        [width, height] = [230.0 / 1280.0, 150.0 / 800.0]
+        @client.detectNonobstructedArea(@client.boardAreaId_fullBoard, [width, height], [1.0, 0.0], @current_gpio_pinout_right_position, [@element_padding, @element_padding], 0.25, false, (action, payload) =>
+            if @state == State.Instructions
+                if "matches" of payload
+                    match = payload['matches'][0]
+                    @current_gpio_pinout_right_position = match['center']
+                    @element_gpio_pinout_right.style.left = ((match['center'][0] - (width / 2.0)) * 100.0) + '%'
+                    @element_gpio_pinout_right.style.top = ((match['center'][1] - (height / 2.0)) * 100.0) + '%'
+                    @element_gpio_pinout_right.style.opacity = 1
+                else
+                    @current_gpio_pinout_right_position = undefined
+                    @element_gpio_pinout_right.style.opacity = 0
+            setTimeout(() =>
+                @updateInstructionGpioPinoutPosition()
+            , 150)
+        )
+
+    updateRaspiOverlayPosition: ->
+        if @state != State.Instructions
+            return
+
+        if @raspberry_pi_position?
+            if (@raspberry_pi_position_current? and @isNewPosition(@raspberry_pi_position_current, @raspberry_pi_position)) or not @raspberry_pi_position_current?
+                @raspberry_pi_position_current = @raspberry_pi_position
+
+                [width, height] = [580.0 / 1280.0, 280.0 / 800.0]
+                @element_raspi_overlay.style.left = ((@raspberry_pi_position[0] - (width * 0.5)) * 100.0) + 'vw'
+                @element_raspi_overlay.style.top = ((@raspberry_pi_position[1] - (height * 0.5)) * 100.0) + 'vh'
+                #@element_raspi_overlay.style.transform = 'scale(0.7, 0.7) rotate(' + 0 + 'deg)'
+                @element_raspi_overlay.style.opacity = 1
+
+        setTimeout(() =>
+            @updateRaspiOverlayPosition()
+        , 100)
 
     hideCurrentState: (completionCallback = () =>) ->
         for element in @all_elements
             element.style.opacity = 0
 
         @current_place_raspberry_pi_on_table_position = undefined
-        @current_steps_position = undefined
-        @current_instructions_position = undefined
+        @current_gpio_pinout_position = undefined
+        @current_gpio_pinout_left_position = undefined
+        @current_gpio_pinout_right_position = undefined
+
+        @raspberry_pi_position = undefined
+        @raspberry_pi_position_current = undefined
 
         setTimeout(() =>
             completionCallback()
         , 300)
 
-    elementTargetPosition: -> if @raspberry_pi_position? then [@raspberry_pi_position['x'], @raspberry_pi_position['y']] else [0.5, 0.5]
+    isNewPosition: (currentPosition, newPosition) -> true  #Math.abs(currentPosition[0] - newPosition[0]) > 10 or Math.abs(currentPosition[1] - newPosition[1]) > 10
 
     currentTimeSeconds: -> new Date().getTime() / 1000.0

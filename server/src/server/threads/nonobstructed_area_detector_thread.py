@@ -51,10 +51,13 @@ class NonobstructedAreaDetectorThread(ServerThread):
                     continue
 
                 centers = [result_dict["result"]["matches"][0]["center"] for result_dict in detection_history]
-                if len(centers) == 0 or centers.count(centers[0]) != len(centers):
+                if len(centers) > 0 and centers.count(centers[0]) != len(centers):
                     continue
 
-                if last_sent_center is None or last_sent_center == centers[0]:
+                if len(centers) == 0:
+                    self.callback_function(result)
+
+                elif last_sent_center is None or last_sent_center == centers[0]:
                     last_sent_center = centers[0]
                     self.callback_function(result)
 

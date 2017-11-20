@@ -14,6 +14,9 @@ class BoardCalibrationThread(ServerThread):
 
     def _run(self):
 
+        # Decrease camera brightness
+        globals.get_state().get_camera().set_low_brightness()
+
         # Update board calibration
         start_time = time.time()
 
@@ -40,6 +43,11 @@ class BoardCalibrationThread(ServerThread):
             # Check calibrated
             if board_calibrator.get_state() == State.DETECTED:
                 print('Board calibrated')
+
+                # Decrease camera brightness
+                globals.get_state().get_camera().set_normal_brightness()
+
+                # Call callback function
                 self.callback_function()
                 return
 
