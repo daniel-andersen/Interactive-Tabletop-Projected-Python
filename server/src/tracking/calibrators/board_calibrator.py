@@ -41,7 +41,7 @@ class BoardCalibrator(Calibrator):
 
     def detect(self, image, debug=False):
 
-        cv2.imwrite("debug_board_calibration.png", image)
+        #cv2.imwrite("debug/board_calibration.png", image)
 
         # Detect image
         with self.lock:

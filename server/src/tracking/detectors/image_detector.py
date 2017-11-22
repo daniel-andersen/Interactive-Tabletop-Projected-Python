@@ -57,7 +57,7 @@ class ImageDetector(Detector):
 
         # TODO! Multiple matches!
 
-        #cv2.imwrite("debug_image_detector.png", image)
+        #cv2.imwrite("debug/image_detector.png", image)
 
         # Find features in image
         with self.lock:

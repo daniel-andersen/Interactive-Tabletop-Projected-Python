@@ -188,7 +188,7 @@ class Server(WebSocket):
 
         camera.set_debug_image(image)
 
-        #cv2.imwrite("debug.png", image)
+        #cv2.imwrite("debug/debug_camera.png", image)
 
         return "OK", {}, self.request_id_from_payload(payload)
 

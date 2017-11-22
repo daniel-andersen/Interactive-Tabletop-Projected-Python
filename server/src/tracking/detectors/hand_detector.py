@@ -42,7 +42,7 @@ class HandDetector(Detector):
         """
 
         # Prepare image
-        #cv2.imwrite("debug_hand_detector.png", image)
+        #cv2.imwrite("debug/hand_detector.png", image)
 
         image = self.prepare_image(image)
 

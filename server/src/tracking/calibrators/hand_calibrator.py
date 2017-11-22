@@ -27,7 +27,7 @@ class HandCalibrator(Calibrator):
 
     def detect(self, image, debug=False):
 
-        #cv2.imwrite("debug_hand_calibration.png", image)
+        #cv2.imwrite("debug/hand_calibration.png", image)
 
         #image = cv2.imread("debug.png")
         #gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
