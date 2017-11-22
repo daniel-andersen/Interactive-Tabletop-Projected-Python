@@ -13,16 +13,16 @@ class HandDetectionTest(BaseTest):
 
     def detection_test(self, debug=False):
         tests = [  # [Filename prefix, board calibration successful, [{expected x, expected y}, ...]]
-            #['test/resources/hand_detection/hand_detection_1', True, [{"gesture": "OPEN_PALM", "x": 0.5, "y": 0.5}]],
-            #['test/resources/hand_detection/hand_detection_2', True, [{"gesture": "POINTING", "x": 0.5, "y": 0.5}]],
+            ['test/resources/hand_detection/hand_detection_1', True, [{"gesture": "OPEN_PALM", "x": 0.5, "y": 0.5}]],
+            ['test/resources/hand_detection/hand_detection_2', True, [{"gesture": "POINTING", "x": 0.5, "y": 0.5}]],
             ['test/resources/hand_detection/hand_detection_3', True, [{"gesture": "POINTING", "x": 0.5, "y": 0.5}]],
             ['test/resources/hand_detection/hand_detection_4', True, [{"gesture": "POINTING", "x": 0.5, "y": 0.5}]],
             ['test/resources/hand_detection/hand_detection_5', True, [{"gesture": "POINTING", "x": 0.5, "y": 0.5}]],
-            #['test/resources/hand_detection/hand_detection_6', False, []],
-            #['test/resources/hand_detection/hand_detection_7', False, []],
-            #['test/resources/hand_detection/hand_detection_8', False, []],
-            #['test/resources/hand_detection/hand_detection_9', False, []],
-            #['test/resources/hand_detection/hand_detection_10', False, []],
+            ['test/resources/hand_detection/hand_detection_6', False, []],
+            ['test/resources/hand_detection/hand_detection_7', False, []],
+            ['test/resources/hand_detection/hand_detection_8', False, []],
+            ['test/resources/hand_detection/hand_detection_9', False, []],
+            ['test/resources/hand_detection/hand_detection_10', False, []],
         ]
 
         # Run tests
