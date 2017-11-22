@@ -49,7 +49,9 @@ RaspberryPiInstructions = (function() {
     this.element_gpio_pinout_left = document.getElementById('instructions_gpio_pinout_left');
     this.element_gpio_pinout_right = document.getElementById('instructions_gpio_pinout_right');
     this.element_raspi_overlay = document.getElementById('instructions_raspi_overlay');
-    this.all_elements = [this.element_place_raspberry_pi_on_table, this.element_gpio_pinout, this.element_gpio_pinout_left, this.element_gpio_pinout_right, this.element_raspi_overlay];
+    this.element_palm_overlay_1 = document.getElementById('instructions_palm_overlay_1');
+    this.element_palm_overlay_2 = document.getElementById('instructions_palm_overlay_2');
+    this.all_elements = [this.element_place_raspberry_pi_on_table, this.element_gpio_pinout, this.element_gpio_pinout_left, this.element_gpio_pinout_right, this.element_raspi_overlay, this.element_palm_overlay_1, this.element_palm_overlay_2];
     this.current_place_raspberry_pi_on_table_position = void 0;
     this.current_gpio_pinout_position = void 0;
     this.current_gpio_pinout_left_position = void 0;
@@ -63,29 +65,18 @@ RaspberryPiInstructions = (function() {
   };
 
   RaspberryPiInstructions.prototype.setupImageDetectors = function() {
-    var i, j, loaded_count, raspberry_pi_source_image, raspberry_pi_source_images, ref, results, total_count;
+    var raspberry_pi_source_image;
     this.raspberry_pi_detector_id = 0;
     this.image_detectors = [];
-    raspberry_pi_source_images = [];
-    loaded_count = 0;
-    total_count = 2;
-    results = [];
-    for (i = j = 1, ref = total_count; 1 <= ref ? j <= ref : j >= ref; i = 1 <= ref ? ++j : --j) {
-      raspberry_pi_source_image = new Image();
-      raspberry_pi_source_images.push(raspberry_pi_source_image);
-      raspberry_pi_source_image.onload = (function(_this) {
-        return function() {
-          loaded_count += 1;
-          if (loaded_count === total_count) {
-            return _this.client.setupImageDetector(0, void 0, raspberry_pi_source_images, void 0, function(action, payload) {
-              return _this.didSetupImageDetector(_this.raspberry_pi_detector_id);
-            });
-          }
-        };
-      })(this);
-      results.push(raspberry_pi_source_image.src = "assets/images/raspberry_pi_source_" + i + ".png");
-    }
-    return results;
+    raspberry_pi_source_image = new Image();
+    raspberry_pi_source_image.onload = (function(_this) {
+      return function() {
+        return _this.client.setupImageDetector(0, raspberry_pi_source_image, void 0, function(action, payload) {
+          return _this.didSetupImageDetector(_this.raspberry_pi_detector_id);
+        });
+      };
+    })(this);
+    return raspberry_pi_source_image.src = "assets/images/raspberry_pi_source.png";
   };
 
   RaspberryPiInstructions.prototype.didSetupImageDetector = function(id) {
@@ -105,7 +96,11 @@ RaspberryPiInstructions = (function() {
   };
 
   RaspberryPiInstructions.prototype.calibrateHandDetection = function() {
-    return this.ready();
+    return this.client.calibrateHandDetection((function(_this) {
+      return function(action, payload) {
+        return _this.ready();
+      };
+    })(this));
   };
 
   RaspberryPiInstructions.prototype.ready = function() {
@@ -114,7 +109,8 @@ RaspberryPiInstructions = (function() {
     this.raspberryPiDetectionHistory = [];
     return this.client.cancelRequests((function(_this) {
       return function(action, payload) {
-        return _this.detectRaspberryPi();
+        _this.detectRaspberryPi();
+        return _this.detectGestures();
       };
     })(this));
   };
@@ -128,10 +124,18 @@ RaspberryPiInstructions = (function() {
     })(this));
   };
 
+  RaspberryPiInstructions.prototype.detectGestures = function() {
+    return this.client.detectGestures(this.client.boardAreaId_fullBoard, void 0, true, (function(_this) {
+      return function(action, payload) {
+        _this.updateGesture(payload);
+        return false;
+      };
+    })(this));
+  };
+
   RaspberryPiInstructions.prototype.updateRaspberryPiDetection = function(payload) {
-    var angle, count, detected, detected_count, entry, j, k, len, len1, position, ref, ref1, size;
+    var angle, count, detected, detected_count, entry, i, j, len, len1, position, ref, ref1, size;
     detected = "matches" in payload;
-    document.getElementById('detection_state').style.backgroundColor = detected ? 'green' : 'red';
     this.raspberryPiDetectionHistory.push({
       'timestamp': this.currentTimeSeconds(),
       'detected': detected,
@@ -142,8 +146,8 @@ RaspberryPiInstructions = (function() {
     }
     detected_count = 0;
     ref = this.raspberryPiDetectionHistory;
-    for (j = 0, len = ref.length; j < len; j++) {
-      entry = ref[j];
+    for (i = 0, len = ref.length; i < len; i++) {
+      entry = ref[i];
       if (entry['detected']) {
         detected_count += 1;
       }
@@ -153,8 +157,8 @@ RaspberryPiInstructions = (function() {
     angle = 0;
     count = 0;
     ref1 = this.raspberryPiDetectionHistory;
-    for (k = 0, len1 = ref1.length; k < len1; k++) {
-      entry = ref1[k];
+    for (j = 0, len1 = ref1.length; j < len1; j++) {
+      entry = ref1[j];
       if (entry['detected']) {
         payload = entry['payload']['matches'][0];
         position = [position[0] + payload['x'], position[1] + payload['y']];
@@ -167,10 +171,10 @@ RaspberryPiInstructions = (function() {
       this.raspberry_pi_position = [position[0] / count, position[1] / count];
       this.raspberry_pi_size = [size[0] / count, size[1] / count];
       this.raspberry_pi_angle = Math.round(angle);
-      if (this.raspberry_pi_angle >= 180 - 10) {
+      if (this.raspberry_pi_angle >= 180 - 5) {
         this.raspberry_pi_angle = 180;
       }
-      if (this.raspberry_pi_angle <= -180 + 10) {
+      if (this.raspberry_pi_angle <= -180 + 5) {
         this.raspberry_pi_angle = -180;
       }
     }
@@ -179,6 +183,34 @@ RaspberryPiInstructions = (function() {
     }
     if (detected_count === 0 && this.state !== State.PlaceRaspberryPiOnTable) {
       return this.showState(State.PlaceRaspberryPiOnTable);
+    }
+  };
+
+  RaspberryPiInstructions.prototype.updateGesture = function(payload) {
+    var hand, hands, height, ref, ref1, width;
+    if (!('hands' in payload)) {
+      this.element_palm_overlay_1.style.opacity = 0;
+      this.element_palm_overlay_2.style.opacity = 0;
+      return;
+    }
+    hands = payload['hands'];
+    if (hands.length > 0 && hands[0]['gesture'] === 2) {
+      hand = hands[0];
+      ref = [45.0 / 1280.0, 44.0 / 800.0], width = ref[0], height = ref[1];
+      this.element_palm_overlay_1.style.left = ((hand['palmCenter']['x'] - (width / 2.0)) * 100.0) + '%';
+      this.element_palm_overlay_1.style.top = ((hand['palmCenter']['y'] - (height / 2.0)) * 100.0) + '%';
+      this.element_palm_overlay_1.style.opacity = 1;
+    } else {
+      this.element_palm_overlay_1.style.opacity = 0;
+    }
+    if (hands.length > 1 && hands[1]['gesture'] === 2) {
+      hand = hands[1];
+      ref1 = [45.0 / 1280.0, 45.0 / 800.0], width = ref1[0], height = ref1[1];
+      this.element_palm_overlay_2.style.left = ((hand['palmCenter']['x'] - (width / 2.0)) * 100.0) + '%';
+      this.element_palm_overlay_2.style.top = ((hand['palmCenter']['y'] - (height / 2.0)) * 100.0) + '%';
+      return this.element_palm_overlay_2.style.opacity = 1;
+    } else {
+      return this.element_palm_overlay_2.style.opacity = 0;
     }
   };
 
@@ -339,15 +371,15 @@ RaspberryPiInstructions = (function() {
   };
 
   RaspberryPiInstructions.prototype.hideCurrentState = function(completionCallback) {
-    var element, j, len, ref;
+    var element, i, len, ref;
     if (completionCallback == null) {
       completionCallback = (function(_this) {
         return function() {};
       })(this);
     }
     ref = this.all_elements;
-    for (j = 0, len = ref.length; j < len; j++) {
-      element = ref[j];
+    for (i = 0, len = ref.length; i < len; i++) {
+      element = ref[i];
       element.style.opacity = 0;
     }
     this.current_place_raspberry_pi_on_table_position = void 0;

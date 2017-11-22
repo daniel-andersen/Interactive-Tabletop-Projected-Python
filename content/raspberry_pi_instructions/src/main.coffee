@@ -66,20 +66,9 @@ class RaspberryPiInstructions
 
         @image_detectors = []
 
-        raspberry_pi_source_images = []
-        loaded_count = 0
-        total_count = 1
-
-        for i in [1..total_count]
-            raspberry_pi_source_image = new Image()
-            raspberry_pi_source_images.push(raspberry_pi_source_image)
-
-            raspberry_pi_source_image.onload = () =>
-                loaded_count += 1
-                if loaded_count == total_count
-                    @client.setupImageDetector(0, undefined, raspberry_pi_source_images, undefined, (action, payload) => @didSetupImageDetector(@raspberry_pi_detector_id))
-
-            raspberry_pi_source_image.src = "assets/images/raspberry_pi_source_" + i +  ".png"
+        raspberry_pi_source_image = new Image()
+        raspberry_pi_source_image.onload = () => @client.setupImageDetector(0, raspberry_pi_source_image, undefined, (action, payload) => @didSetupImageDetector(@raspberry_pi_detector_id))
+        raspberry_pi_source_image.src = "assets/images/raspberry_pi_source.png"
 
     didSetupImageDetector: (id) ->
         @image_detectors.push(id)

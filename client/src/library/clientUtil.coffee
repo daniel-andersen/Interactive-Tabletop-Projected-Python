@@ -22,25 +22,6 @@ class ClientUtil
 
         canvas = null
 
-    @convertImagesToDataURLs: (images, callback) ->
-        dataURLs = []
-
-        for image in images
-            canvas = document.createElement("CANVAS")
-            canvas.width = image.width
-            canvas.height = image.height
-
-            ctx = canvas.getContext("2d")
-            ctx.drawImage(image, 0, 0)
-
-            dataURL = canvas.toDataURL("image/png")
-            dataURL = dataURL.replace(/^.*;base64,/, "")
-            dataURLs.push(dataURL)
-
-            canvas = null
-
-        callback(dataURLs)
-
     @readFileBase64: (filename, callback) ->
         xhr = new XMLHttpRequest()
         xhr.open("GET", filename, true)

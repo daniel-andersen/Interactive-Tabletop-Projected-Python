@@ -333,16 +333,10 @@ Client = (function() {
     })(this), 1000);
   };
 
-  "setupImageDetector: Sets up an image detector. Either sourceImage or sourceImages must be used.\n\ndetectorId: Detector ID to use as a reference.\nsourceImage: (Optional) Image to detect.\nsourceImages: (Optional) List of images to detect. Best match is returned.\nminMatches: (Optional) Minimum number of matches for detection to be considered successful.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+  "setupImageDetector: Sets up an image detector. Either sourceImage or sourceImages must be used.\n\ndetectorId: Detector ID to use as a reference.\nsourceImage: (Optional) Image to detect.\nminMatches: (Optional) Minimum number of matches for detection to be considered successful.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
 
-  Client.prototype.setupImageDetector = function(detectorId, sourceImage, sourceImages, minMatches, completionCallback) {
-    var image, images, requestId;
-    if (sourceImage == null) {
-      sourceImage = void 0;
-    }
-    if (sourceImages == null) {
-      sourceImages = void 0;
-    }
+  Client.prototype.setupImageDetector = function(detectorId, sourceImage, minMatches, completionCallback) {
+    var requestId;
     if (minMatches == null) {
       minMatches = void 0;
     }
@@ -350,28 +344,13 @@ Client = (function() {
       completionCallback = void 0;
     }
     requestId = this.addCompletionCallback(completionCallback);
-    images = [];
-    if (sourceImage != null) {
-      images.push(sourceImage);
-    }
-    if (sourceImages != null) {
-      images.push((function() {
-        var i, len, results;
-        results = [];
-        for (i = 0, len = sourceImages.length; i < len; i++) {
-          image = sourceImages[i];
-          results.push(image);
-        }
-        return results;
-      })());
-    }
-    ClientUtil.convertImagesToDataURLs(images, (function(_this) {
-      return function(base64Images) {
+    ClientUtil.convertImageToDataURL(sourceImage, (function(_this) {
+      return function(base64Image) {
         var json;
         json = {
           "requestId": requestId,
           "detectorId": detectorId,
-          "imagesBase64": base64Images
+          "imageBase64": base64Image
         };
         if (minMatches != null) {
           json["minMatches"] = minMatches;
@@ -533,7 +512,7 @@ Client = (function() {
     return requestId;
   };
 
-  "detectImages: Detect images in the given area.\n\nareaId: Area ID of tiled board area.\ndetectorId: The ID of the detector to use.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+  "detectImages: Detect images in the given area.\n\nareaId: Area ID of tiled board area.\ndetectorId: The ID of the detector to use.\nkeepRunning: (Optional) Keep returning results. Defaults to False.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
 
   Client.prototype.detectImages = function(areaId, detectorId, keepRunning, completionCallback) {
     var json, requestId;
@@ -600,6 +579,31 @@ Client = (function() {
       json["keepRunning"] = keepRunning;
     }
     this.sendMessage("detectNonobstructedArea", json);
+    return requestId;
+  };
+
+  "detectGestures: Detect gestures in the given area.\n\nareaId: Area ID of tiled board area.\ngesture: (Optional) Gesture to detect\nkeepRunning: (Optional) Keep returning results. Defaults to False.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+
+  Client.prototype.detectGestures = function(areaId, gesture, keepRunning, completionCallback) {
+    var json, requestId;
+    if (gesture == null) {
+      gesture = void 0;
+    }
+    if (keepRunning == null) {
+      keepRunning = false;
+    }
+    if (completionCallback == null) {
+      completionCallback = void 0;
+    }
+    requestId = this.addCompletionCallback(completionCallback);
+    json = {
+      "requestId": requestId,
+      "areaId": areaId
+    };
+    if (keepRunning != null) {
+      json["keepRunning"] = keepRunning;
+    }
+    this.sendMessage("detectGestures", json);
     return requestId;
   };
 

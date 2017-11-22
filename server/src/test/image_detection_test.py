@@ -33,7 +33,7 @@ class ImageDetectionTest(BaseTest):
             test_image = cv2.imread(test_filename)
 
             # Find image
-            image_detector = ImageDetector(0, [source_image], input_resolution=input_resolution)
+            image_detector = ImageDetector(0, source_image, input_resolution=input_resolution)
 
             test_image = self.resize_image_to_detector_default_size(test_image, image_detector)
 

@@ -232,28 +232,15 @@ class Server(WebSocket):
 
         detectorId: Detector ID to use as a reference
         imageBase64: (Optional) Source image to detect
-        imagesBase64: (Optional) List of source images to detect. Best match is returned.
         imageResolution: Image resolution to use when detecting (of type tracking.board.board_snapshot.SnapshotSize)
         minMatches: (Optional) Minimum number of matches for detection to be considered successful
         requestId: (Optional) Request ID
         """
-        imagesBase64 = []
+        raw_image = base64.b64decode(payload["imageBase64"])
+        raw_bytes = np.asarray(bytearray(raw_image), dtype=np.uint8)
+        image = cv2.imdecode(raw_bytes, cv2.IMREAD_UNCHANGED)
 
-        if "imageBase64" in payload:
-            imagesBase64.append(payload["imageBase64"])
-
-        if "imagesBase64" in payload:
-            for imageBase64 in payload["imagesBase64"]:
-                imagesBase64.append(imageBase64)
-
-        images = []
-        for imageBase64 in imagesBase64:
-            raw_image = base64.b64decode(imageBase64)
-            raw_bytes = np.asarray(bytearray(raw_image), dtype=np.uint8)
-            image = cv2.imdecode(raw_bytes, cv2.IMREAD_UNCHANGED)
-            images.append(image)
-
-        detector = ImageDetector(detector_id=payload["detectorId"], source_images=images)
+        detector = ImageDetector(detector_id=payload["detectorId"], source_image=image)
         if "imageResolution" in payload:
             detector.input_resolution = payload["imageResolution"]
         if "minMatches" in payload:

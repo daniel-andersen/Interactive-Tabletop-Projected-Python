@@ -59,6 +59,7 @@ src/cv2
 src/cv3
 
 src/debug
+src/debug*.png
 
 venv
 

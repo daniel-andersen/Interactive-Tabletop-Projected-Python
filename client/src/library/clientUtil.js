@@ -29,24 +29,6 @@ ClientUtil = (function() {
     return canvas = null;
   };
 
-  ClientUtil.convertImagesToDataURLs = function(images, callback) {
-    var canvas, ctx, dataURL, dataURLs, i, image, len;
-    dataURLs = [];
-    for (i = 0, len = images.length; i < len; i++) {
-      image = images[i];
-      canvas = document.createElement("CANVAS");
-      canvas.width = image.width;
-      canvas.height = image.height;
-      ctx = canvas.getContext("2d");
-      ctx.drawImage(image, 0, 0);
-      dataURL = canvas.toDataURL("image/png");
-      dataURL = dataURL.replace(/^.*;base64,/, "");
-      dataURLs.push(dataURL);
-      canvas = null;
-    }
-    return callback(dataURLs);
-  };
-
   ClientUtil.readFileBase64 = function(filename, callback) {
     var xhr;
     xhr = new XMLHttpRequest();
