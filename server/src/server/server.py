@@ -21,6 +21,7 @@ from server.threads.nonobstructed_area_detector_thread import NonobstructedAreaD
 from server.threads.tiled_brick_detector_threads import TiledBrickDetectorThread, TiledBrickMovementDetectorThread, \
     TiledBricksDetectorThread
 from tracking.board.board_area import BoardArea
+from tracking.board.board_snapshot import SnapshotSize
 from tracking.board.tiled_board_area import TiledBoardArea
 from tracking.detectors.hand_detector import handDetectorId
 from tracking.detectors.image_detector import ImageDetector
@@ -158,19 +159,28 @@ class Server(WebSocket):
         """
         Takes a screenshot and saves it to disk.
 
+        areaId: (Optional) ID of area to detect images in
         filename: (Optional) Screenshot filename
         requestId: (Optional) Request ID
         """
-        camera = globals.get_state().get_camera()
-        if camera is not None:
-            image = camera.read()
-            if image is not None:
-                filename = payload["filename"] if "filename" in payload else\
-                    "resources/screenshots/board_{0}.png".format(time.strftime("%Y-%m-%d-%H%M%S"))
-                cv2.imwrite(filename, image)
-                return "OK", {}, self.request_id_from_payload(payload)
+        filename = payload["filename"] if "filename" in payload else "resources/screenshots/board_{0}.png".format(time.strftime("%Y-%m-%d-%H%M%S"))
+        area_id = payload["areaId"] if "areaId" in payload else None
+        image = None
 
-        return "CAMERA_NOT_READY", {}, self.request_id_from_payload(payload)
+        if area_id is not None:
+            board_area = globals.get_state().get_board_area(area_id)
+            if board_area is not None:
+                image = board_area.area_image(size=SnapshotSize.ORIGINAL)
+        else:
+            camera = globals.get_state().get_camera()
+            if camera is not None:
+                image = camera.read()
+
+        if image is not None:
+            cv2.imwrite(filename, image)
+            return "OK", {}, self.request_id_from_payload(payload)
+
+        return "ERROR", {}, self.request_id_from_payload(payload)
 
     def set_debug_camera_image(self, payload):
         """

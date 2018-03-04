@@ -34,7 +34,7 @@ class TensorflowBrickDetectionExample
             @takeScreenshot()
 
     takeScreenshot: ->
-        @client.takeScreenshot(undefined, () =>
+        @client.takeScreenshot(@client.boardAreaId_fullBoard, undefined, () =>
             flashElement = document.getElementById("flash")
 
             flashElement.style.transition = "opacity 0s"

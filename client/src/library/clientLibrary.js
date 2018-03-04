@@ -128,8 +128,11 @@ Client = (function() {
 
   "takeScreenshot: Takes and stores a screenshot from the camera.\n\nfilename: (Optional) Screenshot filename.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
 
-  Client.prototype.takeScreenshot = function(filename, completionCallback) {
+  Client.prototype.takeScreenshot = function(areaId, filename, completionCallback) {
     var json, requestId;
+    if (areaId == null) {
+      areaId = void 0;
+    }
     if (filename == null) {
       filename = void 0;
     }
@@ -140,6 +143,9 @@ Client = (function() {
     json = {
       "requestId": requestId
     };
+    if (areaId != null) {
+      json["areaId"] = areaId;
+    }
     if (filename != null) {
       json["filename"] = filename;
     }

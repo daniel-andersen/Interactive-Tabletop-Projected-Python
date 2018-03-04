@@ -122,9 +122,10 @@ class Client
     filename: (Optional) Screenshot filename.
     completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
     """
-    takeScreenshot: (filename = undefined, completionCallback = undefined) ->
+    takeScreenshot: (areaId = undefined, filename = undefined, completionCallback = undefined) ->
         requestId = @addCompletionCallback(completionCallback)
         json = {"requestId": requestId}
+        if areaId? then json["areaId"] = areaId
         if filename? then json["filename"] = filename
         @sendMessage("takeScreenshot", json)
         return requestId

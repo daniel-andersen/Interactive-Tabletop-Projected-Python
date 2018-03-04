@@ -57,7 +57,7 @@ TensorflowBrickDetectionExample = (function() {
   };
 
   TensorflowBrickDetectionExample.prototype.takeScreenshot = function() {
-    return this.client.takeScreenshot(void 0, (function(_this) {
+    return this.client.takeScreenshot(this.client.boardAreaId_fullBoard, void 0, (function(_this) {
       return function() {
         var flashElement;
         flashElement = document.getElementById("flash");
