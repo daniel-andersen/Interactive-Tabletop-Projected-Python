@@ -15,7 +15,7 @@ class ImageDetectionExample
     reset: ->
         @client.reset([1600, 1200], (action, payload) =>
             @client.enableDebug()
-            @setDebugCameraImage("calibration/board_calibration.png", (action, payload) =>
+            @setDebugCameraImage("board_calibration.png", (action, payload) =>
                 @calibrateBoard()
             )
         )

@@ -46,7 +46,7 @@ class HandDetectorCalibrationThread(ServerThread):
             if hand_calibrator.get_state() == State.DETECTED:
 
                 # Create new hand detector
-                hand_detector = HandDetector(detector_id=handDetectorId, medians=hand_calibrator.get_medians())
+                hand_detector = HandDetector(detector_id=handDetectorId, thresholds=hand_calibrator.get_medians())
                 globals.get_state().set_detector(hand_detector)
 
                 # Callback

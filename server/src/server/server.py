@@ -14,12 +14,15 @@ from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
 
 from server import globals
 from server.threads.board_calibration_thread import BoardCalibrationThread
+from server.threads.gesture_detector_thread import GestureDetectorThread
 from server.threads.hand_detector_calibration_thread import HandDetectorCalibrationThread
 from server.threads.images_detector_thread import ImagesDetectorThread
+from server.threads.nonobstructed_area_detector_thread import NonobstructedAreaDetectorThread
 from server.threads.tiled_brick_detector_threads import TiledBrickDetectorThread, TiledBrickMovementDetectorThread, \
     TiledBricksDetectorThread
 from tracking.board.board_area import BoardArea
 from tracking.board.tiled_board_area import TiledBoardArea
+from tracking.detectors.hand_detector import handDetectorId
 from tracking.detectors.image_detector import ImageDetector
 from tracking.detectors.tensorflow_detector import TensorflowDetector
 from util import misc_util
@@ -54,7 +57,9 @@ class Server(WebSocket):
                                         'detectTiledBrickMovement': self.detect_tiled_brick_movement,
                                         'setupImageDetector': self.setup_image_detector,
                                         'setupTensorflowDetector': self.setup_tensorflow_detector,
-                                        'detectImages': self.detect_images}
+                                        'detectImages': self.detect_images,
+                                        'detectNonobstructedArea': self.detect_nonobstructed_area,
+                                        'detectGestures': self.detect_gestures}
 
         self.detectors = {}
         self.detectors_lock = RLock()
@@ -161,7 +166,7 @@ class Server(WebSocket):
             image = camera.read()
             if image is not None:
                 filename = payload["filename"] if "filename" in payload else\
-                    "debug/board_{0}.png".format(time.strftime("%Y-%m-%d-%H%M%S"))
+                    "resources/screenshots/board_{0}.png".format(time.strftime("%Y-%m-%d-%H%M%S"))
                 cv2.imwrite(filename, image)
                 return "OK", {}, self.request_id_from_payload(payload)
 
@@ -183,7 +188,7 @@ class Server(WebSocket):
 
         camera.set_debug_image(image)
 
-        cv2.imwrite("debug.png", image)
+        #cv2.imwrite("debug/debug_camera.png", image)
 
         return "OK", {}, self.request_id_from_payload(payload)
 
@@ -194,14 +199,14 @@ class Server(WebSocket):
         requestId: (Optional) Request ID
         """
         thread = BoardCalibrationThread(self.request_id_from_payload(payload),
-                                        callback_function=lambda: self.stop_thread(thread,
-                                                                                   result="OK",
-                                                                                   action="calibrateBoard",
-                                                                                   payload={}),
-                                        timeout_function=lambda: self.stop_thread(thread,
-                                                                                  result="CALIBRATION TIMEOUT",
-                                                                                  action="calibrateBoard",
-                                                                                  payload={}))
+                                        callback_function=lambda: self.send_thread_result(thread,
+                                                                                          result="OK",
+                                                                                          action="calibrateBoard",
+                                                                                          payload={}),
+                                        timeout_function=lambda: self.send_thread_result(thread,
+                                                                                         result="CALIBRATION TIMEOUT",
+                                                                                         action="calibrateBoard",
+                                                                                         payload={}))
         self.start_thread(self.request_id_from_payload(payload), thread)
 
         return None
@@ -213,20 +218,21 @@ class Server(WebSocket):
         requestId: (Optional) Request ID
         """
         thread = HandDetectorCalibrationThread(self.request_id_from_payload(payload),
-                                               callback_function=lambda: self.stop_thread(thread,
-                                                                                          result="OK",
-                                                                                          action="calibrateHandDetection",
-                                                                                          payload={}))
+                                               callback_function=lambda: self.send_thread_result(thread,
+                                                                                                 result="OK",
+                                                                                                 action="calibrateHandDetection",
+                                                                                                 payload={}))
         self.start_thread(self.request_id_from_payload(payload), thread)
 
         return None
 
     def setup_image_detector(self, payload):
         """
-        Sets up an image detector.
+        Sets up an image detector. Either imageBase64 or imagesBase64 must be used.
 
         detectorId: Detector ID to use as a reference
-        imageBase64: Source Image to detect
+        imageBase64: (Optional) Source image to detect
+        imageResolution: Image resolution to use when detecting (of type tracking.board.board_snapshot.SnapshotSize)
         minMatches: (Optional) Minimum number of matches for detection to be considered successful
         requestId: (Optional) Request ID
         """
@@ -235,6 +241,8 @@ class Server(WebSocket):
         image = cv2.imdecode(raw_bytes, cv2.IMREAD_UNCHANGED)
 
         detector = ImageDetector(detector_id=payload["detectorId"], source_image=image)
+        if "imageResolution" in payload:
+            detector.input_resolution = payload["imageResolution"]
         if "minMatches" in payload:
             detector.min_matches = payload["minMatches"]
 
@@ -350,10 +358,77 @@ class Server(WebSocket):
                                       detector,
                                       board_area,
                                       keep_running=payload["keepRunning"] if "keepRunning" in payload else False,
-                                      callback_function=lambda result: self.stop_thread(thread,
-                                                                                        result="OK",
-                                                                                        action="detectImages",
-                                                                                        payload=result))
+                                      callback_function=lambda result: self.send_thread_result(thread,
+                                                                                               result="OK",
+                                                                                               action="detectImages",
+                                                                                               payload=result,
+                                                                                               keep_alive=thread.keep_running))
+
+        self.start_thread(self.request_id_from_payload(payload), thread)
+
+        return None
+
+    def detect_nonobstructed_area(self, payload):
+        """
+        Detects nonobstructed area on the board.
+
+        areaId: ID of area to detect nonobstructed area in
+        targetSize: Size of area to fit (width, height)
+        targetPosition: (Optional) Find area closest possible to target position (x, y). Defaults to [0.5, 0.5].
+        currentPosition: (Optional) Excludes current position area minus half padding.
+        stableTime: (Optional) Time to wait for result to stabilize. Defaults to 0.5.
+        padding: (Optional) Area padding.
+        keepRunning: (Optional) Keep returning results. Defaults to False
+        requestId: (Optional) Request ID
+        """
+        board_area = globals.get_state().get_board_area(payload["areaId"])
+        if board_area is None:
+            return "BOARD_AREA_NOT_FOUND", {}, self.request_id_from_payload(payload)
+
+        thread = NonobstructedAreaDetectorThread(self.request_id_from_payload(payload),
+                                                 board_area,
+                                                 payload["targetSize"],
+                                                 target_position=payload["targetPosition"] if "targetPosition" in payload else [0.5, 0.5],
+                                                 current_position=payload["currentPosition"] if "currentPosition" in payload else None,
+                                                 padding=payload["padding"] if "padding" in payload else [0.0, 0.0],
+                                                 stable_time=payload["stableTime"] if "stableTime" in payload else 0.5,
+                                                 keep_running=payload["keepRunning"] if "keepRunning" in payload else False,
+                                                 callback_function=lambda result: self.send_thread_result(thread,
+                                                                                                          result="OK",
+                                                                                                          action="detectNonobstructedArea",
+                                                                                                          payload=result,
+                                                                                                          keep_alive=thread.keep_running))
+
+        self.start_thread(self.request_id_from_payload(payload), thread)
+
+        return None
+
+    def detect_gestures(self, payload):
+        """
+        Detects hand gestures.
+
+        areaId: ID of area to detect images in
+        gesture: (Optional) Gesture to detect
+        keepRunning: (Optional) Keep returning results. Defaults to False
+        requestId: (Optional) Request ID
+        """
+        board_area = globals.get_state().get_board_area(payload["areaId"])
+        if board_area is None:
+            return "BOARD_AREA_NOT_FOUND", {}, self.request_id_from_payload(payload)
+
+        detector = globals.get_state().get_detector(handDetectorId)
+        if detector is None:
+            return "HAND_DETECTOR_NOT_INITIALIZED", {}, self.request_id_from_payload(payload)
+
+        thread = GestureDetectorThread(self.request_id_from_payload(payload),
+                                       detector,
+                                       board_area,
+                                       keep_running=payload["keepRunning"] if "keepRunning" in payload else False,
+                                       callback_function=lambda result: self.send_thread_result(thread,
+                                                                                                result="OK",
+                                                                                                action="detectGestures",
+                                                                                                payload=result,
+                                                                                                keep_alive=thread.keep_running))
 
         self.start_thread(self.request_id_from_payload(payload), thread)
 
@@ -380,10 +455,10 @@ class Server(WebSocket):
             valid_positions,
             target_position,
             wait_for_position,
-            callback_function=lambda tile: self.stop_thread(thread,
-                                                            result="OK",
-                                                            action="detectTiledBrick",
-                                                            payload={"tile": tile} if tile else {}))
+            callback_function=lambda tile: self.send_thread_result(thread,
+                                                                   result="OK",
+                                                                   action="detectTiledBrick",
+                                                                   payload={"tile": tile} if tile else {}))
 
         self.start_thread(self.request_id_from_payload(payload), thread)
 
@@ -407,10 +482,10 @@ class Server(WebSocket):
             board_area,
             valid_positions,
             wait_for_position,
-            callback_function=lambda tiles: self.stop_thread(thread,
-                                                             result="OK",
-                                                             action="detectTiledBricks",
-                                                             payload={"tiles": tiles}))
+            callback_function=lambda tiles: self.send_thread_result(thread,
+                                                                    result="OK",
+                                                                    action="detectTiledBricks",
+                                                                    payload={"tiles": tiles}))
 
         self.start_thread(self.request_id_from_payload(payload), thread)
 
@@ -437,11 +512,11 @@ class Server(WebSocket):
             valid_positions,
             initial_position,
             target_position,
-            callback_function=lambda to_position, from_position: self.stop_thread(thread,
-                                                                                  result="OK",
-                                                                                  action="detectTiledBrickMovement",
-                                                                                  payload={"position": to_position,
-                                                                                           "initialPosition": from_position}))
+            callback_function=lambda to_position, from_position: self.send_thread_result(thread,
+                                                                                         result="OK",
+                                                                                         action="detectTiledBrickMovement",
+                                                                                         payload={"position": to_position,
+                                                                                                  "initialPosition": from_position}))
 
         self.start_thread(self.request_id_from_payload(payload), thread)
 
@@ -458,7 +533,7 @@ class Server(WebSocket):
         """
         message = {"result": result,
                    "action": action,
-                   "payload": payload,
+                   "payload": payload if payload is not None else {},
                    "requestId": request_id}
         self.sendMessage(json.dumps(message, ensure_ascii=False))
 
@@ -497,8 +572,9 @@ class Server(WebSocket):
             print("Exception in start_thread: %s" % str(e))
             traceback.print_exc(file=sys.stdout)
 
-    def stop_thread(self, thread, result, action, payload):
-        self.cancel_thread(thread.request_id)
+    def send_thread_result(self, thread, result, action, payload, keep_alive=False):
+        if not keep_alive:
+            self.cancel_thread(thread.request_id)
         self.send_message(result, action, payload, thread.request_id)
 
     def cancel_thread(self, request_id):

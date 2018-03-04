@@ -38,15 +38,25 @@ module.exports = function(grunt) {
         projects: {
           "../content/examples/hand_detection": "default"
         }
-      },*/
+      },
       example_image_detection: {
         projects: {
           "../content/examples/image_detection": "default"
         }
       },
-      /*example_tensorflow_brick_detection: {
+      example_tensorflow_brick_detection: {
         projects: {
           "../content/examples/tensorflow_brick_detection": "default"
+        }
+      },*/
+      example_tensorflow_brick_training: {
+        projects: {
+          "../content/examples/tensorflow_brick_training": "default"
+        }
+      }
+      /*raspberry_pi_instructions: {
+        projects: {
+          "../content/raspberry_pi_instructions": "default"
         }
       },
       MAZE: {
@@ -78,7 +88,7 @@ module.exports = function(grunt) {
           {expand: true, cwd: "../content/examples/hand_detection/lib", src: "**", dest: "target/content/examples/hand_detection/lib"},
           {expand: true, cwd: "../content/examples/hand_detection/", src: "*.html", dest: "target/content/examples/hand_detection/"}
         ]
-      },*/
+      },
       example_image_detection: {
         files: [
           {expand: true, cwd: "../content/examples/image_detection/assets", src: "**", dest: "target/content/examples/image_detection/assets"},
@@ -86,13 +96,29 @@ module.exports = function(grunt) {
           {expand: true, cwd: "../content/examples/image_detection/lib", src: "**", dest: "target/content/examples/image_detection/lib"},
           {expand: true, cwd: "../content/examples/image_detection/", src: "*.html", dest: "target/content/examples/image_detection/"}
         ]
-      }/*,
+      },
       example_tensorflow_brick_detection: {
         files: [
           {expand: true, cwd: "../content/examples/tensorflow_brick_detection/assets", src: "**", dest: "target/content/examples/tensorflow_brick_detection/assets"},
           {expand: true, cwd: "../content/examples/tensorflow_brick_detection/src", src: "**", dest: "target/content/examples/tensorflow_brick_detection/src"},
           {expand: true, cwd: "../content/examples/tensorflow_brick_detection/lib", src: "**", dest: "target/content/examples/tensorflow_brick_detection/lib"},
           {expand: true, cwd: "../content/examples/tensorflow_brick_detection/", src: "*.html", dest: "target/content/examples/tensorflow_brick_detection/"}
+        ]
+      },*/
+      example_tensorflow_brick_training: {
+        files: [
+          {expand: true, cwd: "../content/examples/tensorflow_brick_training/assets", src: "**", dest: "target/content/examples/tensorflow_brick_training/assets"},
+          {expand: true, cwd: "../content/examples/tensorflow_brick_training/src", src: "**", dest: "target/content/examples/tensorflow_brick_training/src"},
+          {expand: true, cwd: "../content/examples/tensorflow_brick_training/lib", src: "**", dest: "target/content/examples/tensorflow_brick_training/lib"},
+          {expand: true, cwd: "../content/examples/tensorflow_brick_training/", src: "*.html", dest: "target/content/examples/tensorflow_brick_training/"}
+        ]
+      }
+      /*raspberry_pi_instructions: {
+        files: [
+          {expand: true, cwd: "../content/raspberry_pi_instructions/assets", src: "**", dest: "target/content/raspberry_pi_instructions/assets"},
+          {expand: true, cwd: "../content/raspberry_pi_instructions/src", src: "**", dest: "target/content/raspberry_pi_instructions/src"},
+          {expand: true, cwd: "../content/raspberry_pi_instructions/lib", src: "**", dest: "target/content/raspberry_pi_instructions/lib"},
+          {expand: true, cwd: "../content/raspberry_pi_instructions/", src: "*.html", dest: "target/content/raspberry_pi_instructions/"}
         ]
       },
       MAZE: {

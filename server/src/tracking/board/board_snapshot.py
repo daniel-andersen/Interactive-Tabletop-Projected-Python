@@ -9,6 +9,19 @@ SnapshotStatus = enum.Enum('NOT_RECOGNIZED', 'RECOGNIZED')
 SnapshotSize = enum.Enum('EXTRA_SMALL', 'SMALL', 'MEDIUM', 'LARGE', 'ORIGINAL')
 
 
+def get_snapshot_width(snapshot_size, default=None):
+    if snapshot_size is SnapshotSize.EXTRA_SMALL:
+        return 320.0
+    elif snapshot_size is SnapshotSize.SMALL:
+        return 640.0
+    elif snapshot_size is SnapshotSize.MEDIUM:
+        return 800.0
+    elif snapshot_size is SnapshotSize.LARGE:
+        return 1200.0
+    else:
+        return default
+
+
 class BoardSnapshot:
     """
     Class representing a snapshot (including current camera feed image) of a board.
@@ -71,16 +84,7 @@ class BoardSnapshot:
             aspect_ratio = float(original_height) / float(original_width)
 
             # Find output width
-            dest_width = original_width
-
-            if image_size is SnapshotSize.EXTRA_SMALL:
-                dest_width = 320.0
-            elif image_size is SnapshotSize.SMALL:
-                dest_width = 640.0
-            elif image_size is SnapshotSize.MEDIUM:
-                dest_width = 800.0
-            elif image_size is SnapshotSize.LARGE:
-                dest_width = 1200.0
+            dest_width = get_snapshot_width(image_size, default=original_width)
 
             # Resize image
             if dest_width < original_width:

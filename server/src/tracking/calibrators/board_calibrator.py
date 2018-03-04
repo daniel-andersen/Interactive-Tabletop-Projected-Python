@@ -27,8 +27,8 @@ class BoardCalibrator(Calibrator):
 
         # Initialize FLANN matcher
         FLANN_INDEX_KDTREE = 0
-        index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
-        search_params = dict(checks=50)
+        index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=4)
+        search_params = dict(checks=32)
 
         self.flann = cv2.FlannBasedMatcher(index_params, search_params)
 
@@ -40,6 +40,8 @@ class BoardCalibrator(Calibrator):
             return self.detect_history[-1]["result"] if self.get_state() == State.DETECTED else None
 
     def detect(self, image, debug=False):
+
+        #cv2.imwrite("debug/board_calibration.png", image)
 
         # Detect image
         with self.lock:
@@ -101,6 +103,14 @@ class BoardCalibrator(Calibrator):
 
             # Get corners
             detected_corners = [[int(p[0][0]), int(p[0][1])] for p in dst_points]
+
+            # Validity check corners
+            image_height, image_width = image.shape[:2]
+            min_area = (image_width * 0.35) * (image_height * 0.35)
+
+            if cv2.contourArea(dst_points, False) < min_area:
+                print("%s vs %s" % (cv2.contourArea(dst_points, False), min_area))
+                return None
 
             # Debug output
             if debug:

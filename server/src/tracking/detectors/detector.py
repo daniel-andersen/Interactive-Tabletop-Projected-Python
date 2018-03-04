@@ -3,7 +3,7 @@ from tracking.board.board_snapshot import SnapshotSize
 
 class Detector(object):
 
-    def __init__(self, detector_id):
+    def __init__(self, detector_id=None):
         """
         :param detector_id: Detector ID
         """
@@ -23,7 +23,7 @@ class Detector(object):
 
         :param image: Image
         :param board_area: Board area
-        :return: List of detected features each containing at least {detectorId, centerX, centerY, width, height, angle}
+        :return: Detector-dependant output
         """
         if image is not None:
             return self.detect_in_image(image)

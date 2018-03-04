@@ -1,9 +1,6 @@
 import cv2
 
 from test.base_test import BaseTest
-from tracking.board.board_area import BoardArea
-from tracking.board.board_descriptor import BoardDescriptor
-from tracking.calibrators.board_calibrator import BoardCalibrator, State
 from tracking.calibrators.hand_calibrator import HandCalibrator
 from tracking.detectors.hand_detector import HandDetector
 
@@ -23,11 +20,10 @@ class HandDetectionTest(BaseTest):
             ['test/resources/hand_detection/hand_detection_5', True, [{"gesture": "POINTING", "x": 0.5, "y": 0.5}]],
             ['test/resources/hand_detection/hand_detection_6', False, []],
             ['test/resources/hand_detection/hand_detection_7', False, []],
+            ['test/resources/hand_detection/hand_detection_8', False, []],
+            ['test/resources/hand_detection/hand_detection_9', False, []],
+            ['test/resources/hand_detection/hand_detection_10', False, []],
         ]
-
-        # Initial board detection
-        board_calibrator = BoardCalibrator(board_image_filename='test/resources/hand_detection/board_detection_source.png')
-        board_descriptor = BoardDescriptor()
 
         # Run tests
         success_count = 0
@@ -36,43 +32,26 @@ class HandDetectionTest(BaseTest):
         for i, (image_filename, board_calibration_success, expected_positions) in enumerate(tests):
             self.print_number(current=i + 1, total=len(tests))
 
-            board_filename = "%s_board.png" % image_filename
-            board_image = cv2.imread(board_filename)
-
             calibrator_filename = "%s_calibration.png" % image_filename
             calibrator_image = cv2.imread(calibrator_filename)
 
             test_filename = "%s_test.png" % image_filename
             test_image = cv2.imread(test_filename)
 
-            # Create board area
-            board_area = BoardArea(0, board_descriptor)
-
-            # Detect board
-            corners = board_calibrator.detect(board_image)
-            if corners is None:
-                failed_count += 1
-                print('%s FAILED. Could not detect board' % image_filename)
-                continue
-
-            # Force update board descriptor to recognize board immediately
-            board_descriptor.get_board_calibrator().update(board_image)
-            board_descriptor.get_board_calibrator().state = State.DETECTED
-
             # Calibrate hand detector
-            hand_detector_calibrator = HandCalibrator()
-            medians = hand_detector_calibrator.detect(calibrator_image)
+            hand_calibrator = HandCalibrator()
+            thresholds = hand_calibrator.detect(calibrator_image)
 
-            if medians is None and not board_calibration_success:
+            if thresholds is None and not board_calibration_success:
                 success_count += 1
                 continue
 
-            if medians is None and board_calibration_success:
+            if thresholds is None and board_calibration_success:
                 failed_count += 1
                 print('%s FAILED. Could not calibrate hand' % image_filename)
                 continue
 
-            if medians is not None and not board_calibration_success:
+            if thresholds is not None and not board_calibration_success:
                 failed_count += 1
                 print('%s FAILED. Hand calibration mistakely found hand!' % image_filename)
                 continue
@@ -81,8 +60,9 @@ class HandDetectionTest(BaseTest):
             #board_descriptor.update(calibrator_image)
 
             # Detect hands
-            hand_detector = HandDetector(0, medians)
-            #result = hand_detector.detect_in_image(test_image)
+            hand_detector = HandDetector(0, thresholds)
+            test_image = self.resize_image_to_detector_default_size(test_image, hand_detector)
+            result = hand_detector.detect_in_image(test_image)
 
             # Success
             success_count += 1

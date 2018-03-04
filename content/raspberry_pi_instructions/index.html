@@ -2,7 +2,7 @@
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
     <head>
         <meta charset="utf-8" />
-        <title>Hand Detection Example</title>
+        <title>Raspberry Pi Instructions</title>
         <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1" />
         <script type="text/javascript" src="../../../library/clientUtil.js"></script>
         <script type="text/javascript" src="../../../library/clientLibrary.js"></script>
@@ -19,13 +19,22 @@
         </style>
     </head>
     <body class="fullscreen_black">
-        <div id="content" class="fullscreen_black" style="height: 100vh;">
-        </div>
+        <div id="content" class="fullscreen_black" style="height: 100vh;"></div>
+
+        <img id="instructions_place_raspberry_pi_on_table" src="assets/images/instructions_place_raspberry_pi_on_table.png" style="position: absolute; opacity: 0; transition: opacity 0.2s linear; transform-origin: 50% 50%;" />
+        <img id="instructions_gpio_pinout" src="assets/images/instructions_gpio_pinout.png" style="position: absolute; opacity: 0; transition: opacity 0.2s linear; transform-origin: 50% 50%;" />
+        <img id="instructions_gpio_pinout_left" src="assets/images/instructions_gpio_pinout_left.png" style="position: absolute; opacity: 0; transition: opacity 0.2s linear; transform-origin: 50% 50%;" />
+        <img id="instructions_gpio_pinout_right" src="assets/images/instructions_gpio_pinout_right.png" style="position: absolute; opacity: 0; transition: opacity 0.2s linear; transform-origin: 50% 50%;" />
+        <img id="instructions_raspi_overlay" src="assets/images/instructions_raspi_overlay.png" style="position: absolute; opacity: 0; transition: opacity 0.2s linear; transform-origin: 50% 50%;" />
+        <img id="instructions_palm_overlay_1" src="assets/images/instructions_palm_overlay_1.png" style="position: absolute; opacity: 0; transition: opacity 0.2s linear; transform-origin: 50% 50%;" />
+        <img id="instructions_palm_overlay_2" src="assets/images/instructions_palm_overlay_2.png" style="position: absolute; opacity: 0; transition: opacity 0.2s linear; transform-origin: 50% 50%;" />
+
+        <!-- <div id="detection_state" style="position: absolute; left: 0; top: 0; width: 20px; height: 20px; background-color: transparent;"></div> -->
 
         <script>
             window.addEventListener("DOMContentLoaded", function() {
-                var example = new HandDetectionExample();
-                example.start();
+                var instructions = new RaspberryPiInstructions();
+                instructions.start();
             });
         </script>
     </body>

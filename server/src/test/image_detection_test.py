@@ -1,11 +1,8 @@
 import cv2
 
 from test.base_test import BaseTest
-from tracking.board.board_area import BoardArea
-from tracking.board.board_descriptor import BoardDescriptor
-from tracking.calibrators.board_calibrator import BoardCalibrator, State
-from tracking.calibrators.hand_calibrator import HandCalibrator
-from tracking.detectors.hand_detector import HandDetector
+from tracking.board import board_snapshot
+from tracking.board.board_snapshot import SnapshotSize
 from tracking.detectors.image_detector import ImageDetector
 
 
@@ -17,24 +14,17 @@ class ImageDetectionTest(BaseTest):
 
     def detection_test(self, debug=False):
         tests = [  # [Filename prefix, [{expected x, expected y, expected width, expected height, expected angle}, ...]]
-            ['test/resources/image_detection/image_detection_1', [{"x": 0.4000, "y": 0.3650, "width": 0.1562, "height": 0.1675, "angle": 30.0}]],
-            ['test/resources/image_detection/image_detection_2', [{"x": 0.8039, "y": 0.7662, "width": 0.0742, "height": 0.1875, "angle": -73.0}]],
-            ['test/resources/image_detection/image_detection_3', [{"x": 0.3390, "y": 0.5400, "width": 0.0742, "height": 0.1875, "angle": 67.0}]],
+            ['test/resources/image_detection/image_detection_1', SnapshotSize.SMALL, [{"x": 0.4000, "y": 0.3650, "width": 0.1562, "height": 0.1675, "angle": 30.0}]],
+            ['test/resources/image_detection/image_detection_2', SnapshotSize.LARGE, [{"x": 0.8039, "y": 0.7662, "width": 0.0742, "height": 0.1875, "angle": -73.0}]],
+            ['test/resources/image_detection/image_detection_3', SnapshotSize.LARGE, [{"x": 0.3390, "y": 0.5400, "width": 0.0742, "height": 0.1875, "angle": 67.0}]],
         ]
-
-        # Initial board detection
-        board_calibrator = BoardCalibrator(board_image_filename='test/resources/hand_detection/board_detection_source.png')
-        board_descriptor = BoardDescriptor()
 
         # Run tests
         success_count = 0
         failed_count = 0
 
-        for i, (image_filename, expected_matches) in enumerate(tests):
+        for i, (image_filename, input_resolution, expected_matches) in enumerate(tests):
             self.print_number(current=i + 1, total=len(tests))
-
-            board_filename = "%s_board.png" % image_filename
-            board_image = cv2.imread(board_filename)
 
             source_filename = "%s_source.png" % image_filename
             source_image = cv2.imread(source_filename)
@@ -42,26 +32,12 @@ class ImageDetectionTest(BaseTest):
             test_filename = "%s_test.png" % image_filename
             test_image = cv2.imread(test_filename)
 
-            # Create board area
-            board_area = BoardArea(0, board_descriptor)
-
-            # Detect board
-            corners = board_calibrator.detect(board_image)
-            if corners is None:
-                failed_count += 1
-                print('%s FAILED. Could not detect board' % image_filename)
-                continue
-
-            # Force update board descriptor to recognize board immediately
-            board_descriptor.get_board_calibrator().update(board_image)
-            board_descriptor.get_board_calibrator().state = State.DETECTED
-
-            # Update board descriptor with test image
-            board_descriptor.update(test_image)
-
             # Find image
-            image_detector = ImageDetector(0, source_image)
-            result = image_detector.detect(test_image, board_area)
+            image_detector = ImageDetector(0, source_image, input_resolution=input_resolution)
+
+            test_image = self.resize_image_to_detector_default_size(test_image, image_detector)
+
+            result = image_detector.detect(test_image)
 
             matches = result["matches"]
             matches_count = len(matches)
@@ -86,7 +62,7 @@ class ImageDetectionTest(BaseTest):
                     print('%s FAILED. Incorrect size: (%s, %s). Should be (%s, %s).' % (image_filename, actual_match["width"], actual_match["height"], expected_match["width"], expected_match["height"]))
                     continue
 
-                if abs(actual_match["angle"] - expected_match["angle"]) > 2.0:
+                if abs(actual_match["angle"] - expected_match["angle"]) > 3.0:
                     failed_count += 1
                     print('%s FAILED. Incorrect angle: %s. Should be %s.' % (image_filename, actual_match["angle"], expected_match["angle"]))
                     continue

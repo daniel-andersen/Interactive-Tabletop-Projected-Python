@@ -202,12 +202,12 @@ class Client
 
         setTimeout(() =>
             @boardCalibrationDiv.style.opacity = '1'
-        , 1)
+        , 100)
 
         setTimeout(() =>
             if completionCallback?
                 completionCallback()
-        , 1000)
+        , 1100)
 
     hideBoardCalibratorImage: (completionCallback) ->
         @boardCalibrationDiv.style.opacity = '0'
@@ -257,14 +257,15 @@ class Client
 
         setTimeout(() =>
             @handDetectionCalibrationDiv.style.opacity = '1'
-        , 1)
+        , 100)
 
         setTimeout(() =>
             if completionCallback?
                 completionCallback()
-        , 1000)
+        , 1100)
 
     hideHandDetectionCalibratorImage: (completionCallback) ->
+        @handDetectionCalibrationDiv.style.transition = 'opacity 0.3s linear'
         @handDetectionCalibrationDiv.style.opacity = '0'
 
         setTimeout(() =>
@@ -275,11 +276,11 @@ class Client
         , 1000)
 
     """
-    setupImageDetector: Sets up an image detector.
+    setupImageDetector: Sets up an image detector. Either sourceImage or sourceImages must be used.
 
     detectorId: Detector ID to use as a reference.
-    sourceImage: Image to detect
-    minMatches: (Optional) Minimum number of matches for detection to be considered successful
+    sourceImage: (Optional) Image to detect.
+    minMatches: (Optional) Minimum number of matches for detection to be considered successful.
     completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
     """
     setupImageDetector: (detectorId, sourceImage, minMatches = undefined, completionCallback = undefined) ->
@@ -424,15 +425,63 @@ class Client
 
     areaId: Area ID of tiled board area.
     detectorId: The ID of the detector to use.
+    keepRunning: (Optional) Keep returning results. Defaults to False.
     completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
     """
-    detectImages: (areaId, detectorId, completionCallback = undefined) ->
+    detectImages: (areaId, detectorId, keepRunning = false, completionCallback = undefined) ->
         requestId = @addCompletionCallback(completionCallback)
-        @sendMessage("detectImages", {
+        json = {
             "requestId": requestId,
             "areaId": areaId,
-            "detectorId": detectorId
-        })
+            "detectorId": detectorId,
+        }
+        if keepRunning? then json["keepRunning"] = keepRunning
+        @sendMessage("detectImages", json)
+        return requestId
+
+    """
+    detectNonobstructedArea: Detects nonobstructed area on the board.
+
+    areaId: ID of area to detect nonobstructed area in.
+    targetSize: Size of area to fit (width, height).
+    targetPosition: (Optional) Find area closest possible to target targetPosition (x, y). Defaults to [0.5, 0.5].
+    currentPosition: (Optional) Excludes current position area minus half padding.
+    padding: (Optional) Area padding.
+    stableTime: (Optional) Time to wait for result to stabilize. Defaults to 0.5.
+    keepRunning: (Optional) Keep returning results. Defaults to False.
+    completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
+    """
+    detectNonobstructedArea: (areaId, targetSize, targetPosition = undefined, currentPosition = undefined, padding = [0.05, 0.05], stableTime = 0.5, keepRunning = false, completionCallback = undefined) ->
+        requestId = @addCompletionCallback(completionCallback)
+        json = {
+            "requestId": requestId,
+            "areaId": areaId,
+            "targetSize": targetSize
+        }
+        if targetPosition? then json["targetPosition"] = targetPosition
+        if currentPosition? then json["currentPosition"] = currentPosition
+        if padding? then json["padding"] = padding
+        if stableTime? then json["stableTime"] = stableTime
+        if keepRunning? then json["keepRunning"] = keepRunning
+        @sendMessage("detectNonobstructedArea", json)
+        return requestId
+
+    """
+    detectGestures: Detect gestures in the given area.
+
+    areaId: Area ID of tiled board area.
+    gesture: (Optional) Gesture to detect
+    keepRunning: (Optional) Keep returning results. Defaults to False.
+    completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
+    """
+    detectGestures: (areaId, gesture = undefined, keepRunning = false, completionCallback = undefined) ->
+        requestId = @addCompletionCallback(completionCallback)
+        json = {
+            "requestId": requestId,
+            "areaId": areaId,
+        }
+        if keepRunning? then json["keepRunning"] = keepRunning
+        @sendMessage("detectGestures", json)
         return requestId
 
     """

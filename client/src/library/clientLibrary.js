@@ -236,14 +236,14 @@ Client = (function() {
       return function() {
         return _this.boardCalibrationDiv.style.opacity = '1';
       };
-    })(this), 1);
+    })(this), 100);
     return setTimeout((function(_this) {
       return function() {
         if (completionCallback != null) {
           return completionCallback();
         }
       };
-    })(this), 1000);
+    })(this), 1100);
   };
 
   Client.prototype.hideBoardCalibratorImage = function(completionCallback) {
@@ -309,17 +309,18 @@ Client = (function() {
       return function() {
         return _this.handDetectionCalibrationDiv.style.opacity = '1';
       };
-    })(this), 1);
+    })(this), 100);
     return setTimeout((function(_this) {
       return function() {
         if (completionCallback != null) {
           return completionCallback();
         }
       };
-    })(this), 1000);
+    })(this), 1100);
   };
 
   Client.prototype.hideHandDetectionCalibratorImage = function(completionCallback) {
+    this.handDetectionCalibrationDiv.style.transition = 'opacity 0.3s linear';
     this.handDetectionCalibrationDiv.style.opacity = '0';
     return setTimeout((function(_this) {
       return function() {
@@ -332,7 +333,7 @@ Client = (function() {
     })(this), 1000);
   };
 
-  "setupImageDetector: Sets up an image detector.\n\ndetectorId: Detector ID to use as a reference.\nsourceImage: Image to detect\nminMatches: (Optional) Minimum number of matches for detection to be considered successful\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+  "setupImageDetector: Sets up an image detector. Either sourceImage or sourceImages must be used.\n\ndetectorId: Detector ID to use as a reference.\nsourceImage: (Optional) Image to detect.\nminMatches: (Optional) Minimum number of matches for detection to be considered successful.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
 
   Client.prototype.setupImageDetector = function(detectorId, sourceImage, minMatches, completionCallback) {
     var requestId;
@@ -511,19 +512,98 @@ Client = (function() {
     return requestId;
   };
 
-  "detectImages: Detect images in the given area.\n\nareaId: Area ID of tiled board area.\ndetectorId: The ID of the detector to use.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+  "detectImages: Detect images in the given area.\n\nareaId: Area ID of tiled board area.\ndetectorId: The ID of the detector to use.\nkeepRunning: (Optional) Keep returning results. Defaults to False.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
 
-  Client.prototype.detectImages = function(areaId, detectorId, completionCallback) {
-    var requestId;
+  Client.prototype.detectImages = function(areaId, detectorId, keepRunning, completionCallback) {
+    var json, requestId;
+    if (keepRunning == null) {
+      keepRunning = false;
+    }
     if (completionCallback == null) {
       completionCallback = void 0;
     }
     requestId = this.addCompletionCallback(completionCallback);
-    this.sendMessage("detectImages", {
+    json = {
       "requestId": requestId,
       "areaId": areaId,
       "detectorId": detectorId
-    });
+    };
+    if (keepRunning != null) {
+      json["keepRunning"] = keepRunning;
+    }
+    this.sendMessage("detectImages", json);
+    return requestId;
+  };
+
+  "detectNonobstructedArea: Detects nonobstructed area on the board.\n\nareaId: ID of area to detect nonobstructed area in.\ntargetSize: Size of area to fit (width, height).\ntargetPosition: (Optional) Find area closest possible to target targetPosition (x, y). Defaults to [0.5, 0.5].\ncurrentPosition: (Optional) Excludes current position area minus half padding.\npadding: (Optional) Area padding.\nstableTime: (Optional) Time to wait for result to stabilize. Defaults to 0.5.\nkeepRunning: (Optional) Keep returning results. Defaults to False.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+
+  Client.prototype.detectNonobstructedArea = function(areaId, targetSize, targetPosition, currentPosition, padding, stableTime, keepRunning, completionCallback) {
+    var json, requestId;
+    if (targetPosition == null) {
+      targetPosition = void 0;
+    }
+    if (currentPosition == null) {
+      currentPosition = void 0;
+    }
+    if (padding == null) {
+      padding = [0.05, 0.05];
+    }
+    if (stableTime == null) {
+      stableTime = 0.5;
+    }
+    if (keepRunning == null) {
+      keepRunning = false;
+    }
+    if (completionCallback == null) {
+      completionCallback = void 0;
+    }
+    requestId = this.addCompletionCallback(completionCallback);
+    json = {
+      "requestId": requestId,
+      "areaId": areaId,
+      "targetSize": targetSize
+    };
+    if (targetPosition != null) {
+      json["targetPosition"] = targetPosition;
+    }
+    if (currentPosition != null) {
+      json["currentPosition"] = currentPosition;
+    }
+    if (padding != null) {
+      json["padding"] = padding;
+    }
+    if (stableTime != null) {
+      json["stableTime"] = stableTime;
+    }
+    if (keepRunning != null) {
+      json["keepRunning"] = keepRunning;
+    }
+    this.sendMessage("detectNonobstructedArea", json);
+    return requestId;
+  };
+
+  "detectGestures: Detect gestures in the given area.\n\nareaId: Area ID of tiled board area.\ngesture: (Optional) Gesture to detect\nkeepRunning: (Optional) Keep returning results. Defaults to False.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+
+  Client.prototype.detectGestures = function(areaId, gesture, keepRunning, completionCallback) {
+    var json, requestId;
+    if (gesture == null) {
+      gesture = void 0;
+    }
+    if (keepRunning == null) {
+      keepRunning = false;
+    }
+    if (completionCallback == null) {
+      completionCallback = void 0;
+    }
+    requestId = this.addCompletionCallback(completionCallback);
+    json = {
+      "requestId": requestId,
+      "areaId": areaId
+    };
+    if (keepRunning != null) {
+      json["keepRunning"] = keepRunning;
+    }
+    this.sendMessage("detectGestures", json);
     return requestId;
   };
 
