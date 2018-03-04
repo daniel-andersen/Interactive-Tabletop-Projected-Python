@@ -49,11 +49,16 @@ module.exports = function(grunt) {
           "../content/examples/tensorflow_brick_detection": "default"
         }
       },*/
-      raspberry_pi_instructions: {
+      example_tensorflow_brick_training: {
+        projects: {
+          "../content/examples/tensorflow_brick_training": "default"
+        }
+      }
+      /*raspberry_pi_instructions: {
         projects: {
           "../content/raspberry_pi_instructions": "default"
         }
-      }/*,
+      },
       MAZE: {
         projects: {
           "../content/MAZE": "default"
@@ -100,14 +105,22 @@ module.exports = function(grunt) {
           {expand: true, cwd: "../content/examples/tensorflow_brick_detection/", src: "*.html", dest: "target/content/examples/tensorflow_brick_detection/"}
         ]
       },*/
-      raspberry_pi_instructions: {
+      example_tensorflow_brick_training: {
+        files: [
+          {expand: true, cwd: "../content/examples/tensorflow_brick_training/assets", src: "**", dest: "target/content/examples/tensorflow_brick_training/assets"},
+          {expand: true, cwd: "../content/examples/tensorflow_brick_training/src", src: "**", dest: "target/content/examples/tensorflow_brick_training/src"},
+          {expand: true, cwd: "../content/examples/tensorflow_brick_training/lib", src: "**", dest: "target/content/examples/tensorflow_brick_training/lib"},
+          {expand: true, cwd: "../content/examples/tensorflow_brick_training/", src: "*.html", dest: "target/content/examples/tensorflow_brick_training/"}
+        ]
+      }
+      /*raspberry_pi_instructions: {
         files: [
           {expand: true, cwd: "../content/raspberry_pi_instructions/assets", src: "**", dest: "target/content/raspberry_pi_instructions/assets"},
           {expand: true, cwd: "../content/raspberry_pi_instructions/src", src: "**", dest: "target/content/raspberry_pi_instructions/src"},
           {expand: true, cwd: "../content/raspberry_pi_instructions/lib", src: "**", dest: "target/content/raspberry_pi_instructions/lib"},
           {expand: true, cwd: "../content/raspberry_pi_instructions/", src: "*.html", dest: "target/content/raspberry_pi_instructions/"}
         ]
-      }/*,
+      },
       MAZE: {
         files: [
           {expand: true, cwd: "../content/MAZE/assets", src: "**", dest: "target/content/MAZE/assets"},

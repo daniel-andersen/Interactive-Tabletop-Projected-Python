@@ -166,7 +166,7 @@ class Server(WebSocket):
             image = camera.read()
             if image is not None:
                 filename = payload["filename"] if "filename" in payload else\
-                    "debug/board_{0}.png".format(time.strftime("%Y-%m-%d-%H%M%S"))
+                    "resources/screenshots/board_{0}.png".format(time.strftime("%Y-%m-%d-%H%M%S"))
                 cv2.imwrite(filename, image)
                 return "OK", {}, self.request_id_from_payload(payload)
 
