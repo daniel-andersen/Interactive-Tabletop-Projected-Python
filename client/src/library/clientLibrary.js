@@ -126,12 +126,15 @@ Client = (function() {
     return requestId;
   };
 
-  "takeScreenshot: Takes and stores a screenshot from the camera.\n\nfilename: (Optional) Screenshot filename.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+  "takeScreenshot: Takes and stores a screenshot from the camera.\n\nareaId: (Optional) ID of area to detect images in.\nsize: (Optional) Size of image.\nfilename: (Optional) Screenshot filename.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
 
-  Client.prototype.takeScreenshot = function(areaId, filename, completionCallback) {
+  Client.prototype.takeScreenshot = function(areaId, size, filename, completionCallback) {
     var json, requestId;
     if (areaId == null) {
       areaId = void 0;
+    }
+    if (size == null) {
+      size = void 0;
     }
     if (filename == null) {
       filename = void 0;
@@ -146,10 +149,38 @@ Client = (function() {
     if (areaId != null) {
       json["areaId"] = areaId;
     }
+    if (size != null) {
+      json["size"] = size;
+    }
     if (filename != null) {
       json["filename"] = filename;
     }
     this.sendMessage("takeScreenshot", json);
+    return requestId;
+  };
+
+  "setDebugCameraImageFilename: Uploads debug camera image with specified filename.\n\nfilename: Debug image filename.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+
+  Client.prototype.setDebugCameraImageFilename = function(filename, completionCallback) {
+    var image, requestId;
+    if (completionCallback == null) {
+      completionCallback = void 0;
+    }
+    requestId = this.addCompletionCallback(completionCallback);
+    image = new Image();
+    image.onload = (function(_this) {
+      return function() {
+        return ClientUtil.convertImageToDataURL(image, function(base64Image) {
+          var json;
+          json = {
+            "requestId": requestId,
+            "imageBase64": base64Image
+          };
+          return _this.sendMessage("setDebugCameraImage", json);
+        });
+      };
+    })(this);
+    image.src = filename;
     return requestId;
   };
 
@@ -189,6 +220,23 @@ Client = (function() {
       "imageBase64": base64Image
     };
     this.sendMessage("setDebugCameraImage", json);
+    return requestId;
+  };
+
+  "writeTextToFile: Saves given text on the filesystem.\n\nfilename: Output filename.\ntext: Text.\ncompletionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.";
+
+  Client.prototype.writeTextToFile = function(filename, text, completionCallback) {
+    var json, requestId;
+    if (completionCallback == null) {
+      completionCallback = void 0;
+    }
+    requestId = this.addCompletionCallback(completionCallback);
+    json = {
+      "requestId": requestId,
+      "filename": filename,
+      "textBase64": btoa(text)
+    };
+    this.sendMessage("writeTextToFile", json);
     return requestId;
   };
 

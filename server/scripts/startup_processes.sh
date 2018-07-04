@@ -3,6 +3,7 @@
 # Kill current running processes
 pkill -ef "main.py"
 pkill -ef "grunt"
+pkill -ef "browser"
 
 # Pull latest from git
 cd ~/itp/

@@ -119,15 +119,40 @@ class Client
     """
     takeScreenshot: Takes and stores a screenshot from the camera.
 
+    areaId: (Optional) ID of area to detect images in.
+    size: (Optional) Size of image.
     filename: (Optional) Screenshot filename.
     completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
     """
-    takeScreenshot: (areaId = undefined, filename = undefined, completionCallback = undefined) ->
+    takeScreenshot: (areaId = undefined, size = undefined, filename = undefined, completionCallback = undefined) ->
         requestId = @addCompletionCallback(completionCallback)
         json = {"requestId": requestId}
         if areaId? then json["areaId"] = areaId
+        if size? then json["size"] = size
         if filename? then json["filename"] = filename
         @sendMessage("takeScreenshot", json)
+        return requestId
+
+    """
+    setDebugCameraImageFilename: Uploads debug camera image with specified filename.
+
+    filename: Debug image filename.
+    completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
+    """
+    setDebugCameraImageFilename: (filename, completionCallback = undefined) ->
+        requestId = @addCompletionCallback(completionCallback)
+
+        image = new Image()
+        image.onload = () =>
+            ClientUtil.convertImageToDataURL(image, (base64Image) =>
+                json = {
+                    "requestId": requestId,
+                    "imageBase64": base64Image
+                }
+                @sendMessage("setDebugCameraImage", json)
+            )
+        image.src = filename
+
         return requestId
 
     """
@@ -163,6 +188,23 @@ class Client
             "imageBase64": base64Image
         }
         @sendMessage("setDebugCameraImage", json)
+        return requestId
+
+    """
+    writeTextToFile: Saves given text on the filesystem.
+
+    filename: Output filename.
+    text: Text.
+    completionCallback: (Optional) completionCallback(action, payload) is called when receiving a respond to the request.
+    """
+    writeTextToFile: (filename, text, completionCallback = undefined) ->
+        requestId = @addCompletionCallback(completionCallback)
+        json = {
+            "requestId": requestId,
+            "filename": filename,
+            "textBase64": btoa(text)
+        }
+        @sendMessage("writeTextToFile", json)
         return requestId
 
     """

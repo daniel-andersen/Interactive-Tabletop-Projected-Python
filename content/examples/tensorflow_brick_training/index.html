@@ -20,7 +20,10 @@
     </head>
     <body class="fullscreen_black">
         <div id="content" class="fullscreen_black" style="height: 100vh;">
-            <img src="assets/images/background.png" />
+            <div id="background" style="position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; background-color: #000000; opacity: 0; transition: opacity 1s linear;">
+                <div id="tiles" style="position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; background-color: #00000000;"></div>
+                <div id="markers" style="position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; background-color: #00000000;"></div>
+            </div>
             <div id="flash" style="position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; background-color: #999999; opacity: 0;"></div>
         </div>
 

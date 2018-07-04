@@ -18,8 +18,7 @@ from server.threads.gesture_detector_thread import GestureDetectorThread
 from server.threads.hand_detector_calibration_thread import HandDetectorCalibrationThread
 from server.threads.images_detector_thread import ImagesDetectorThread
 from server.threads.nonobstructed_area_detector_thread import NonobstructedAreaDetectorThread
-from server.threads.tiled_brick_detector_threads import TiledBrickDetectorThread, TiledBrickMovementDetectorThread, \
-    TiledBricksDetectorThread
+from server.threads.tiled_brick_detector_threads import TiledBrickDetectorThread, TiledBrickMovementDetectorThread, TiledBricksDetectorThread
 from tracking.board.board_area import BoardArea
 from tracking.board.board_snapshot import SnapshotSize
 from tracking.board.tiled_board_area import TiledBoardArea
@@ -50,6 +49,7 @@ class Server(WebSocket):
                                         'enableDebug': self.enable_debug,
                                         'takeScreenshot': self.take_screenshot,
                                         'setDebugCameraImage': self.set_debug_camera_image,
+                                        'writeTextToFile': self.write_text_to_file,
                                         'calibrateBoard': self.calibrate_board,
                                         'calibrateHandDetection': self.calibrate_hand_detection,
                                         'initializeTiledBoardArea': self.initialize_tiled_board_area,
@@ -160,11 +160,13 @@ class Server(WebSocket):
         Takes a screenshot and saves it to disk.
 
         areaId: (Optional) ID of area to detect images in
+        size: (Optional) Size of image
         filename: (Optional) Screenshot filename
         requestId: (Optional) Request ID
         """
         filename = payload["filename"] if "filename" in payload else "resources/screenshots/board_{0}.png".format(time.strftime("%Y-%m-%d-%H%M%S"))
         area_id = payload["areaId"] if "areaId" in payload else None
+        size = payload["size"] if "size" in payload else None
         image = None
 
         if area_id is not None:
@@ -177,6 +179,8 @@ class Server(WebSocket):
                 image = camera.read()
 
         if image is not None:
+            if size is not None:
+                image = cv2.resize(image, (size[0], size[1]))
             cv2.imwrite(filename, image)
             return "OK", {}, self.request_id_from_payload(payload)
 
@@ -199,6 +203,21 @@ class Server(WebSocket):
         camera.set_debug_image(image)
 
         #cv2.imwrite("debug/debug_camera.png", image)
+
+        return "OK", {}, self.request_id_from_payload(payload)
+
+    def write_text_to_file(self, payload):
+        """
+        Writes the given text to the filesystem.
+
+        textBase64: Base 64 encoded text
+        filename: Output filename
+        """
+        filename = payload["filename"]
+        text = base64.b64decode(bytes(payload["textBase64"], 'utf-8')).decode("utf-8", "ignore")
+
+        with open(filename, "w") as text_file:
+            text_file.write(text)
 
         return "OK", {}, self.request_id_from_payload(payload)
 
