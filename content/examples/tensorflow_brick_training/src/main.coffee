@@ -12,8 +12,8 @@ class TensorflowBrickDetectionExample
             y: 20
 
         @tileSize =
-            x: window.innerWidth / @tileCount.x
-            y: window.innerHeight / @tileCount.y
+            width: window.innerWidth / @tileCount.x
+            height: window.innerHeight / @tileCount.y
 
         @aspectRatio = (640 / window.innerWidth)
         @screenshotSize =
@@ -162,6 +162,7 @@ class TensorflowBrickDetectionExample
         @markersDiv = document.getElementById("markers")
         @tilesDiv = document.getElementById("tiles")
         @flashDiv = document.getElementById("flash")
+        @maskElement = document.getElementById("mask")
 
         @trainNumber = 0
 
@@ -207,6 +208,7 @@ class TensorflowBrickDetectionExample
             setTimeout(() =>
                 @markersDiv.removeChild(@markersDiv.firstChild) while @markersDiv.firstChild?
                 @tilesDiv.removeChild(@tilesDiv.firstChild) while @tilesDiv.firstChild?
+                @maskElement.removeChild(@maskElement.firstChild) while @maskElement.firstChild?
                 @presentNewBackground()
             , 1000)
             return
@@ -263,21 +265,24 @@ class TensorflowBrickDetectionExample
                     if tile["tilemap"][i][j] == "*"
                         @tilePositions.push({
                             "x": j + tilePosition.x,
-                            "y": i + tilePosition.y
+                            "y": i + tilePosition.y,
+                            "masked": false
                         })
 
             # Create img
             tileImg = document.createElement('img')
             tileImg.src = 'assets/images/' + tile["filename"]
             tileImg.style.position = 'fixed'
-            tileImg.style.left = (tilePosition.x * @tileSize.x) + 'px'
-            tileImg.style.top = (tilePosition.y * @tileSize.y) + 'px'
-            tileImg.style.width = (tileCount.x * @tileSize.x) + 'px'
-            tileImg.style.height = (tileCount.y * @tileSize.y) + 'px'
+            tileImg.style.left = (tilePosition.x * @tileSize.width) + 'px'
+            tileImg.style.top = (tilePosition.y * @tileSize.height) + 'px'
+            tileImg.style.width = (tileCount.x * @tileSize.width) + 'px'
+            tileImg.style.height = (tileCount.y * @tileSize.height) + 'px'
 
             @tilesDiv.appendChild(tileImg)
 
     presentRandomBackground: ->
+
+        useMask = @randomInRange(0, 3) > 0
 
         # All tile positions are valid for background images
         @tilePositions = []
@@ -285,7 +290,8 @@ class TensorflowBrickDetectionExample
             for j in [0...@tileCount.x]
                 @tilePositions.push({
                     "x": j,
-                    "y": i
+                    "y": i,
+                    "masked": useMask
                 })
 
         # Create img
@@ -335,10 +341,10 @@ class TensorflowBrickDetectionExample
             markerImg = document.createElement('img')
             markerImg.src = 'assets/images/figure_marker.png'
             markerImg.style.position = 'fixed'
-            markerImg.style.left = ((position.x * @tileSize.x) - (@tileSize.x * 0.25)) + 'px'
-            markerImg.style.top = ((position.y * @tileSize.y) - (@tileSize.y * 0.25)) + 'px'
-            markerImg.style.width = (@tileSize.x * 1.50) + 'px'
-            markerImg.style.height = (@tileSize.y * 1.50) + 'px'
+            markerImg.style.left = ((position.x * @tileSize.width) - (@tileSize.width * 0.25)) + 'px'
+            markerImg.style.top = ((position.y * @tileSize.height) - (@tileSize.height * 0.25)) + 'px'
+            markerImg.style.width = (@tileSize.width * 1.50) + 'px'
+            markerImg.style.height = (@tileSize.height * 1.50) + 'px'
 
             @markersDiv.appendChild(markerImg)
 
@@ -351,12 +357,41 @@ class TensorflowBrickDetectionExample
             markerLabel.style.textAlign = 'center'
             markerLabel.style.color = 'yellow'
             markerLabel.style.position = 'fixed'
-            markerLabel.style.left = ((@positions[i].x * @tileSize.x) - (@tileSize.x * 0.5)) + 'px'
-            markerLabel.style.top = ((@positions[i].y * @tileSize.y) - (@tileSize.y * 0.25)) + 'px'
-            markerLabel.style.width = (@tileSize.x * 2.00) + 'px'
-            markerLabel.style.height = (@tileSize.y * 1.50) + 'px'
+            markerLabel.style.left = ((@positions[i].x * @tileSize.width) - (@tileSize.width * 0.5)) + 'px'
+            markerLabel.style.top = ((@positions[i].y * @tileSize.height) - (@tileSize.height * 0.25)) + 'px'
+            markerLabel.style.width = (@tileSize.width * 2.00) + 'px'
+            markerLabel.style.height = (@tileSize.height * 1.50) + 'px'
 
             @markersDiv.appendChild(markerLabel)
+
+        # Apply mask to positions
+        maskSize =
+            width: @tileSize.width * 8.0
+            height: @tileSize.height * 8.0
+
+        useMask = false
+        for position in @positions
+            if position.masked
+                maskCircle = document.createElementNS("http://www.w3.org/2000/svg", "image")
+                maskCircle.setAttributeNS(null, "href", "assets/images/figure_marker_mask.png")
+                maskCircle.setAttributeNS(null, "x", ((position.x * @tileSize.width) + (@tileSize.width / 2.0) - (maskSize.width / 2.0)) + "px")
+                maskCircle.setAttributeNS(null, "y", ((position.y * @tileSize.height) + (@tileSize.height / 2.0) - (maskSize.height / 2.0)) + "px")
+                maskCircle.setAttributeNS(null, "width", maskSize.width + "px")
+                maskCircle.setAttributeNS(null, "height", maskSize.height + "px")
+
+                @maskElement.appendChild(maskCircle)
+
+                useMask = true
+
+        if not useMask
+            maskCircle = document.createElementNS("http://www.w3.org/2000/svg", "rect")
+            maskCircle.setAttributeNS(null, "x", "0px")
+            maskCircle.setAttributeNS(null, "y", "0px")
+            maskCircle.setAttributeNS(null, "width", window.innerWidth + "px")
+            maskCircle.setAttributeNS(null, "height", window.innerHeight + "px")
+            maskCircle.setAttributeNS(null, "style", "fill: white")
+
+            @maskElement.appendChild(maskCircle)
 
     onKeydown: (event) ->
         if event.keyCode == 32  # Space

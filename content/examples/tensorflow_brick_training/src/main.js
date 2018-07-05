@@ -10,8 +10,8 @@ TensorflowBrickDetectionExample = (function() {
       y: 20
     };
     this.tileSize = {
-      x: window.innerWidth / this.tileCount.x,
-      y: window.innerHeight / this.tileCount.y
+      width: window.innerWidth / this.tileCount.x,
+      height: window.innerHeight / this.tileCount.y
     };
     this.aspectRatio = 640 / window.innerWidth;
     this.screenshotSize = {
@@ -61,6 +61,7 @@ TensorflowBrickDetectionExample = (function() {
     this.markersDiv = document.getElementById("markers");
     this.tilesDiv = document.getElementById("tiles");
     this.flashDiv = document.getElementById("flash");
+    this.maskElement = document.getElementById("mask");
     this.trainNumber = 0;
     this.readyForScreenshot = false;
   }
@@ -122,6 +123,9 @@ TensorflowBrickDetectionExample = (function() {
           }
           while (_this.tilesDiv.firstChild != null) {
             _this.tilesDiv.removeChild(_this.tilesDiv.firstChild);
+          }
+          while (_this.maskElement.firstChild != null) {
+            _this.maskElement.removeChild(_this.maskElement.firstChild);
           }
           return _this.presentNewBackground();
         };
@@ -193,7 +197,8 @@ TensorflowBrickDetectionExample = (function() {
           if (tile["tilemap"][i][j] === "*") {
             this.tilePositions.push({
               "x": j + tilePosition.x,
-              "y": i + tilePosition.y
+              "y": i + tilePosition.y,
+              "masked": false
             });
           }
         }
@@ -201,23 +206,25 @@ TensorflowBrickDetectionExample = (function() {
       tileImg = document.createElement('img');
       tileImg.src = 'assets/images/' + tile["filename"];
       tileImg.style.position = 'fixed';
-      tileImg.style.left = (tilePosition.x * this.tileSize.x) + 'px';
-      tileImg.style.top = (tilePosition.y * this.tileSize.y) + 'px';
-      tileImg.style.width = (tileCount.x * this.tileSize.x) + 'px';
-      tileImg.style.height = (tileCount.y * this.tileSize.y) + 'px';
+      tileImg.style.left = (tilePosition.x * this.tileSize.width) + 'px';
+      tileImg.style.top = (tilePosition.y * this.tileSize.height) + 'px';
+      tileImg.style.width = (tileCount.x * this.tileSize.width) + 'px';
+      tileImg.style.height = (tileCount.y * this.tileSize.height) + 'px';
       results.push(this.tilesDiv.appendChild(tileImg));
     }
     return results;
   };
 
   TensorflowBrickDetectionExample.prototype.presentRandomBackground = function() {
-    var i, j, l, m, number, ref, ref1, tileImg;
+    var i, j, l, m, number, ref, ref1, tileImg, useMask;
+    useMask = this.randomInRange(0, 3) > 0;
     this.tilePositions = [];
     for (i = l = 0, ref = this.tileCount.y; 0 <= ref ? l < ref : l > ref; i = 0 <= ref ? ++l : --l) {
       for (j = m = 0, ref1 = this.tileCount.x; 0 <= ref1 ? m < ref1 : m > ref1; j = 0 <= ref1 ? ++m : --m) {
         this.tilePositions.push({
           "x": j,
-          "y": i
+          "y": i,
+          "masked": useMask
         });
       }
     }
@@ -233,7 +240,7 @@ TensorflowBrickDetectionExample = (function() {
   };
 
   TensorflowBrickDetectionExample.prototype.pickRandomPositions = function() {
-    var availableFigures, count, figure, figureIndex, i, l, len, len1, m, markerImg, markerLabel, n, o, position, positionIndex, ref, ref1, ref2, ref3, results;
+    var availableFigures, count, figure, figureIndex, i, l, len, len1, len2, m, markerImg, markerLabel, maskCircle, maskSize, n, o, p, position, positionIndex, ref, ref1, ref2, ref3, ref4, useMask;
     this.choosenFigures = [];
     availableFigures = (function() {
       var l, len, ref, results;
@@ -267,26 +274,52 @@ TensorflowBrickDetectionExample = (function() {
       markerImg = document.createElement('img');
       markerImg.src = 'assets/images/figure_marker.png';
       markerImg.style.position = 'fixed';
-      markerImg.style.left = ((position.x * this.tileSize.x) - (this.tileSize.x * 0.25)) + 'px';
-      markerImg.style.top = ((position.y * this.tileSize.y) - (this.tileSize.y * 0.25)) + 'px';
-      markerImg.style.width = (this.tileSize.x * 1.50) + 'px';
-      markerImg.style.height = (this.tileSize.y * 1.50) + 'px';
+      markerImg.style.left = ((position.x * this.tileSize.width) - (this.tileSize.width * 0.25)) + 'px';
+      markerImg.style.top = ((position.y * this.tileSize.height) - (this.tileSize.height * 0.25)) + 'px';
+      markerImg.style.width = (this.tileSize.width * 1.50) + 'px';
+      markerImg.style.height = (this.tileSize.height * 1.50) + 'px';
       this.markersDiv.appendChild(markerImg);
     }
-    results = [];
     for (i = o = 0, ref3 = this.choosenFigures.length; 0 <= ref3 ? o < ref3 : o > ref3; i = 0 <= ref3 ? ++o : --o) {
       markerLabel = document.createElement('p');
       markerLabel.textContent = this.choosenFigures[i];
       markerLabel.style.textAlign = 'center';
       markerLabel.style.color = 'yellow';
       markerLabel.style.position = 'fixed';
-      markerLabel.style.left = ((this.positions[i].x * this.tileSize.x) - (this.tileSize.x * 0.5)) + 'px';
-      markerLabel.style.top = ((this.positions[i].y * this.tileSize.y) - (this.tileSize.y * 0.25)) + 'px';
-      markerLabel.style.width = (this.tileSize.x * 2.00) + 'px';
-      markerLabel.style.height = (this.tileSize.y * 1.50) + 'px';
-      results.push(this.markersDiv.appendChild(markerLabel));
+      markerLabel.style.left = ((this.positions[i].x * this.tileSize.width) - (this.tileSize.width * 0.5)) + 'px';
+      markerLabel.style.top = ((this.positions[i].y * this.tileSize.height) - (this.tileSize.height * 0.25)) + 'px';
+      markerLabel.style.width = (this.tileSize.width * 2.00) + 'px';
+      markerLabel.style.height = (this.tileSize.height * 1.50) + 'px';
+      this.markersDiv.appendChild(markerLabel);
     }
-    return results;
+    maskSize = {
+      width: this.tileSize.width * 8.0,
+      height: this.tileSize.height * 8.0
+    };
+    useMask = false;
+    ref4 = this.positions;
+    for (p = 0, len2 = ref4.length; p < len2; p++) {
+      position = ref4[p];
+      if (position.masked) {
+        maskCircle = document.createElementNS("http://www.w3.org/2000/svg", "image");
+        maskCircle.setAttributeNS(null, "href", "assets/images/figure_marker_mask.png");
+        maskCircle.setAttributeNS(null, "x", ((position.x * this.tileSize.width) + (this.tileSize.width / 2.0) - (maskSize.width / 2.0)) + "px");
+        maskCircle.setAttributeNS(null, "y", ((position.y * this.tileSize.height) + (this.tileSize.height / 2.0) - (maskSize.height / 2.0)) + "px");
+        maskCircle.setAttributeNS(null, "width", maskSize.width + "px");
+        maskCircle.setAttributeNS(null, "height", maskSize.height + "px");
+        this.maskElement.appendChild(maskCircle);
+        useMask = true;
+      }
+    }
+    if (!useMask) {
+      maskCircle = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      maskCircle.setAttributeNS(null, "x", "0px");
+      maskCircle.setAttributeNS(null, "y", "0px");
+      maskCircle.setAttributeNS(null, "width", window.innerWidth + "px");
+      maskCircle.setAttributeNS(null, "height", window.innerHeight + "px");
+      maskCircle.setAttributeNS(null, "style", "fill: white");
+      return this.maskElement.appendChild(maskCircle);
+    }
   };
 
   TensorflowBrickDetectionExample.prototype.onKeydown = function(event) {

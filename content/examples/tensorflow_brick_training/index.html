@@ -19,8 +19,14 @@
         </style>
     </head>
     <body class="fullscreen_black">
+        <svg>
+          <defs id="svg_defs">
+              <mask id="mask">
+              </mask>
+          </defs>
+        </svg>
         <div id="content" class="fullscreen_black" style="height: 100vh;">
-            <div id="background" style="position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; background-color: #000000; opacity: 0; transition: opacity 1s linear;">
+            <div id="background" style="position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; background-color: #000000; opacity: 0; transition: opacity 1s linear; mask: url(#mask);">
                 <div id="tiles" style="position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; background-color: #00000000;"></div>
                 <div id="markers" style="position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; background-color: #00000000;"></div>
             </div>
