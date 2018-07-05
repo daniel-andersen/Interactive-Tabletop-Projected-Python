@@ -443,10 +443,10 @@ class TensorflowBrickDetectionExample
             x2 = x1 + screenshotTileSize.width
             y2 = y1 + screenshotTileSize.height
 
-            x1 = Math.max(0, x1 - (screenshotTileSize.width * 0.5))
-            y1 = Math.max(0, y1 - (screenshotTileSize.height * 0.5))
-            x2 = Math.min(@screenshotSize.width - 1, x2 + (screenshotTileSize.width * 0.5))
-            y2 = Math.min(@screenshotSize.height - 1, y2 + (screenshotTileSize.height * 0.5))
+            x1 = Math.max(0, x1 - (screenshotTileSize.width * 0.25))
+            y1 = Math.max(0, y1 - (screenshotTileSize.height * 0.25))
+            x2 = Math.min(@screenshotSize.width - 1, x2 + (screenshotTileSize.width * 0.25))
+            y2 = Math.min(@screenshotSize.height - 1, y2 + (screenshotTileSize.height * 0.25))
 
             xmlText += "    <object>\n"
             xmlText += "        <name>" + @choosenFigures[i] + "</name>\n"
