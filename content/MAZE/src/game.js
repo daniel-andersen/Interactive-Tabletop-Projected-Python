@@ -32,7 +32,9 @@ MazeGame = (function() {
   MazeGame.prototype.reset = function() {
     return this.client.reset(void 0, (function(_this) {
       return function(action, payload) {
-        return _this.calibrateBoard();
+        return _this.client.setDebugCameraImageFilename("assets/images/calibration/board_calibration.png", function(action, payload) {
+          return _this.calibrateBoard();
+        });
       };
     })(this));
   };
@@ -65,7 +67,7 @@ MazeGame = (function() {
   };
 
   MazeGame.prototype.setupUi = function() {
-    var i, image, j, k, l, m, n, o, overlay, q, ref, ref1, ref2, ref3, ref4, ref5, tile, x, y;
+    var i, image, j, k, l, m, n, o, overlay, q, ref, ref1, ref2, ref3, ref4, ref5, tileImg, x, y;
     this.tileAlphaDark = 0.3;
     this.contentDiv = document.getElementById("content");
     this.tileMapDiv = document.getElementById("tileMap");
@@ -78,7 +80,7 @@ MazeGame = (function() {
       image.src = "assets/images/tiles/tile_" + i + ".png";
       this.tileImages.push(image);
     }
-    this.tileMap = (function() {
+    this.imgTileMap = (function() {
       var k, ref, results;
       results = [];
       for (y = k = 1, ref = this.mazeModel.height; 1 <= ref ? k <= ref : k >= ref; y = 1 <= ref ? ++k : --k) {
@@ -93,16 +95,16 @@ MazeGame = (function() {
       }
       return results;
     }).call(this);
-    for (y = k = 0, ref = this.mazeModel.height - 1; 0 <= ref ? k <= ref : k >= ref; y = 0 <= ref ? ++k : --k) {
-      for (x = l = 0, ref1 = this.mazeModel.width - 1; 0 <= ref1 ? l <= ref1 : l >= ref1; x = 0 <= ref1 ? ++l : --l) {
-        tile = this.tileMap[y][x];
-        tile.src = this.tileImages[0].src;
-        tile.style.position = "absolute";
-        tile.style.left = (x * 100.0 / this.mazeModel.width) + "%";
-        tile.style.top = (y * 100.0 / this.mazeModel.height) + "%";
-        tile.style.width = (100.0 / this.mazeModel.width) + "%";
-        tile.style.height = (100.0 / this.mazeModel.height) + "%";
-        this.tileMapDiv.appendChild(tile);
+    for (y = k = 0, ref = this.mazeModel.height; 0 <= ref ? k < ref : k > ref; y = 0 <= ref ? ++k : --k) {
+      for (x = l = 0, ref1 = this.mazeModel.width; 0 <= ref1 ? l < ref1 : l > ref1; x = 0 <= ref1 ? ++l : --l) {
+        tileImg = this.imgTileMap[y][x];
+        tileImg.src = this.tileImages[0].src;
+        tileImg.style.position = "absolute";
+        tileImg.style.left = (x * 100.0 / this.mazeModel.width) + "%";
+        tileImg.style.top = (y * 100.0 / this.mazeModel.height) + "%";
+        tileImg.style.width = (100.0 / this.mazeModel.width) + "%";
+        tileImg.style.height = (100.0 / this.mazeModel.height) + "%";
+        this.tileMapDiv.appendChild(tileImg);
       }
     }
     this.blackOverlayMap = (function() {
@@ -120,8 +122,8 @@ MazeGame = (function() {
       }
       return results;
     }).call(this);
-    for (y = m = 0, ref2 = this.mazeModel.height - 1; 0 <= ref2 ? m <= ref2 : m >= ref2; y = 0 <= ref2 ? ++m : --m) {
-      for (x = n = 0, ref3 = this.mazeModel.width - 1; 0 <= ref3 ? n <= ref3 : n >= ref3; x = 0 <= ref3 ? ++n : --n) {
+    for (y = m = 0, ref2 = this.mazeModel.height; 0 <= ref2 ? m < ref2 : m > ref2; y = 0 <= ref2 ? ++m : --m) {
+      for (x = n = 0, ref3 = this.mazeModel.width; 0 <= ref3 ? n < ref3 : n > ref3; x = 0 <= ref3 ? ++n : --n) {
         overlay = this.blackOverlayMap[y][x];
         overlay.style.background = "#000000";
         overlay.style.opacity = "1";
@@ -149,8 +151,8 @@ MazeGame = (function() {
       }
       return results;
     }).call(this);
-    for (y = o = 0, ref4 = this.mazeModel.height - 1; 0 <= ref4 ? o <= ref4 : o >= ref4; y = 0 <= ref4 ? ++o : --o) {
-      for (x = q = 0, ref5 = this.mazeModel.width - 1; 0 <= ref5 ? q <= ref5 : q >= ref5; x = 0 <= ref5 ? ++q : --q) {
+    for (y = o = 0, ref4 = this.mazeModel.height; 0 <= ref4 ? o < ref4 : o > ref4; y = 0 <= ref4 ? ++o : --o) {
+      for (x = q = 0, ref5 = this.mazeModel.width; 0 <= ref5 ? q < ref5 : q > ref5; x = 0 <= ref5 ? ++q : --q) {
         this.tileAlphaMap[y][x] = 0.0;
       }
     }
@@ -395,8 +397,8 @@ MazeGame = (function() {
     if (completionCallback == null) {
       completionCallback = void 0;
     }
-    for (y = j = 0, ref = this.mazeModel.height - 1; 0 <= ref ? j <= ref : j >= ref; y = 0 <= ref ? ++j : --j) {
-      for (x = k = 0, ref1 = this.mazeModel.width - 1; 0 <= ref1 ? k <= ref1 : k >= ref1; x = 0 <= ref1 ? ++k : --k) {
+    for (y = j = 0, ref = this.mazeModel.height; 0 <= ref ? j < ref : j > ref; y = 0 <= ref ? ++j : --j) {
+      for (x = k = 0, ref1 = this.mazeModel.width; 0 <= ref1 ? k < ref1 : k > ref1; x = 0 <= ref1 ? ++k : --k) {
         this.tileAlphaMap[y][x] = 0.0;
       }
     }
@@ -404,7 +406,7 @@ MazeGame = (function() {
       drawOrder = (function() {
         var l, ref2, results;
         results = [];
-        for (i = l = 0, ref2 = this.mazeModel.players.length - 1; 0 <= ref2 ? l <= ref2 : l >= ref2; i = 0 <= ref2 ? ++l : --l) {
+        for (i = l = 0, ref2 = this.mazeModel.players.length; 0 <= ref2 ? l < ref2 : l > ref2; i = 0 <= ref2 ? ++l : --l) {
           results.push(i);
         }
         return results;
@@ -414,9 +416,6 @@ MazeGame = (function() {
       for (l = 0, len = drawOrder.length; l < len; l++) {
         playerIndex = drawOrder[l];
         player = this.mazeModel.players[playerIndex];
-        if (player.state === PlayerState.DISABLED) {
-          continue;
-        }
         ref2 = this.mazeModel.positionsReachableFromPosition(player.position, player.reachDistance + 2);
         for (m = 0, len1 = ref2.length; m < len1; m++) {
           position = ref2[m];
@@ -429,10 +428,10 @@ MazeGame = (function() {
         }
       }
     }
-    for (y = o = 0, ref4 = this.mazeModel.height - 1; 0 <= ref4 ? o <= ref4 : o >= ref4; y = 0 <= ref4 ? ++o : --o) {
-      for (x = q = 0, ref5 = this.mazeModel.width - 1; 0 <= ref5 ? q <= ref5 : q >= ref5; x = 0 <= ref5 ? ++q : --q) {
+    for (y = o = 0, ref4 = this.mazeModel.height; 0 <= ref4 ? o < ref4 : o > ref4; y = 0 <= ref4 ? ++o : --o) {
+      for (x = q = 0, ref5 = this.mazeModel.width; 0 <= ref5 ? q < ref5 : q > ref5; x = 0 <= ref5 ? ++q : --q) {
         overlay = this.blackOverlayMap[y][x];
-        overlay.style.opacity = 1.0 - this.tileAlphaMap[y][x];
+        overlay.style.opacity = 0.0;
       }
     }
     if (completionCallback != null) {
@@ -445,16 +444,16 @@ MazeGame = (function() {
   };
 
   MazeGame.prototype.drawMaze = function() {
-    var entry, j, ref, results, tile, x, y;
+    var j, ref, results, tile, tileImg, x, y;
     results = [];
-    for (y = j = 0, ref = this.mazeModel.height - 1; 0 <= ref ? j <= ref : j >= ref; y = 0 <= ref ? ++j : --j) {
+    for (y = j = 0, ref = this.mazeModel.height; 0 <= ref ? j < ref : j > ref; y = 0 <= ref ? ++j : --j) {
       results.push((function() {
         var k, ref1, results1;
         results1 = [];
-        for (x = k = 0, ref1 = this.mazeModel.width - 1; 0 <= ref1 ? k <= ref1 : k >= ref1; x = 0 <= ref1 ? ++k : --k) {
-          entry = this.mazeModel.entryAtCoordinate(x, y);
-          tile = this.tileMap[y][x];
-          results1.push(tile.src = this.tileImages[entry.tileIndex].src);
+        for (x = k = 0, ref1 = this.mazeModel.width; 0 <= ref1 ? k < ref1 : k > ref1; x = 0 <= ref1 ? ++k : --k) {
+          tile = this.mazeModel.tileAtCoordinate(x, y);
+          tileImg = this.imgTileMap[y][x];
+          results1.push(tileImg.src = this.tileImages[tile.wallSum()].src);
         }
         return results1;
       }).call(this));

@@ -27,7 +27,10 @@ class MazeGame
 
     reset: ->
         @client.reset(undefined, (action, payload) =>
-            @calibrateBoard()
+            @client.setDebugCameraImageFilename("assets/images/calibration/board_calibration.png", (action, payload) =>
+                @calibrateBoard()
+            )
+            #@calibrateBoard()
         )
 
     calibrateBoard: ->
@@ -81,22 +84,22 @@ class MazeGame
           @tileImages.push(image)
 
         # Create image grid
-        @tileMap = ((document.createElement('img') for x in [1..@mazeModel.width]) for y in [1..@mazeModel.height])
-        for y in [0..@mazeModel.height - 1]
-            for x in [0..@mazeModel.width - 1]
-                tile = @tileMap[y][x]
-                tile.src = @tileImages[0].src
-                tile.style.position = "absolute"
-                tile.style.left = (x * 100.0 / @mazeModel.width) + "%"
-                tile.style.top = (y * 100.0 / @mazeModel.height) + "%"
-                tile.style.width = (100.0 / @mazeModel.width) + "%"
-                tile.style.height = (100.0 / @mazeModel.height) + "%"
-                @tileMapDiv.appendChild(tile)
+        @imgTileMap = ((document.createElement('img') for x in [1..@mazeModel.width]) for y in [1..@mazeModel.height])
+        for y in [0...@mazeModel.height]
+            for x in [0...@mazeModel.width]
+                tileImg = @imgTileMap[y][x]
+                tileImg.src = @tileImages[0].src
+                tileImg.style.position = "absolute"
+                tileImg.style.left = (x * 100.0 / @mazeModel.width) + "%"
+                tileImg.style.top = (y * 100.0 / @mazeModel.height) + "%"
+                tileImg.style.width = (100.0 / @mazeModel.width) + "%"
+                tileImg.style.height = (100.0 / @mazeModel.height) + "%"
+                @tileMapDiv.appendChild(tileImg)
 
         # Create black overlay grid
         @blackOverlayMap = ((document.createElement('div') for x in [1..@mazeModel.width]) for y in [1..@mazeModel.height])
-        for y in [0..@mazeModel.height - 1]
-            for x in [0..@mazeModel.width - 1]
+        for y in [0...@mazeModel.height]
+            for x in [0...@mazeModel.width]
                 overlay = @blackOverlayMap[y][x]
                 overlay.style.background = "#000000"
                 overlay.style.opacity = "1"
@@ -110,8 +113,8 @@ class MazeGame
 
         # Create tile alpha map
         @tileAlphaMap = ((0.0 for x in [1..@mazeModel.width]) for y in [1..@mazeModel.height])
-        for y in [0..@mazeModel.height - 1]
-            for x in [0..@mazeModel.width - 1]
+        for y in [0...@mazeModel.height]
+            for x in [0...@mazeModel.width]
                 @tileAlphaMap[y][x] = 0.0
 
         # Create treasure
@@ -321,22 +324,22 @@ class MazeGame
     updateMaze: (completionCallback = undefined) ->
 
         # Tilemap black as default
-        for y in [0..@mazeModel.height - 1]
-            for x in [0..@mazeModel.width - 1]
+        for y in [0...@mazeModel.height]
+            for x in [0...@mazeModel.width]
                 @tileAlphaMap[y][x] = 0.0
 
         # Check if any players are active
         if @mazeModel.players?
 
             # Update player tiles
-            drawOrder = (i for i in [0..@mazeModel.players.length - 1])
+            drawOrder = (i for i in [0...@mazeModel.players.length])
             drawOrder.splice(@currentPlayer.index, 1)
             drawOrder.push(@currentPlayer.index)
 
             for playerIndex in drawOrder
                 player = @mazeModel.players[playerIndex]
-                if player.state == PlayerState.DISABLED
-                    continue
+                #if player.state == PlayerState.DISABLED
+                #    continue
 
                 for position in @mazeModel.positionsReachableFromPosition(player.position, player.reachDistance + 2)
                     @tileAlphaMap[position.y][position.x] = @tileAlphaDark
@@ -345,10 +348,10 @@ class MazeGame
                     @tileAlphaMap[position.y][position.x] = if player.state == PlayerState.TURN then 1.0 else @tileAlphaDark
 
         # Update tile map
-        for y in [0..@mazeModel.height - 1]
-            for x in [0..@mazeModel.width - 1]
+        for y in [0...@mazeModel.height]
+            for x in [0...@mazeModel.width]
                 overlay = @blackOverlayMap[y][x]
-                overlay.style.opacity = 1.0 - @tileAlphaMap[y][x]
+                overlay.style.opacity = 0.0 # 1.0 - @tileAlphaMap[y][x]
 
         # Completion callback
         if completionCallback?
@@ -357,11 +360,11 @@ class MazeGame
             , 1750)
 
     drawMaze: ->
-        for y in [0..@mazeModel.height - 1]
-            for x in [0..@mazeModel.width - 1]
-                entry = @mazeModel.entryAtCoordinate(x, y)
-                tile = @tileMap[y][x]
-                tile.src = @tileImages[entry.tileIndex].src
+        for y in [0...@mazeModel.height]
+            for x in [0...@mazeModel.width]
+                tile = @mazeModel.tileAtCoordinate(x, y)
+                tileImg = @imgTileMap[y][x]
+                tileImg.src = @tileImages[tile.wallSum()].src
 
     positionOnScreenInPercentage: (x, y) ->
         return new Position(x * 100.0 / @mazeModel.width, y * 100.0 / @mazeModel.height)

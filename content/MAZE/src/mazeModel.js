@@ -1,12 +1,10 @@
-var Direction, MazeEntry, MazeModel, MazeWall, WallType, directionMovements,
-  indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+var Direction, MazeModel, Tile, Wall, directionMovements;
 
-WallType = {
+Wall = {
   UP: 1,
   RIGHT: 2,
   DOWN: 4,
-  LEFT: 8,
-  ALL_SIDES: 15
+  LEFT: 8
 };
 
 Direction = {
@@ -18,23 +16,19 @@ Direction = {
 
 directionMovements = [[0, -1], [1, 0], [0, 1], [-1, 0]];
 
-MazeEntry = (function() {
-  function MazeEntry(walls, tileIndex) {
-    this.walls = walls != null ? walls : [WallType.UP, WallType.RIGHT, WallType.DOWN, WallType.LEFT];
-    this.tileIndex = tileIndex != null ? tileIndex : 0;
+Tile = (function() {
+  function Tile(position1, walls) {
+    this.position = position1;
+    this.walls = walls != null ? walls : [Wall.UP, Wall.RIGHT, Wall.DOWN, Wall.LEFT];
   }
 
-  return MazeEntry;
+  Tile.prototype.wallSum = function() {
+    return this.walls.reduce((function(t, s) {
+      return t + s;
+    }), 0);
+  };
 
-})();
-
-MazeWall = (function() {
-  function MazeWall(position11, position21) {
-    this.position1 = position11;
-    this.position2 = position21;
-  }
-
-  return MazeWall;
+  return Tile;
 
 })();
 
@@ -43,58 +37,33 @@ MazeModel = (function() {
     this.numberOfPlayers = 4;
     this.width = 32;
     this.height = 20;
-    this.granularity = 2;
   }
 
   MazeModel.prototype.createRandomMaze = function() {
     this.placePlayers();
     this.resetMaze();
     this.createMaze();
-    this.calculateTileIndices();
     this.placeTreasure();
     return console.log("Treasure position: " + this.treasurePosition.x + ", " + this.treasurePosition.y);
   };
 
   MazeModel.prototype.resetMaze = function() {
     var x, y;
-    this.maze = (function() {
+    return this.tileMap = (function() {
       var j, ref, results;
       results = [];
-      for (y = j = 1, ref = this.height; 1 <= ref ? j <= ref : j >= ref; y = 1 <= ref ? ++j : --j) {
+      for (y = j = 0, ref = this.height; 0 <= ref ? j < ref : j > ref; y = 0 <= ref ? ++j : --j) {
         results.push((function() {
           var k, ref1, results1;
           results1 = [];
-          for (x = k = 1, ref1 = this.width; 1 <= ref1 ? k <= ref1 : k >= ref1; x = 1 <= ref1 ? ++k : --k) {
-            results1.push(new MazeEntry());
+          for (x = k = 0, ref1 = this.width; 0 <= ref1 ? k < ref1 : k > ref1; x = 0 <= ref1 ? ++k : --k) {
+            results1.push(new Tile(new Position(x, y)));
           }
           return results1;
         }).call(this));
       }
       return results;
     }).call(this);
-    this.validPositionMap = (function() {
-      var j, ref, results;
-      results = [];
-      for (y = j = 0, ref = this.height - 1; 0 <= ref ? j <= ref : j >= ref; y = 0 <= ref ? ++j : --j) {
-        results.push((function() {
-          var k, ref1, results1;
-          results1 = [];
-          for (x = k = 0, ref1 = this.width - 1; 0 <= ref1 ? k <= ref1 : k >= ref1; x = 0 <= ref1 ? ++k : --k) {
-            results1.push(true);
-          }
-          return results1;
-        }).call(this));
-      }
-      return results;
-    }).call(this);
-    this.validPositionMap[this.players[0].position.y][this.players[0].position.x - this.granularity] = false;
-    this.validPositionMap[this.players[0].position.y][this.players[0].position.x + this.granularity] = false;
-    this.validPositionMap[this.players[1].position.y - this.granularity][this.players[1].position.x] = false;
-    this.validPositionMap[this.players[1].position.y + this.granularity][this.players[1].position.x] = false;
-    this.validPositionMap[this.players[2].position.y][this.players[2].position.x - this.granularity] = false;
-    this.validPositionMap[this.players[2].position.y][this.players[2].position.x + this.granularity] = false;
-    this.validPositionMap[this.players[3].position.y - this.granularity][this.players[3].position.x] = false;
-    return this.validPositionMap[this.players[3].position.y + this.granularity][this.players[3].position.x] = false;
   };
 
   MazeModel.prototype.placePlayers = function() {
@@ -124,11 +93,11 @@ MazeModel = (function() {
     this.treasurePosition = null;
     bestScore = null;
     results = [];
-    for (y = k = 0, ref1 = this.height - 1; 0 <= ref1 ? k <= ref1 : k >= ref1; y = 0 <= ref1 ? ++k : --k) {
+    for (y = k = 0, ref1 = this.height; 0 <= ref1 ? k < ref1 : k > ref1; y = 0 <= ref1 ? ++k : --k) {
       results.push((function() {
         var l, m, n, ref2, ref3, ref4, results1;
         results1 = [];
-        for (x = l = 0, ref2 = this.width - 1; 0 <= ref2 ? l <= ref2 : l >= ref2; x = 0 <= ref2 ? ++l : --l) {
+        for (x = l = 0, ref2 = this.width; 0 <= ref2 ? l < ref2 : l > ref2; x = 0 <= ref2 ? ++l : --l) {
           isValid = true;
           for (i = m = 0, ref3 = this.players.length - 1; 0 <= ref3 ? m <= ref3 : m >= ref3; i = 0 <= ref3 ? ++m : --m) {
             if (distanceMaps[i][y][x] === -1) {
@@ -159,16 +128,162 @@ MazeModel = (function() {
     return results;
   };
 
-  MazeModel.prototype.distanceMapForPlayer = function(player) {
-    var _, adjacentPosition, currentDistance, distanceMap, granularity, j, len, position, ref, unvisitedPositions;
-    distanceMap = (function() {
+  MazeModel.prototype.createMaze = function() {
+    var index, neighborIndex, neighborTile, results, tile, tileList, unvisitedNeighborTiles, visitedMap, x, y;
+    visitedMap = (function() {
       var j, ref, results;
       results = [];
-      for (_ = j = 1, ref = this.height; 1 <= ref ? j <= ref : j >= ref; _ = 1 <= ref ? ++j : --j) {
+      for (y = j = 0, ref = this.height; 0 <= ref ? j < ref : j > ref; y = 0 <= ref ? ++j : --j) {
         results.push((function() {
           var k, ref1, results1;
           results1 = [];
-          for (_ = k = 1, ref1 = this.width; 1 <= ref1 ? k <= ref1 : k >= ref1; _ = 1 <= ref1 ? ++k : --k) {
+          for (x = k = 0, ref1 = this.width; 0 <= ref1 ? k < ref1 : k > ref1; x = 0 <= ref1 ? ++k : --k) {
+            results1.push(false);
+          }
+          return results1;
+        }).call(this));
+      }
+      return results;
+    }).call(this);
+    tileList = [];
+    tileList.push(this.tileAtCoordinate(Util.randomInRange(0, this.width), Util.randomInRange(0, this.height)));
+    results = [];
+    while (tileList.length > 0) {
+      index = this.chooseTileListIndex(tileList);
+      tile = tileList[index];
+      visitedMap[tile.position.y][tile.position.x] = true;
+      unvisitedNeighborTiles = this.unvisitedNeighborsOfTile(tile, visitedMap);
+      if (unvisitedNeighborTiles.length === 0) {
+        tileList.splice(index, 1);
+        continue;
+      }
+      neighborIndex = Util.randomInRange(0, unvisitedNeighborTiles.length);
+      neighborTile = unvisitedNeighborTiles[neighborIndex];
+      this.carvePathBetweenTiles(tile, neighborTile);
+      results.push(tileList.push(neighborTile));
+    }
+    return results;
+  };
+
+  MazeModel.prototype.carvePathBetweenTiles = function(tile1, tile2) {
+    if (tile1.position.x === tile2.position.x - 1) {
+      this.removeWallFromTile(tile1, Wall.RIGHT);
+      this.removeWallFromTile(tile2, Wall.LEFT);
+    }
+    if (tile1.position.x === tile2.position.x + 1) {
+      this.removeWallFromTile(tile1, Wall.LEFT);
+      this.removeWallFromTile(tile2, Wall.RIGHT);
+    }
+    if (tile1.position.y === tile2.position.y - 1) {
+      this.removeWallFromTile(tile1, Wall.DOWN);
+      this.removeWallFromTile(tile2, Wall.UP);
+    }
+    if (tile1.position.y === tile2.position.y + 1) {
+      this.removeWallFromTile(tile1, Wall.UP);
+      return this.removeWallFromTile(tile2, Wall.DOWN);
+    }
+  };
+
+  MazeModel.prototype.removeWallFromTile = function(tile, wall) {
+    var wallIndex;
+    wallIndex = tile.walls.indexOf(wall);
+    if (wallIndex > -1) {
+      return tile.walls.splice(wallIndex, 1);
+    }
+  };
+
+  MazeModel.prototype.chooseTileListIndex = function(tileList) {
+    return tileList.length - 1;
+  };
+
+  MazeModel.prototype.unvisitedNeighborsOfTile = function(tile, visitedMap) {
+    var adjacentTile;
+    return (function() {
+      var j, len, ref, results;
+      ref = this.adjacentTiles(tile);
+      results = [];
+      for (j = 0, len = ref.length; j < len; j++) {
+        adjacentTile = ref[j];
+        if (!visitedMap[adjacentTile.position.y][adjacentTile.position.x]) {
+          results.push(adjacentTile);
+        }
+      }
+      return results;
+    }).call(this);
+  };
+
+  MazeModel.prototype.adjacentTiles = function(tile) {
+    var p, tiles;
+    tiles = [];
+    p = new Position(tile.position.x - 1, tile.position.y);
+    if (this.isPositionValid(p)) {
+      tiles.push(this.tileAtPosition(p));
+    }
+    p = new Position(tile.position.x + 1, tile.position.y);
+    if (this.isPositionValid(p)) {
+      tiles.push(this.tileAtPosition(p));
+    }
+    p = new Position(tile.position.x, tile.position.y - 1);
+    if (this.isPositionValid(p)) {
+      tiles.push(this.tileAtPosition(p));
+    }
+    p = new Position(tile.position.x, tile.position.y + 1);
+    if (this.isPositionValid(p)) {
+      tiles.push(this.tileAtPosition(p));
+    }
+    return tiles;
+  };
+
+  MazeModel.prototype.adjacentConnectedTiles = function(tile) {
+    var adjacentTile;
+    return (function() {
+      var j, len, ref, results;
+      ref = this.adjacentTiles(tile);
+      results = [];
+      for (j = 0, len = ref.length; j < len; j++) {
+        adjacentTile = ref[j];
+        if (this.areTilesConnected(tile, adjacentTile)) {
+          results.push(adjacentTile);
+        }
+      }
+      return results;
+    }).call(this);
+  };
+
+  MazeModel.prototype.areTilesConnected = function(tile1, tile2) {
+    if (tile1.position.y === tile2.position.y) {
+      if (tile1.position.x === tile2.position.x - 1) {
+        return tile1.walls.indexOf(Wall.RIGHT) === -1;
+      }
+      if (tile1.position.x === tile2.position.x + 1) {
+        return tile1.walls.indexOf(Wall.LEFT) === -1;
+      }
+    }
+    if (tile1.position.x === tile2.position.x) {
+      if (tile1.position.y === tile2.position.y - 1) {
+        return tile1.walls.indexOf(Wall.DOWN) === -1;
+      }
+      if (tile1.position.y === tile2.position.y + 1) {
+        return tile1.walls.indexOf(Wall.UP) === -1;
+      }
+    }
+    return false;
+  };
+
+  MazeModel.prototype.isPositionValid = function(position) {
+    return position.x >= 0 && position.y >= 0 && position.x < this.width && position.y < this.height;
+  };
+
+  MazeModel.prototype.distanceMapForPlayer = function(player) {
+    var _, adjacentTile, currentDistance, distanceMap, j, len, ref, tile, unvisitedTiles;
+    distanceMap = (function() {
+      var j, ref, results;
+      results = [];
+      for (_ = j = 0, ref = this.height; 0 <= ref ? j < ref : j > ref; _ = 0 <= ref ? ++j : --j) {
+        results.push((function() {
+          var k, ref1, results1;
+          results1 = [];
+          for (_ = k = 0, ref1 = this.width; 0 <= ref1 ? k < ref1 : k > ref1; _ = 0 <= ref1 ? ++k : --k) {
             results1.push(-1);
           }
           return results1;
@@ -177,196 +292,59 @@ MazeModel = (function() {
       return results;
     }).call(this);
     distanceMap[player.position.y][player.position.x] = 0;
-    unvisitedPositions = [];
-    unvisitedPositions.push(player.position);
-    while (unvisitedPositions.length > 0) {
-      position = unvisitedPositions.splice(0, 1)[0];
-      currentDistance = distanceMap[position.y][position.x];
-      ref = this.adjacentConnectedPositions(position, granularity = 1);
+    unvisitedTiles = [];
+    unvisitedTiles.push(this.tileAtPosition(player.position));
+    while (unvisitedTiles.length > 0) {
+      tile = unvisitedTiles.splice(0, 1)[0];
+      currentDistance = distanceMap[tile.position.y][tile.position.x];
+      ref = this.adjacentConnectedTiles(tile);
       for (j = 0, len = ref.length; j < len; j++) {
-        adjacentPosition = ref[j];
-        if (distanceMap[adjacentPosition.y][adjacentPosition.x] === -1) {
-          distanceMap[adjacentPosition.y][adjacentPosition.x] = currentDistance + 1;
-          unvisitedPositions.push(adjacentPosition);
+        adjacentTile = ref[j];
+        if (distanceMap[adjacentTile.position.y][adjacentTile.position.x] === -1) {
+          distanceMap[adjacentTile.position.y][adjacentTile.position.x] = currentDistance + 1;
+          unvisitedTiles.push(adjacentTile);
         }
       }
     }
     return distanceMap;
   };
 
-  MazeModel.prototype.createMaze = function() {
-    var downPosition, entry, j, leftPosition, position, randomIndex, ref, results, rightPosition, upPosition, wall, x, y;
-    this.wallsToVisit = [];
-    position = this.positionWithGranularity(new Position(this.width / 2, this.height / 2));
-    this.removeWalls(position, new Position(position.x + 1, position.y));
-    this.addAdjacentWallsToVisitList(position);
-    while (this.wallsToVisit.length > 0) {
-      randomIndex = Util.randomInRange(0, this.wallsToVisit.length);
-      wall = this.wallsToVisit.splice(randomIndex, 1)[0];
-      if (this.wallMaskAtPosition(wall.position1) !== WallType.ALL_SIDES && this.wallMaskAtPosition(wall.position2) !== WallType.ALL_SIDES) {
-        continue;
-      }
-      this.removeWalls(wall.position1, wall.position2);
-      this.addAdjacentWallsToVisitList(wall.position2);
-    }
-    this.digWalls(this.players[0].position, Direction.DOWN);
-    this.digWalls(this.players[1].position, Direction.LEFT);
-    this.digWalls(this.players[2].position, Direction.UP);
-    this.digWalls(this.players[3].position, Direction.RIGHT);
-    results = [];
-    for (y = j = 0, ref = this.height - 1; 0 <= ref ? j <= ref : j >= ref; y = 0 <= ref ? ++j : --j) {
-      results.push((function() {
-        var k, ref1, ref2, ref3, ref4, ref5, results1;
-        results1 = [];
-        for (x = k = 0, ref1 = this.width - 1; 0 <= ref1 ? k <= ref1 : k >= ref1; x = 0 <= ref1 ? ++k : --k) {
-          position = new Position(x, y);
-          entry = this.entryAtPosition(position);
-          upPosition = new Position(x, y - 1);
-          if (this.isPositionValid(upPosition) && (ref2 = WallType.DOWN, indexOf.call(this.entryAtPosition(upPosition).walls, ref2) < 0)) {
-            entry.walls = entry.walls.filter(function(type) {
-              return type !== WallType.UP;
-            });
-          }
-          rightPosition = new Position(x + 1, y);
-          if (this.isPositionValid(rightPosition) && (ref3 = WallType.LEFT, indexOf.call(this.entryAtPosition(rightPosition).walls, ref3) < 0)) {
-            entry.walls = entry.walls.filter(function(type) {
-              return type !== WallType.RIGHT;
-            });
-          }
-          downPosition = new Position(x, y + 1);
-          if (this.isPositionValid(downPosition) && (ref4 = WallType.UP, indexOf.call(this.entryAtPosition(downPosition).walls, ref4) < 0)) {
-            entry.walls = entry.walls.filter(function(type) {
-              return type !== WallType.DOWN;
-            });
-          }
-          leftPosition = new Position(x - 1, y);
-          if (this.isPositionValid(leftPosition) && (ref5 = WallType.RIGHT, indexOf.call(this.entryAtPosition(leftPosition).walls, ref5) < 0)) {
-            results1.push(entry.walls = entry.walls.filter(function(type) {
-              return type !== WallType.LEFT;
-            }));
-          } else {
-            results1.push(void 0);
-          }
-        }
-        return results1;
-      }).call(this));
-    }
-    return results;
-  };
-
-  MazeModel.prototype.calculateTileIndices = function() {
-    var entry, j, ref, results, x, y;
-    results = [];
-    for (y = j = 0, ref = this.height - 1; 0 <= ref ? j <= ref : j >= ref; y = 0 <= ref ? ++j : --j) {
-      results.push((function() {
-        var k, ref1, results1;
-        results1 = [];
-        for (x = k = 0, ref1 = this.width - 1; 0 <= ref1 ? k <= ref1 : k >= ref1; x = 0 <= ref1 ? ++k : --k) {
-          entry = this.entryAtCoordinate(x, y);
-          results1.push(entry.tileIndex = this.tileIndexAtCoordinate(x, y));
-        }
-        return results1;
-      }).call(this));
-    }
-    return results;
-  };
-
-  MazeModel.prototype.removeWalls = function(position1, position2, granularity) {
-    var entry, wallType;
-    if (granularity == null) {
-      granularity = this.granularity;
-    }
-    entry = this.entryAtPosition(position1);
-    wallType = this.wallTypeOfAdjacentPositions(position1, position2, granularity);
-    entry.walls = entry.walls.filter(function(type) {
-      return type !== wallType;
-    });
-    entry = this.entryAtPosition(position2);
-    wallType = this.wallTypeOfAdjacentPositions(position2, position1, granularity);
-    return entry.walls = entry.walls.filter(function(type) {
-      return type !== wallType;
-    });
-  };
-
-  MazeModel.prototype.addAdjacentWallsToVisitList = function(position, granularity) {
-    var adjacentPosition, j, len, ref, results;
-    if (granularity == null) {
-      granularity = this.granularity;
-    }
-    ref = this.adjacentPositions(position, granularity);
+  MazeModel.prototype.positionsReachableByPlayer = function(player) {
+    var j, len, ref, results, tile;
+    ref = this.tilesReachableByPlayer(player);
     results = [];
     for (j = 0, len = ref.length; j < len; j++) {
-      adjacentPosition = ref[j];
-      results.push(this.wallsToVisit.push(new MazeWall(position, adjacentPosition)));
+      tile = ref[j];
+      results.push(tile.position);
     }
     return results;
-  };
-
-  MazeModel.prototype.adjacentPositions = function(position, granularity) {
-    var p, positions;
-    if (granularity == null) {
-      granularity = this.granularity;
-    }
-    positions = [];
-    p = new Position(position.x - granularity, position.y);
-    if (this.isPositionValid(p)) {
-      positions.push(p);
-    }
-    p = new Position(position.x + granularity, position.y);
-    if (this.isPositionValid(p)) {
-      positions.push(p);
-    }
-    p = new Position(position.x, position.y - granularity);
-    if (this.isPositionValid(p)) {
-      positions.push(p);
-    }
-    p = new Position(position.x, position.y + granularity);
-    if (this.isPositionValid(p)) {
-      positions.push(p);
-    }
-    return positions;
-  };
-
-  MazeModel.prototype.adjacentConnectedPositions = function(position, granularity) {
-    var p;
-    if (granularity == null) {
-      granularity = this.granularity;
-    }
-    return (function() {
-      var j, len, ref, results;
-      ref = this.adjacentPositions(position, granularity);
-      results = [];
-      for (j = 0, len = ref.length; j < len; j++) {
-        p = ref[j];
-        if (this.arePositionsConnected(position, p, granularity)) {
-          results.push(p);
-        }
-      }
-      return results;
-    }).call(this);
-  };
-
-  MazeModel.prototype.isPositionValid = function(position) {
-    if (position.x < 0 || position.y < 0 || position.x > this.width - 1 || position.y > this.height - 1) {
-      return false;
-    }
-    return this.validPositionMap[position.y][position.x];
-  };
-
-  MazeModel.prototype.positionsReachableByPlayer = function(player) {
-    return this.positionsReachableFromPosition(player.position, player.reachDistance);
   };
 
   MazeModel.prototype.positionsReachableFromPosition = function(position, maxDistance) {
-    var _, adjacentPosition, distance, distanceMap, granularity, j, len, positions, positionsToVisit, ref;
+    var j, len, ref, results, tile;
+    ref = this.tilesReachableFromPosition(position, maxDistance);
+    results = [];
+    for (j = 0, len = ref.length; j < len; j++) {
+      tile = ref[j];
+      results.push(tile.position);
+    }
+    return results;
+  };
+
+  MazeModel.prototype.tilesReachableByPlayer = function(player) {
+    return this.tilesReachableFromPosition(player.position, player.reachDistance);
+  };
+
+  MazeModel.prototype.tilesReachableFromPosition = function(position, maxDistance) {
+    var _, adjacentTile, distance, distanceMap, j, len, ref, tile, tiles, tilesToVisit;
     distanceMap = (function() {
       var j, ref, results;
       results = [];
-      for (_ = j = 1, ref = this.height; 1 <= ref ? j <= ref : j >= ref; _ = 1 <= ref ? ++j : --j) {
+      for (_ = j = 0, ref = this.height; 0 <= ref ? j < ref : j > ref; _ = 0 <= ref ? ++j : --j) {
         results.push((function() {
           var k, ref1, results1;
           results1 = [];
-          for (_ = k = 1, ref1 = this.width; 1 <= ref1 ? k <= ref1 : k >= ref1; _ = 1 <= ref1 ? ++k : --k) {
+          for (_ = k = 0, ref1 = this.width; 0 <= ref1 ? k < ref1 : k > ref1; _ = 0 <= ref1 ? ++k : --k) {
             results1.push(-1);
           }
           return results1;
@@ -375,104 +353,33 @@ MazeModel = (function() {
       return results;
     }).call(this);
     distanceMap[position.y][position.x] = 0;
-    positions = [];
-    positionsToVisit = [position];
-    while (positionsToVisit.length > 0) {
-      position = positionsToVisit.splice(0, 1)[0];
-      distance = distanceMap[position.y][position.x];
+    tiles = [];
+    tilesToVisit = [this.tileAtPosition(position)];
+    while (tilesToVisit.length > 0) {
+      tile = tilesToVisit.splice(0, 1)[0];
+      distance = distanceMap[tile.position.y][tile.position.x];
       if (distance >= maxDistance) {
         continue;
       }
-      positions.push(position);
-      ref = this.adjacentConnectedPositions(position, granularity = 1);
+      tiles.push(tile);
+      ref = this.adjacentConnectedTiles(tile);
       for (j = 0, len = ref.length; j < len; j++) {
-        adjacentPosition = ref[j];
-        if (distanceMap[adjacentPosition.y][adjacentPosition.x] === -1) {
-          distanceMap[adjacentPosition.y][adjacentPosition.x] = distance + 1;
-          positionsToVisit.push(adjacentPosition);
+        adjacentTile = ref[j];
+        if (distanceMap[adjacentTile.position.y][adjacentTile.position.x] === -1) {
+          distanceMap[adjacentTile.position.y][adjacentTile.position.x] = distance + 1;
+          tilesToVisit.push(adjacentTile);
         }
       }
     }
-    return positions;
+    return tiles;
   };
 
-  MazeModel.prototype.digWalls = function(position, direction) {
-    var entry, granularity, nextPosition;
-    entry = this.entryAtPosition(position);
-    while (this.wallMaskAtPosition(position) === WallType.ALL_SIDES) {
-      nextPosition = this.positionInDirection(position, direction);
-      if (!this.isPositionValid(nextPosition)) {
-        return;
-      }
-      this.removeWalls(position, nextPosition, granularity = 1);
-      position = nextPosition;
-      entry = this.entryAtPosition(nextPosition);
-    }
+  MazeModel.prototype.tileAtPosition = function(position) {
+    return this.tileAtCoordinate(position.x, position.y);
   };
 
-  MazeModel.prototype.positionInDirection = function(position, direction) {
-    return new Position(position.x + directionMovements[direction][0], position.y + directionMovements[direction][1]);
-  };
-
-  MazeModel.prototype.wallMaskAtPosition = function(position) {
-    return this.entryAtPosition(position).walls.reduce((function(t, s) {
-      return t + s;
-    }), 0);
-  };
-
-  MazeModel.prototype.entryAtCoordinate = function(x, y) {
-    return this.maze[y][x];
-  };
-
-  MazeModel.prototype.entryAtPosition = function(position) {
-    return this.maze[position.y][position.x];
-  };
-
-  MazeModel.prototype.arePositionsConnected = function(position1, position2, granularity) {
-    var wallType;
-    if (granularity == null) {
-      granularity = this.granularity;
-    }
-    wallType = this.wallTypeOfAdjacentPositions(position1, position2, granularity);
-    return indexOf.call(this.entryAtPosition(position1).walls, wallType) < 0;
-  };
-
-  MazeModel.prototype.wallTypeOfAdjacentPositions = function(position1, position2, granularity) {
-    if (granularity == null) {
-      granularity = this.granularity;
-    }
-    if (position1.y === position2.y) {
-      if (position1.x === position2.x - granularity) {
-        return WallType.RIGHT;
-      }
-      if (position1.x === position2.x + granularity) {
-        return WallType.LEFT;
-      }
-    }
-    if (position1.x === position2.x) {
-      if (position1.y === position2.y - granularity) {
-        return WallType.DOWN;
-      }
-      if (position1.y === position2.y + granularity) {
-        return WallType.UP;
-      }
-    }
-    return 0;
-  };
-
-  MazeModel.prototype.tileIndexAtCoordinate = function(x, y) {
-    var entry;
-    entry = this.entryAtCoordinate(x, y);
-    return entry.walls.reduce((function(t, s) {
-      return t + s;
-    }), 0);
-  };
-
-  MazeModel.prototype.positionWithGranularity = function(position, granularity) {
-    if (granularity == null) {
-      granularity = this.granularity;
-    }
-    return new Position(position.x - (position.x % granularity), position.y - (position.y % granularity));
+  MazeModel.prototype.tileAtCoordinate = function(x, y) {
+    return this.tileMap[y][x];
   };
 
   return MazeModel;
