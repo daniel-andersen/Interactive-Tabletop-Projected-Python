@@ -2,6 +2,7 @@ var TensorflowBrickDetectionExample;
 
 TensorflowBrickDetectionExample = (function() {
   function TensorflowBrickDetectionExample() {
+    var dateStr, now;
     this.client = new Client();
     this.figures = ["Black", "Red", "Blue", "Green"];
     this.backgroundCount = 2;
@@ -64,6 +65,9 @@ TensorflowBrickDetectionExample = (function() {
     this.maskElement = document.getElementById("mask");
     this.trainNumber = 0;
     this.readyForScreenshot = false;
+    now = new Date();
+    dateStr = now.getFullYear() + "" + this.pad(now.getMonth(), 2) + "" + this.pad(now.getDate(), 2) + "_" + this.pad(now.getHours(), 2) + "" + this.pad(now.getMinutes(), 2);
+    this.outputFilename = "resources/tensorflow/images/image_" + dateStr + "_" + this.trainNumber;
   }
 
   TensorflowBrickDetectionExample.prototype.start = function() {
@@ -337,7 +341,7 @@ TensorflowBrickDetectionExample = (function() {
     this.markersDiv.style.opacity = '0';
     setTimeout((function(_this) {
       return function() {
-        return _this.client.takeScreenshot(_this.client.boardAreaId_fullBoard, [_this.screenshotSize.width, _this.screenshotSize.height], "resources/tensorflow/images/image_" + _this.trainNumber + ".jpg", function() {
+        return _this.client.takeScreenshot(_this.client.boardAreaId_fullBoard, [_this.screenshotSize.width, _this.screenshotSize.height], _this.outputFilename + ".jpg", function() {
           _this.flashDiv.style.transition = "opacity 0s";
           _this.flashDiv.style.opacity = 1.0;
           return setTimeout(function() {
@@ -369,10 +373,10 @@ TensorflowBrickDetectionExample = (function() {
       y1 = this.positions[i].y * screenshotTileSize.height;
       x2 = x1 + screenshotTileSize.width;
       y2 = y1 + screenshotTileSize.height;
-      x1 = Math.max(0, x1 - (screenshotTileSize.width * 0.5));
-      y1 = Math.max(0, y1 - (screenshotTileSize.height * 0.5));
-      x2 = Math.min(this.screenshotSize.width - 1, x2 + (screenshotTileSize.width * 0.5));
-      y2 = Math.min(this.screenshotSize.height - 1, y2 + (screenshotTileSize.height * 0.5));
+      x1 = Math.max(0, x1 - (screenshotTileSize.width * 0.25));
+      y1 = Math.max(0, y1 - (screenshotTileSize.height * 0.25));
+      x2 = Math.min(this.screenshotSize.width - 1, x2 + (screenshotTileSize.width * 0.25));
+      y2 = Math.min(this.screenshotSize.height - 1, y2 + (screenshotTileSize.height * 0.25));
       xmlText += "    <object>\n";
       xmlText += "        <name>" + this.choosenFigures[i] + "</name>\n";
       xmlText += "        <pose>Unspecified</pose>\n";
@@ -388,7 +392,7 @@ TensorflowBrickDetectionExample = (function() {
       xmlText += "    </object>\n";
     }
     xmlText += "</annotation>\n";
-    return this.client.writeTextToFile("resources/tensorflow/images/image_" + this.trainNumber + ".xml", xmlText, (function(_this) {
+    return this.client.writeTextToFile(this.outputFilename + ".xml", xmlText, (function(_this) {
       return function() {
         return console.log("Wrote XML!");
       };
@@ -413,6 +417,14 @@ TensorflowBrickDetectionExample = (function() {
 
   TensorflowBrickDetectionExample.prototype.randomInRange = function(min, max) {
     return Math.floor(Math.random() * (max - min)) + min;
+  };
+
+  TensorflowBrickDetectionExample.prototype.pad = function(str, size) {
+    str = str + "";
+    while (str.length < size) {
+      str = "0" + str;
+    }
+    return str;
   };
 
   return TensorflowBrickDetectionExample;

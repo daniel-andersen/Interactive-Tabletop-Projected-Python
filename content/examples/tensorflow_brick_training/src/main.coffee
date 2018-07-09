@@ -168,6 +168,10 @@ class TensorflowBrickDetectionExample
 
         @readyForScreenshot = false
 
+        now = new Date()
+        dateStr = now.getFullYear() + "" + @pad(now.getMonth(), 2) + "" + @pad(now.getDate(), 2) + "_" + @pad(now.getHours(), 2) + "" + @pad(now.getMinutes(), 2)
+        @outputFilename = "resources/tensorflow/images/image_" + dateStr + "_" + @trainNumber
+
     start: ->
         @client.connect(
           (() => @reset()),
@@ -180,9 +184,10 @@ class TensorflowBrickDetectionExample
     reset: ->
         @client.reset([1600, 1200], (action, payload) =>
             @client.enableDebug()
-            @client.setDebugCameraImageFilename("assets/images/calibration/board_calibration.png", (action, payload) =>
-                @calibrateBoard()
-            )
+            #@client.setDebugCameraImageFilename("assets/images/calibration/board_calibration.png", (action, payload) =>
+            #    @calibrateBoard()
+            #)
+            @calibrateBoard()
         )
 
     onMessage: (json) ->
@@ -407,7 +412,7 @@ class TensorflowBrickDetectionExample
         @markersDiv.style.opacity = '0'
 
         setTimeout(() =>
-            @client.takeScreenshot(@client.boardAreaId_fullBoard, [@screenshotSize.width, @screenshotSize.height], "resources/tensorflow/images/image_" + @trainNumber + ".jpg", () =>
+            @client.takeScreenshot(@client.boardAreaId_fullBoard, [@screenshotSize.width, @screenshotSize.height], @outputFilename + ".jpg", () =>
                 @flashDiv.style.transition = "opacity 0s"
                 @flashDiv.style.opacity = 1.0
 
@@ -463,7 +468,7 @@ class TensorflowBrickDetectionExample
             xmlText += "    </object>\n"
         xmlText += "</annotation>\n"
 
-        @client.writeTextToFile("resources/tensorflow/images/image_" + @trainNumber + ".xml", xmlText, () =>
+        @client.writeTextToFile(@outputFilename + ".xml", xmlText, () =>
             console.log("Wrote XML!")
         )
 
@@ -481,3 +486,8 @@ class TensorflowBrickDetectionExample
 
     randomInRange: (min, max) ->
         return Math.floor(Math.random() * (max - min)) + min
+
+    pad: (str, size) ->
+        str = str + ""
+        str = "0" + str while str.length < size
+        return str

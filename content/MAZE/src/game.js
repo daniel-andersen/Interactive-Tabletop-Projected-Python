@@ -75,10 +75,10 @@ MazeGame = (function() {
     this.titleImage = document.getElementById("title");
     this.transientObjectsOverlay = document.getElementById("transientObjectsOverlay");
     this.tileImages = [];
-    for (i = j = 1; j <= 16; i = ++j) {
+    for (i = j = 0; j <= 16; i = ++j) {
       image = new Image();
       image.src = "assets/images/tiles/tile_" + i + ".png";
-      this.tileImages.push(image);
+      this.tileImages[i] = image;
     }
     this.imgTileMap = (function() {
       var k, ref, results;
@@ -354,7 +354,7 @@ MazeGame = (function() {
   };
 
   MazeGame.prototype.resetMaze = function() {
-    this.mazeModel.createRandomMaze();
+    this.mazeModel.createRandomMaze(2);
     this.gameState = GameState.INITIAL_PLACEMENT;
     this.currentPlayer = this.mazeModel.players[0];
     this.drawMaze();
@@ -416,6 +416,9 @@ MazeGame = (function() {
       for (l = 0, len = drawOrder.length; l < len; l++) {
         playerIndex = drawOrder[l];
         player = this.mazeModel.players[playerIndex];
+        if (player.state === PlayerState.DISABLED) {
+          continue;
+        }
         ref2 = this.mazeModel.positionsReachableFromPosition(player.position, player.reachDistance + 2);
         for (m = 0, len1 = ref2.length; m < len1; m++) {
           position = ref2[m];
@@ -453,7 +456,7 @@ MazeGame = (function() {
         for (x = k = 0, ref1 = this.mazeModel.width; 0 <= ref1 ? k < ref1 : k > ref1; x = 0 <= ref1 ? ++k : --k) {
           tile = this.mazeModel.tileAtCoordinate(x, y);
           tileImg = this.imgTileMap[y][x];
-          results1.push(tileImg.src = this.tileImages[tile.wallSum()].src);
+          results1.push(tileImg.src = this.tileImages[tile.imageIndex].src);
         }
         return results1;
       }).call(this));

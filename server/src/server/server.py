@@ -90,8 +90,8 @@ class Server(object):
         """
         try:
             async for data in websocket:
-                #message = ("%s" % data)[:128]
-                #print("Got message: %s" % message)
+                message = ("%s" % data)[:128]
+                print("Got message: %s" % message)
 
                 json_dict = json.loads(data)
 

@@ -78,10 +78,10 @@ class MazeGame
 
         # Load tiles
         @tileImages = []
-        for i in [1..16]
+        for i in [0..16]
           image = new Image()
           image.src = "assets/images/tiles/tile_" + i + ".png"
-          @tileImages.push(image)
+          @tileImages[i] = image
 
         # Create image grid
         @imgTileMap = ((document.createElement('img') for x in [1..@mazeModel.width]) for y in [1..@mazeModel.height])
@@ -278,7 +278,7 @@ class MazeGame
     resetMaze: ->
 
         # Create random maze and reset players
-        @mazeModel.createRandomMaze()
+        @mazeModel.createRandomMaze(2)
 
         # Reset game state
         @gameState = GameState.INITIAL_PLACEMENT
@@ -338,8 +338,8 @@ class MazeGame
 
             for playerIndex in drawOrder
                 player = @mazeModel.players[playerIndex]
-                #if player.state == PlayerState.DISABLED
-                #    continue
+                if player.state == PlayerState.DISABLED
+                    continue
 
                 for position in @mazeModel.positionsReachableFromPosition(player.position, player.reachDistance + 2)
                     @tileAlphaMap[position.y][position.x] = @tileAlphaDark
@@ -351,7 +351,7 @@ class MazeGame
         for y in [0...@mazeModel.height]
             for x in [0...@mazeModel.width]
                 overlay = @blackOverlayMap[y][x]
-                overlay.style.opacity = 0.0 # 1.0 - @tileAlphaMap[y][x]
+                overlay.style.opacity = 0.0  #1.0 - @tileAlphaMap[y][x]
 
         # Completion callback
         if completionCallback?
@@ -364,7 +364,7 @@ class MazeGame
             for x in [0...@mazeModel.width]
                 tile = @mazeModel.tileAtCoordinate(x, y)
                 tileImg = @imgTileMap[y][x]
-                tileImg.src = @tileImages[tile.wallSum()].src
+                tileImg.src = @tileImages[tile.imageIndex].src
 
     positionOnScreenInPercentage: (x, y) ->
         return new Position(x * 100.0 / @mazeModel.width, y * 100.0 / @mazeModel.height)
