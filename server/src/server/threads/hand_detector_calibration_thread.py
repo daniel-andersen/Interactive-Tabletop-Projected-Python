@@ -51,5 +51,5 @@ class HandDetectorCalibrationThread(ServerThread):
 
                 # Callback
                 print('Hand calibrated')
-                self.callback_function()
+                self._callback(lambda: self.callback_function())
                 return

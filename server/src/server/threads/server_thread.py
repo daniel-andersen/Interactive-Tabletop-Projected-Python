@@ -1,4 +1,5 @@
 import uuid
+import asyncio
 from threading import Thread
 
 
@@ -17,3 +18,7 @@ class ServerThread(object):
 
     def _run(self):
         pass
+
+    def _callback(self, callback):
+        event_loop = asyncio.new_event_loop()
+        event_loop.run_until_complete(callback())

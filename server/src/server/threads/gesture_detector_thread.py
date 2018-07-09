@@ -31,7 +31,7 @@ class GestureDetectorThread(ServerThread):
 
                 # Update
                 result = self.detector.detect(board_area=self.board_area)
-                self.callback_function(result)
+                self._callback(lambda: self.callback_function(result))
 
                 # Stop running
                 if not self.keep_running:
@@ -42,7 +42,7 @@ class GestureDetectorThread(ServerThread):
 
                 # Give up waiting if not keep running
                 if not self.keep_running:
-                    self.callback_function([])
+                    self._callback(lambda: self.callback_function([]))
                     return
 
                 # Wait for board image

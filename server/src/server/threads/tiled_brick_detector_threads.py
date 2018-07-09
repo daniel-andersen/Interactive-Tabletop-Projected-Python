@@ -39,7 +39,7 @@ class TiledBrickDetectorThreadBase(ServerThread):
 
                 # Give up if not waiting for position to return
                 if not self.wait_for_position:
-                    self.callback_function([])
+                    self._callback(lambda: self.callback_function([]))
                     return
 
                 # Wait for board image
@@ -65,12 +65,12 @@ class TiledBricksDetectorThread(TiledBrickDetectorThreadBase):
 
         # Got positions
         if len(positions) > 0 or not self.wait_for_position:
-            self.callback_function(positions)
+            self._callback(lambda: self.callback_function(positions))
             return True
 
         # Not waiting for positions
         if not self.wait_for_position:
-            self.callback_function([])
+            self._callback(lambda: self.callback_function([]))
             return True
 
         # Waiting for positions
@@ -95,17 +95,17 @@ class TiledBrickDetectorThread(TiledBrickDetectorThreadBase):
 
             # No specific target position
             if self.target_position is None:
-                self.callback_function(position)
+                self._callback(lambda: self.callback_function(position))
                 return True
 
             # Target position specified
             elif position[0] == self.target_position[0] and position[1] == self.target_position[1]:
-                self.callback_function(position)
+                self._callback(lambda: self.callback_function(position))
                 return True
 
         # Not waiting for position
         if not self.wait_for_position:
-            self.callback_function(None)
+            self._callback(lambda: self.callback_function(None))
             return True
 
         # Waiting for position
@@ -139,10 +139,10 @@ class TiledBrickMovementDetectorThread(TiledBrickDetectorThreadBase):
 
             # Return found position if no target defined
             if not self.target_position:
-                self.callback_function(position, self.initial_position)
+                self._callback(lambda: self.callback_function(position, self.initial_position))
                 return True
 
             # Check moved to target position
             if self.target_position and position[0] == self.target_position[0] and position[1] == self.target_position[1]:
-                self.callback_function(position, self.initial_position)
+                self._callback(lambda: self.callback_function(position, self.initial_position))
                 return True

@@ -3,8 +3,8 @@ html5lib==0.9999999
 Markdown==2.6.9
 numpy==1.13.0
 protobuf==3.4.0
--e git+https://github.com/dpallot/simple-websocket-server.git@8e12e2a532fa16f636e83efbffdf013585046f18#egg=SimpleWebSocketServer
 six==1.11.0
 tensorflow==1.3.0
 tensorflow-tensorboard==0.1.8
+websockets==5.0.1
 Werkzeug==0.12.2

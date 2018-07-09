@@ -55,11 +55,11 @@ class NonobstructedAreaDetectorThread(ServerThread):
                     continue
 
                 if len(centers) == 0:
-                    self.callback_function(result)
+                    self._callback(lambda: self.callback_function(result))
 
                 elif last_sent_center is None or last_sent_center == centers[0]:
                     last_sent_center = centers[0]
-                    self.callback_function(result)
+                    self._callback(lambda: self.callback_function(result))
 
                 # Stop running
                 if not self.keep_running:
@@ -70,7 +70,7 @@ class NonobstructedAreaDetectorThread(ServerThread):
 
                 # Give up waiting if not keep running
                 if not self.keep_running:
-                    self.callback_function(None)
+                    self._callback(lambda: self.callback_function(None))
                     return
 
                 # Wait for board image

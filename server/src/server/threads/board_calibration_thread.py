@@ -48,10 +48,10 @@ class BoardCalibrationThread(ServerThread):
                 globals.get_state().get_camera().set_normal_brightness()
 
                 # Call callback function
-                self.callback_function()
+                self._callback(lambda: self.callback_function())
                 return
 
         # Timeout
         print('Board calibration timed out!')
         if self.timeout_function is not None:
-            self.timeout_function()
+            self._callback(lambda: self.timeout_function())

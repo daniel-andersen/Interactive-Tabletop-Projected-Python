@@ -1,8 +1,8 @@
-import server.server as server
+from server.server import Server
 
 
 def main():
-    server.start_server()
+    Server().start()
 
 
 main()
