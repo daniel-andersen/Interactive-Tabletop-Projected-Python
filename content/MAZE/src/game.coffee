@@ -27,10 +27,7 @@ class MazeGame
 
     reset: ->
         @client.reset(undefined, (action, payload) =>
-            @client.setDebugCameraImageFilename("assets/images/calibration/board_calibration.png", (action, payload) =>
-                @calibrateBoard()
-            )
-            #@calibrateBoard()
+            @calibrateBoard()
         )
 
     calibrateBoard: ->
@@ -67,55 +64,38 @@ class MazeGame
     setupUi: ->
 
         # Misc constants
-        @tileAlphaDark = 0.3
+        @tileAlphaDark = 0.2
 
         # Get document elements
         @contentDiv = document.getElementById("content")
-        @tileMapDiv = document.getElementById("tileMap")
-        @blackOverlayMapDiv = document.getElementById("blackOverlayMap")
+        @renderedCanvases = [document.getElementById("renderedCanvasBehind"), document.getElementById("renderedCanvasFront")]
+        @tileCanvas = document.getElementById("tileCanvas")
         @titleImage = document.getElementById("title")
         @transientObjectsOverlay = document.getElementById("transientObjectsOverlay")
+
+        # Setup canvases
+        @currentRenderedCanvasIndex = 0
+
+        for canvas in [@renderedCanvases[0], @renderedCanvases[1], @tileCanvas]
+            canvas.width = window.innerWidth
+            canvas.height = window.innerHeight
+            canvas.style.width = window.innerWidth
+            canvas.style.height = window.innerHeight
 
         # Load tiles
         @tileImages = []
         for i in [0..16]
-          image = new Image()
-          image.src = "assets/images/tiles/tile_" + i + ".png"
-          @tileImages[i] = image
+            image = new Image()
+            image.src = "assets/images/tiles/tile_" + i + ".png"
+            @tileImages[i] = image
 
-        # Create image grid
-        @imgTileMap = ((document.createElement('img') for x in [1..@mazeModel.width]) for y in [1..@mazeModel.height])
-        for y in [0...@mazeModel.height]
-            for x in [0...@mazeModel.width]
-                tileImg = @imgTileMap[y][x]
-                tileImg.src = @tileImages[0].src
-                tileImg.style.position = "absolute"
-                tileImg.style.left = (x * 100.0 / @mazeModel.width) + "%"
-                tileImg.style.top = (y * 100.0 / @mazeModel.height) + "%"
-                tileImg.style.width = (100.0 / @mazeModel.width) + "%"
-                tileImg.style.height = (100.0 / @mazeModel.height) + "%"
-                @tileMapDiv.appendChild(tileImg)
+        # Load visibility mask
+        @visibilityMask = new Image()
+        @visibilityMask.src = "assets/images/tiles/visibility_mask.png"
 
-        # Create black overlay grid
-        @blackOverlayMap = ((document.createElement('div') for x in [1..@mazeModel.width]) for y in [1..@mazeModel.height])
-        for y in [0...@mazeModel.height]
-            for x in [0...@mazeModel.width]
-                overlay = @blackOverlayMap[y][x]
-                overlay.style.background = "#000000"
-                overlay.style.opacity = "1"
-                overlay.style.transition = "opacity 1s linear"
-                overlay.style.position = "absolute"
-                overlay.style.left = (x * 100.0 / @mazeModel.width) + "%"
-                overlay.style.top = (y * 100.0 / @mazeModel.height) + "%"
-                overlay.style.width = (100.0 / @mazeModel.width) + "%"
-                overlay.style.height = (100.0 / @mazeModel.height) + "%"
-                @blackOverlayMapDiv.appendChild(overlay)
-
-        # Create tile alpha map
-        @tileAlphaMap = ((0.0 for x in [1..@mazeModel.width]) for y in [1..@mazeModel.height])
-        for y in [0...@mazeModel.height]
-            for x in [0...@mazeModel.width]
-                @tileAlphaMap[y][x] = 0.0
+        # Load background image
+        @backgroundImage = new Image()
+        @backgroundImage.src = "assets/images/background.png"
 
         # Create treasure
         @treasureImage = document.createElement("img")
@@ -323,10 +303,15 @@ class MazeGame
 
     updateMaze: (completionCallback = undefined) ->
 
+        # Swap rendered canvas
+        @currentRenderedCanvasIndex = 1 - @currentRenderedCanvasIndex
+
         # Tilemap black as default
+        tileAlphaMap = ((0.0 for x in [1..@mazeModel.width]) for y in [1..@mazeModel.height])
+
         for y in [0...@mazeModel.height]
             for x in [0...@mazeModel.width]
-                @tileAlphaMap[y][x] = 0.0
+                tileAlphaMap[y][x] = 0.0
 
         # Check if any players are active
         if @mazeModel.players?
@@ -341,17 +326,43 @@ class MazeGame
                 if player.state == PlayerState.DISABLED
                     continue
 
-                for position in @mazeModel.positionsReachableFromPosition(player.position, player.reachDistance + 2)
-                    @tileAlphaMap[position.y][position.x] = @tileAlphaDark
+                for position in @mazeModel.positionsReachableFromPosition(player.position, player.reachDistance + 1)
+                    tileAlphaMap[position.y][position.x] = @tileAlphaDark
 
                 for position in @mazeModel.positionsReachableFromPosition(player.position, player.reachDistance)
-                    @tileAlphaMap[position.y][position.x] = if player.state == PlayerState.TURN then 1.0 else @tileAlphaDark
+                    tileAlphaMap[position.y][position.x] = if player.state == PlayerState.TURN then 1.0 else @tileAlphaDark
 
-        # Update tile map
+        # Prepare rendered canvas
+        canvas = @renderedCanvases[@currentRenderedCanvasIndex]
+
+        context = canvas.getContext("2d")
+        context.clearRect(0, 0, canvas.width, canvas.height)
+
+        # Draw dark tiles mask
+        context.globalCompositeOperation = "source-over"
         for y in [0...@mazeModel.height]
             for x in [0...@mazeModel.width]
-                overlay = @blackOverlayMap[y][x]
-                overlay.style.opacity = 0.0  #1.0 - @tileAlphaMap[y][x]
+                if tileAlphaMap[y][x] > 0.0
+                    context.drawImage(@visibilityMask, (x - 1) * window.innerWidth / @mazeModel.width, (y - 1) * window.innerHeight / @mazeModel.height, 3 * window.innerWidth / @mazeModel.width, 3 * window.innerHeight / @mazeModel.height)
+
+        # Darken tiles
+        context.globalCompositeOperation = "source-in"
+        context.fillStyle = "rgba(0, 0, 0, " + @tileAlphaDark + ")"
+        context.fillRect(0, 0, canvas.width, canvas.height)
+
+        # Draw bright tiles mask
+        context.globalCompositeOperation = "source-over"
+        for y in [0...@mazeModel.height]
+            for x in [0...@mazeModel.width]
+                if tileAlphaMap[y][x] == 1.0
+                    context.drawImage(@visibilityMask, (x - 1) * window.innerWidth / @mazeModel.width, (y - 1) * window.innerHeight / @mazeModel.height, 3 * window.innerWidth / @mazeModel.width, 3 * window.innerHeight / @mazeModel.height)
+
+        # Draw tile map on top of mask
+        context.globalCompositeOperation = "source-in"
+        context.drawImage(@tileCanvas, 0, 0, window.innerWidth, window.innerHeight)
+
+        # Fade canvas
+        @renderedCanvases[1].style.opacity = if @currentRenderedCanvasIndex == 0 then 0.0 else 1.0
 
         # Completion callback
         if completionCallback?
@@ -360,11 +371,19 @@ class MazeGame
             , 1750)
 
     drawMaze: ->
+
+        # Prepare canvas
+        context = @tileCanvas.getContext("2d")
+        context.clearRect(0, 0, @tileCanvas.width, @tileCanvas.height)
+
+        # Draw background
+        context.drawImage(@backgroundImage, 0, 0, window.innerWidth, window.innerHeight)
+
+        # Draw tiles
         for y in [0...@mazeModel.height]
             for x in [0...@mazeModel.width]
                 tile = @mazeModel.tileAtCoordinate(x, y)
-                tileImg = @imgTileMap[y][x]
-                tileImg.src = @tileImages[tile.imageIndex].src
+                context.drawImage(@tileImages[tile.imageIndex], x * window.innerWidth / @mazeModel.width, y * window.innerHeight / @mazeModel.height, window.innerWidth / @mazeModel.width, window.innerHeight / @mazeModel.height)
 
     positionOnScreenInPercentage: (x, y) ->
         return new Position(x * 100.0 / @mazeModel.width, y * 100.0 / @mazeModel.height)

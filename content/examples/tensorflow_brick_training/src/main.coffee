@@ -377,26 +377,26 @@ class TensorflowBrickDetectionExample
         useMask = false
         for position in @positions
             if position.masked
-                maskCircle = document.createElementNS("http://www.w3.org/2000/svg", "image")
-                maskCircle.setAttributeNS(null, "href", "assets/images/figure_marker_mask.png")
-                maskCircle.setAttributeNS(null, "x", ((position.x * @tileSize.width) + (@tileSize.width / 2.0) - (maskSize.width / 2.0)) + "px")
-                maskCircle.setAttributeNS(null, "y", ((position.y * @tileSize.height) + (@tileSize.height / 2.0) - (maskSize.height / 2.0)) + "px")
-                maskCircle.setAttributeNS(null, "width", maskSize.width + "px")
-                maskCircle.setAttributeNS(null, "height", maskSize.height + "px")
+                maskImage = document.createElementNS("http://www.w3.org/2000/svg", "image")
+                maskImage.setAttributeNS(null, "href", "assets/images/figure_marker_mask.png")
+                maskImage.setAttributeNS(null, "x", ((position.x * @tileSize.width) + (@tileSize.width / 2.0) - (maskSize.width / 2.0)) + "px")
+                maskImage.setAttributeNS(null, "y", ((position.y * @tileSize.height) + (@tileSize.height / 2.0) - (maskSize.height / 2.0)) + "px")
+                maskImage.setAttributeNS(null, "width", maskSize.width + "px")
+                maskImage.setAttributeNS(null, "height", maskSize.height + "px")
 
-                @maskElement.appendChild(maskCircle)
+                @maskElement.appendChild(maskImage)
 
                 useMask = true
 
         if not useMask
-            maskCircle = document.createElementNS("http://www.w3.org/2000/svg", "rect")
-            maskCircle.setAttributeNS(null, "x", "0px")
-            maskCircle.setAttributeNS(null, "y", "0px")
-            maskCircle.setAttributeNS(null, "width", window.innerWidth + "px")
-            maskCircle.setAttributeNS(null, "height", window.innerHeight + "px")
-            maskCircle.setAttributeNS(null, "style", "fill: white")
+            maskRect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
+            maskRect.setAttributeNS(null, "x", "0px")
+            maskRect.setAttributeNS(null, "y", "0px")
+            maskRect.setAttributeNS(null, "width", window.innerWidth + "px")
+            maskRect.setAttributeNS(null, "height", window.innerHeight + "px")
+            maskRect.setAttributeNS(null, "style", "fill: white")
 
-            @maskElement.appendChild(maskCircle)
+            @maskElement.appendChild(maskRect)
 
     onKeydown: (event) ->
         if event.keyCode == 32  # Space

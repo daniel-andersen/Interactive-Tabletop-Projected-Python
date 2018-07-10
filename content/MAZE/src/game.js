@@ -32,9 +32,7 @@ MazeGame = (function() {
   MazeGame.prototype.reset = function() {
     return this.client.reset(void 0, (function(_this) {
       return function(action, payload) {
-        return _this.client.setDebugCameraImageFilename("assets/images/calibration/board_calibration.png", function(action, payload) {
-          return _this.calibrateBoard();
-        });
+        return _this.calibrateBoard();
       };
     })(this));
   };
@@ -67,95 +65,32 @@ MazeGame = (function() {
   };
 
   MazeGame.prototype.setupUi = function() {
-    var i, image, j, k, l, m, n, o, overlay, q, ref, ref1, ref2, ref3, ref4, ref5, tileImg, x, y;
-    this.tileAlphaDark = 0.3;
+    var canvas, i, image, j, k, len, ref;
+    this.tileAlphaDark = 0.2;
     this.contentDiv = document.getElementById("content");
-    this.tileMapDiv = document.getElementById("tileMap");
-    this.blackOverlayMapDiv = document.getElementById("blackOverlayMap");
+    this.renderedCanvases = [document.getElementById("renderedCanvasBehind"), document.getElementById("renderedCanvasFront")];
+    this.tileCanvas = document.getElementById("tileCanvas");
     this.titleImage = document.getElementById("title");
     this.transientObjectsOverlay = document.getElementById("transientObjectsOverlay");
+    this.currentRenderedCanvasIndex = 0;
+    ref = [this.renderedCanvases[0], this.renderedCanvases[1], this.tileCanvas];
+    for (j = 0, len = ref.length; j < len; j++) {
+      canvas = ref[j];
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      canvas.style.width = window.innerWidth;
+      canvas.style.height = window.innerHeight;
+    }
     this.tileImages = [];
-    for (i = j = 0; j <= 16; i = ++j) {
+    for (i = k = 0; k <= 16; i = ++k) {
       image = new Image();
       image.src = "assets/images/tiles/tile_" + i + ".png";
       this.tileImages[i] = image;
     }
-    this.imgTileMap = (function() {
-      var k, ref, results;
-      results = [];
-      for (y = k = 1, ref = this.mazeModel.height; 1 <= ref ? k <= ref : k >= ref; y = 1 <= ref ? ++k : --k) {
-        results.push((function() {
-          var l, ref1, results1;
-          results1 = [];
-          for (x = l = 1, ref1 = this.mazeModel.width; 1 <= ref1 ? l <= ref1 : l >= ref1; x = 1 <= ref1 ? ++l : --l) {
-            results1.push(document.createElement('img'));
-          }
-          return results1;
-        }).call(this));
-      }
-      return results;
-    }).call(this);
-    for (y = k = 0, ref = this.mazeModel.height; 0 <= ref ? k < ref : k > ref; y = 0 <= ref ? ++k : --k) {
-      for (x = l = 0, ref1 = this.mazeModel.width; 0 <= ref1 ? l < ref1 : l > ref1; x = 0 <= ref1 ? ++l : --l) {
-        tileImg = this.imgTileMap[y][x];
-        tileImg.src = this.tileImages[0].src;
-        tileImg.style.position = "absolute";
-        tileImg.style.left = (x * 100.0 / this.mazeModel.width) + "%";
-        tileImg.style.top = (y * 100.0 / this.mazeModel.height) + "%";
-        tileImg.style.width = (100.0 / this.mazeModel.width) + "%";
-        tileImg.style.height = (100.0 / this.mazeModel.height) + "%";
-        this.tileMapDiv.appendChild(tileImg);
-      }
-    }
-    this.blackOverlayMap = (function() {
-      var m, ref2, results;
-      results = [];
-      for (y = m = 1, ref2 = this.mazeModel.height; 1 <= ref2 ? m <= ref2 : m >= ref2; y = 1 <= ref2 ? ++m : --m) {
-        results.push((function() {
-          var n, ref3, results1;
-          results1 = [];
-          for (x = n = 1, ref3 = this.mazeModel.width; 1 <= ref3 ? n <= ref3 : n >= ref3; x = 1 <= ref3 ? ++n : --n) {
-            results1.push(document.createElement('div'));
-          }
-          return results1;
-        }).call(this));
-      }
-      return results;
-    }).call(this);
-    for (y = m = 0, ref2 = this.mazeModel.height; 0 <= ref2 ? m < ref2 : m > ref2; y = 0 <= ref2 ? ++m : --m) {
-      for (x = n = 0, ref3 = this.mazeModel.width; 0 <= ref3 ? n < ref3 : n > ref3; x = 0 <= ref3 ? ++n : --n) {
-        overlay = this.blackOverlayMap[y][x];
-        overlay.style.background = "#000000";
-        overlay.style.opacity = "1";
-        overlay.style.transition = "opacity 1s linear";
-        overlay.style.position = "absolute";
-        overlay.style.left = (x * 100.0 / this.mazeModel.width) + "%";
-        overlay.style.top = (y * 100.0 / this.mazeModel.height) + "%";
-        overlay.style.width = (100.0 / this.mazeModel.width) + "%";
-        overlay.style.height = (100.0 / this.mazeModel.height) + "%";
-        this.blackOverlayMapDiv.appendChild(overlay);
-      }
-    }
-    this.tileAlphaMap = (function() {
-      var o, ref4, results;
-      results = [];
-      for (y = o = 1, ref4 = this.mazeModel.height; 1 <= ref4 ? o <= ref4 : o >= ref4; y = 1 <= ref4 ? ++o : --o) {
-        results.push((function() {
-          var q, ref5, results1;
-          results1 = [];
-          for (x = q = 1, ref5 = this.mazeModel.width; 1 <= ref5 ? q <= ref5 : q >= ref5; x = 1 <= ref5 ? ++q : --q) {
-            results1.push(0.0);
-          }
-          return results1;
-        }).call(this));
-      }
-      return results;
-    }).call(this);
-    for (y = o = 0, ref4 = this.mazeModel.height; 0 <= ref4 ? o < ref4 : o > ref4; y = 0 <= ref4 ? ++o : --o) {
-      for (x = q = 0, ref5 = this.mazeModel.width; 0 <= ref5 ? q < ref5 : q > ref5; x = 0 <= ref5 ? ++q : --q) {
-        this.tileAlphaMap[y][x] = 0.0;
-      }
-    }
+    this.visibilityMask = new Image();
+    this.visibilityMask.src = "assets/images/tiles/visibility_mask.png";
+    this.backgroundImage = new Image();
+    this.backgroundImage.src = "assets/images/background.png";
     this.treasureImage = document.createElement("img");
     this.treasureImage.src = "assets/images/treasure.png";
     this.treasureImage.style.opacity = "0";
@@ -393,13 +328,29 @@ MazeGame = (function() {
   };
 
   MazeGame.prototype.updateMaze = function(completionCallback) {
-    var drawOrder, i, j, k, l, len, len1, len2, m, n, o, overlay, player, playerIndex, position, q, ref, ref1, ref2, ref3, ref4, ref5, x, y;
+    var canvas, context, drawOrder, i, j, k, l, len, len1, len2, m, n, o, player, playerIndex, position, q, r, ref, ref1, ref2, ref3, ref4, ref5, ref6, ref7, s, tileAlphaMap, x, y;
     if (completionCallback == null) {
       completionCallback = void 0;
     }
+    this.currentRenderedCanvasIndex = 1 - this.currentRenderedCanvasIndex;
+    tileAlphaMap = (function() {
+      var j, ref, results;
+      results = [];
+      for (y = j = 1, ref = this.mazeModel.height; 1 <= ref ? j <= ref : j >= ref; y = 1 <= ref ? ++j : --j) {
+        results.push((function() {
+          var k, ref1, results1;
+          results1 = [];
+          for (x = k = 1, ref1 = this.mazeModel.width; 1 <= ref1 ? k <= ref1 : k >= ref1; x = 1 <= ref1 ? ++k : --k) {
+            results1.push(0.0);
+          }
+          return results1;
+        }).call(this));
+      }
+      return results;
+    }).call(this);
     for (y = j = 0, ref = this.mazeModel.height; 0 <= ref ? j < ref : j > ref; y = 0 <= ref ? ++j : --j) {
       for (x = k = 0, ref1 = this.mazeModel.width; 0 <= ref1 ? k < ref1 : k > ref1; x = 0 <= ref1 ? ++k : --k) {
-        this.tileAlphaMap[y][x] = 0.0;
+        tileAlphaMap[y][x] = 0.0;
       }
     }
     if (this.mazeModel.players != null) {
@@ -419,24 +370,43 @@ MazeGame = (function() {
         if (player.state === PlayerState.DISABLED) {
           continue;
         }
-        ref2 = this.mazeModel.positionsReachableFromPosition(player.position, player.reachDistance + 2);
+        ref2 = this.mazeModel.positionsReachableFromPosition(player.position, player.reachDistance + 1);
         for (m = 0, len1 = ref2.length; m < len1; m++) {
           position = ref2[m];
-          this.tileAlphaMap[position.y][position.x] = this.tileAlphaDark;
+          tileAlphaMap[position.y][position.x] = this.tileAlphaDark;
         }
         ref3 = this.mazeModel.positionsReachableFromPosition(player.position, player.reachDistance);
         for (n = 0, len2 = ref3.length; n < len2; n++) {
           position = ref3[n];
-          this.tileAlphaMap[position.y][position.x] = player.state === PlayerState.TURN ? 1.0 : this.tileAlphaDark;
+          tileAlphaMap[position.y][position.x] = player.state === PlayerState.TURN ? 1.0 : this.tileAlphaDark;
         }
       }
     }
+    canvas = this.renderedCanvases[this.currentRenderedCanvasIndex];
+    context = canvas.getContext("2d");
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.globalCompositeOperation = "source-over";
     for (y = o = 0, ref4 = this.mazeModel.height; 0 <= ref4 ? o < ref4 : o > ref4; y = 0 <= ref4 ? ++o : --o) {
       for (x = q = 0, ref5 = this.mazeModel.width; 0 <= ref5 ? q < ref5 : q > ref5; x = 0 <= ref5 ? ++q : --q) {
-        overlay = this.blackOverlayMap[y][x];
-        overlay.style.opacity = 0.0;
+        if (tileAlphaMap[y][x] > 0.0) {
+          context.drawImage(this.visibilityMask, (x - 1) * window.innerWidth / this.mazeModel.width, (y - 1) * window.innerHeight / this.mazeModel.height, 3 * window.innerWidth / this.mazeModel.width, 3 * window.innerHeight / this.mazeModel.height);
+        }
       }
     }
+    context.globalCompositeOperation = "source-in";
+    context.fillStyle = "rgba(0, 0, 0, " + this.tileAlphaDark + ")";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.globalCompositeOperation = "source-over";
+    for (y = r = 0, ref6 = this.mazeModel.height; 0 <= ref6 ? r < ref6 : r > ref6; y = 0 <= ref6 ? ++r : --r) {
+      for (x = s = 0, ref7 = this.mazeModel.width; 0 <= ref7 ? s < ref7 : s > ref7; x = 0 <= ref7 ? ++s : --s) {
+        if (tileAlphaMap[y][x] === 1.0) {
+          context.drawImage(this.visibilityMask, (x - 1) * window.innerWidth / this.mazeModel.width, (y - 1) * window.innerHeight / this.mazeModel.height, 3 * window.innerWidth / this.mazeModel.width, 3 * window.innerHeight / this.mazeModel.height);
+        }
+      }
+    }
+    context.globalCompositeOperation = "source-in";
+    context.drawImage(this.tileCanvas, 0, 0, window.innerWidth, window.innerHeight);
+    this.renderedCanvases[1].style.opacity = this.currentRenderedCanvasIndex === 0 ? 0.0 : 1.0;
     if (completionCallback != null) {
       return setTimeout((function(_this) {
         return function() {
@@ -447,7 +417,10 @@ MazeGame = (function() {
   };
 
   MazeGame.prototype.drawMaze = function() {
-    var j, ref, results, tile, tileImg, x, y;
+    var context, j, ref, results, tile, x, y;
+    context = this.tileCanvas.getContext("2d");
+    context.clearRect(0, 0, this.tileCanvas.width, this.tileCanvas.height);
+    context.drawImage(this.backgroundImage, 0, 0, window.innerWidth, window.innerHeight);
     results = [];
     for (y = j = 0, ref = this.mazeModel.height; 0 <= ref ? j < ref : j > ref; y = 0 <= ref ? ++j : --j) {
       results.push((function() {
@@ -455,8 +428,7 @@ MazeGame = (function() {
         results1 = [];
         for (x = k = 0, ref1 = this.mazeModel.width; 0 <= ref1 ? k < ref1 : k > ref1; x = 0 <= ref1 ? ++k : --k) {
           tile = this.mazeModel.tileAtCoordinate(x, y);
-          tileImg = this.imgTileMap[y][x];
-          results1.push(tileImg.src = this.tileImages[tile.imageIndex].src);
+          results1.push(context.drawImage(this.tileImages[tile.imageIndex], x * window.innerWidth / this.mazeModel.width, y * window.innerHeight / this.mazeModel.height, window.innerWidth / this.mazeModel.width, window.innerHeight / this.mazeModel.height));
         }
         return results1;
       }).call(this));

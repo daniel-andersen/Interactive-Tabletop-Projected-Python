@@ -61,7 +61,11 @@ MazeModel = (function() {
     this.calculateTileImageIndices();
     this.placePlayers(granularity);
     this.placeTreasure();
-    return console.log("Treasure position: " + this.treasurePosition.x + ", " + this.treasurePosition.y);
+    if (this.treasurePosition != null) {
+      return console.log("Treasure position: " + this.treasurePosition.x + ", " + this.treasurePosition.y);
+    } else {
+      return console.log("OH NO! No treasure!");
+    }
   };
 
   MazeModel.prototype.resetMaze = function() {
@@ -97,8 +101,8 @@ MazeModel = (function() {
       return results;
     }).call(this);
     this.players[0].position = new Position(Math.floor(this.width / granularity / 2) * granularity, 0);
-    this.players[1].position = new Position(Math.floor((this.width / granularity) - 1) * granularity, Math.floor(this.height / granularity / 2) * granularity);
-    this.players[2].position = new Position(Math.floor(this.width / granularity / 2) * granularity, Math.floor(this.height / granularity - 1) * granularity);
+    this.players[1].position = new Position(Math.floor((this.width - 1) / granularity) * granularity, Math.floor(this.height / granularity / 2) * granularity);
+    this.players[2].position = new Position(Math.floor(this.width / granularity / 2) * granularity, Math.floor((this.height - 1) / granularity) * granularity);
     return this.players[3].position = new Position(0, Math.floor(this.height / granularity / 2) * granularity);
   };
 
@@ -353,18 +357,18 @@ MazeModel = (function() {
     }
     if (tile1.position.y === tile2.position.y) {
       if (tile1.position.x === tile2.position.x - granularity) {
-        return tile1.hasWall(Wall.RIGHT);
+        return !tile1.hasWall(Wall.RIGHT);
       }
       if (tile1.position.x === tile2.position.x + granularity) {
-        return tile1.hasWall(Wall.LEFT);
+        return !tile1.hasWall(Wall.LEFT);
       }
     }
     if (tile1.position.x === tile2.position.x) {
       if (tile1.position.y === tile2.position.y - granularity) {
-        return tile1.hasWall(Wall.DOWN);
+        return !tile1.hasWall(Wall.DOWN);
       }
       if (tile1.position.y === tile2.position.y + granularity) {
-        return tile1.hasWall(Wall.UP);
+        return !tile1.hasWall(Wall.UP);
       }
     }
     return false;

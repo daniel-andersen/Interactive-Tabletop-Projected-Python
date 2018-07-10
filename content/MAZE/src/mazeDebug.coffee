@@ -3,6 +3,10 @@ class MazeDebug
         @enabled = false
 
         @setupCameraCanvas()
+        @setupVisualizationCanvas()
+
+        @resetTileMap(false)
+
         @setupClickListener()
 
     setupClickListener: ->
@@ -17,39 +21,62 @@ class MazeDebug
 
     enableDebug: ->
         @enabled = true
-        @setDebugCameraImage("assets/images/board_calibration.png")
+        @setDebugCameraImage("assets/images/calibration/board_calibration.png")
+        document.body.appendChild(@visualizationCanvas)
 
     setupCameraCanvas: ->
-        @canvas = document.createElement("CANVAS")
-        @canvas.width = @canvasWidth
-        @canvas.height = @canvasHeight
+        @cameraCanvas = document.createElement("CANVAS")
+        @cameraCanvas.style = "position: absolute; left: 0; top: 0; width: 100%; height: 100%;"
+        @cameraCanvas.width = @canvasWidth
+        @cameraCanvas.height = @canvasHeight
 
-        ctx = @canvas.getContext("2d")
-        ctx.fillStyle = "white"
-        ctx.fillRect(0, 0, @canvasWidth, @canvasHeight)
+        context = @cameraCanvas.getContext("2d")
+        context.clearRect(0, 0, @cameraCanvas.width, @cameraCanvas.height)
 
-        @resetTileMap(false)
+    setupVisualizationCanvas: ->
+        @visualizationCanvas = document.createElement("CANVAS")
+        @visualizationCanvas.style = "position: absolute; left: 0; top: 0; width: 100%; height: 100%;"
+        @visualizationCanvas.width = @canvasWidth
+        @visualizationCanvas.height = @canvasHeight
+
+        context = @visualizationCanvas.getContext("2d")
+        context.clearRect(0, 0, @visualizationCanvas.width, @visualizationCanvas.height)
 
     resetTileMap: (updateCanvas = false) ->
         @tileMap = ((0 for x in [1..@tileMapWidth]) for y in [1..@tileMapHeight])
         if updateCanvas
             @updateCanvas()
 
-    updateCanvas: ->
-        ctx = @canvas.getContext("2d")
+    updateCameraCanvas: ->
+        context = @cameraCanvas.getContext("2d")
+        context.fillStyle = "white"
+        context.fillRect(0, 0, @visualizationCanvas.width, @visualizationCanvas.height)
+
+        context.fillStyle = "black"
         for y in [0..@tileMapHeight - 1]
             for x in [0..@tileMapWidth - 1]
-                ctx.fillStyle = if @tileMap[y][x] == 0 then "white" else "black"
-                ctx.fillRect(x * @canvasWidth / @tileMapWidth, y * @canvasHeight / @tileMapHeight, @canvasWidth / @tileMapWidth, @canvasHeight / @tileMapHeight)
+                if @tileMap[y][x] != 0
+                    context.fillRect(x * @canvasWidth / @tileMapWidth, y * @canvasHeight / @tileMapHeight, @canvasWidth / @tileMapWidth, @canvasHeight / @tileMapHeight)
 
-        @client.setDebugCameraCanvas(@canvas)
+        @client.setDebugCameraCanvas(@cameraCanvas)
+
+    updateVisualizationCanvas: ->
+        context = @visualizationCanvas.getContext("2d")
+        context.clearRect(0, 0, @cameraCanvas.width, @cameraCanvas.height)
+
+        context.fillStyle = "rgba(0, 0, 0, 0.7)"
+        for y in [0..@tileMapHeight - 1]
+            for x in [0..@tileMapWidth - 1]
+                if @tileMap[y][x] != 0
+                    context.fillRect(x * @canvasWidth / @tileMapWidth, y * @canvasHeight / @tileMapHeight, @canvasWidth / @tileMapWidth, @canvasHeight / @tileMapHeight)
 
     toggleTile: (screenX, screenY) ->
         x = Math.floor(screenX * @tileMapWidth / window.innerWidth)
         y = Math.floor(screenY * @tileMapHeight / window.innerHeight)
         @tileMap[y][x] = 1 - @tileMap[y][x]
 
-        @updateCanvas()
+        @updateCameraCanvas()
+        @updateVisualizationCanvas()
 
     setDebugCameraImage: (filename, completionCallback) ->
         image = new Image()

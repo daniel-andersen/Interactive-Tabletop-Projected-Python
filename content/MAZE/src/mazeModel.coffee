@@ -47,7 +47,10 @@ class MazeModel
         # Place treasure
         @placeTreasure()
 
-        console.log("Treasure position: " + @treasurePosition.x + ", " + @treasurePosition.y)
+        if @treasurePosition?
+            console.log("Treasure position: " + @treasurePosition.x + ", " + @treasurePosition.y)
+        else
+            console.log("OH NO! No treasure!")
 
     resetMaze: ->
 
@@ -58,8 +61,8 @@ class MazeModel
         @players = (new Player(i) for i in [0..@numberOfPlayers - 1])
 
         @players[0].position = new Position(Math.floor(@width / granularity / 2) * granularity, 0)
-        @players[1].position = new Position(Math.floor((@width / granularity) - 1) * granularity, Math.floor(@height / granularity / 2) * granularity)
-        @players[2].position = new Position(Math.floor(@width / granularity / 2) * granularity, Math.floor((@height / granularity - 1)) * granularity)
+        @players[1].position = new Position(Math.floor((@width - 1) / granularity) * granularity, Math.floor(@height / granularity / 2) * granularity)
+        @players[2].position = new Position(Math.floor(@width / granularity / 2) * granularity, Math.floor((@height - 1) / granularity) * granularity)
         @players[3].position = new Position(0, Math.floor(@height / granularity / 2) * granularity)
 
     placeTreasure: ->
@@ -223,16 +226,16 @@ class MazeModel
         # Horizontally adjacent
         if tile1.position.y == tile2.position.y
             if tile1.position.x == tile2.position.x - granularity
-                return tile1.hasWall(Wall.RIGHT)
+                return not tile1.hasWall(Wall.RIGHT)
             if tile1.position.x == tile2.position.x + granularity
-                return tile1.hasWall(Wall.LEFT)
+                return not tile1.hasWall(Wall.LEFT)
 
         # Vertically adjacent
         if tile1.position.x == tile2.position.x
             if tile1.position.y == tile2.position.y - granularity
-                return tile1.hasWall(Wall.DOWN)
+                return not tile1.hasWall(Wall.DOWN)
             if tile1.position.y == tile2.position.y + granularity
-                return tile1.hasWall(Wall.UP)
+                return not tile1.hasWall(Wall.UP)
 
         return false
 
