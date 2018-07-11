@@ -56,6 +56,18 @@ TensorflowBrickDetectionExample = (function() {
       }, {
         "filename": "tiles12.png",
         "tilemap": ["     ", " *** ", " *   ", " *   ", "     "]
+      }, {
+        "filename": "tiles13.png",
+        "tilemap": ["         ", " ******* ", " ******* ", "         "]
+      }, {
+        "filename": "tiles14.png",
+        "tilemap": ["       ", "    ** ", "     * ", "  **** ", "       "]
+      }, {
+        "filename": "tiles15.png",
+        "tilemap": ["         ", "         ", "   *     ", "   **    ", "   *     ", " ******  ", " *       ", "         ", "         "]
+      }, {
+        "filename": "tiles16.png",
+        "tilemap": ["         ", "         ", "       * ", "  ****** ", "     *   ", "     **  ", "         "]
       }
     ];
     this.backgroundDiv = document.getElementById("background");
@@ -67,7 +79,8 @@ TensorflowBrickDetectionExample = (function() {
     this.readyForScreenshot = false;
     now = new Date();
     dateStr = now.getFullYear() + "" + this.pad(now.getMonth(), 2) + "" + this.pad(now.getDate(), 2) + "_" + this.pad(now.getHours(), 2) + "" + this.pad(now.getMinutes(), 2);
-    this.outputFilename = "resources/tensorflow/images/image_" + dateStr + "_" + this.trainNumber;
+    this.outputFilenameTrain = "resources/tensorflow/images/train/image_" + dateStr;
+    this.outputFilenameEval = "resources/tensorflow/images/eval/image_" + dateStr;
   }
 
   TensorflowBrickDetectionExample.prototype.start = function() {
@@ -244,7 +257,7 @@ TensorflowBrickDetectionExample = (function() {
   };
 
   TensorflowBrickDetectionExample.prototype.pickRandomPositions = function() {
-    var availableFigures, count, figure, figureIndex, i, l, len, len1, len2, m, markerImg, markerLabel, maskCircle, maskSize, n, o, p, position, positionIndex, ref, ref1, ref2, ref3, ref4, useMask;
+    var availableFigures, count, figure, figureIndex, i, l, len, len1, len2, m, markerImg, markerLabel, maskImage, maskRect, maskSize, n, o, p, position, positionIndex, ref, ref1, ref2, ref3, ref4, useMask;
     this.choosenFigures = [];
     availableFigures = (function() {
       var l, len, ref, results;
@@ -305,24 +318,24 @@ TensorflowBrickDetectionExample = (function() {
     for (p = 0, len2 = ref4.length; p < len2; p++) {
       position = ref4[p];
       if (position.masked) {
-        maskCircle = document.createElementNS("http://www.w3.org/2000/svg", "image");
-        maskCircle.setAttributeNS(null, "href", "assets/images/figure_marker_mask.png");
-        maskCircle.setAttributeNS(null, "x", ((position.x * this.tileSize.width) + (this.tileSize.width / 2.0) - (maskSize.width / 2.0)) + "px");
-        maskCircle.setAttributeNS(null, "y", ((position.y * this.tileSize.height) + (this.tileSize.height / 2.0) - (maskSize.height / 2.0)) + "px");
-        maskCircle.setAttributeNS(null, "width", maskSize.width + "px");
-        maskCircle.setAttributeNS(null, "height", maskSize.height + "px");
-        this.maskElement.appendChild(maskCircle);
+        maskImage = document.createElementNS("http://www.w3.org/2000/svg", "image");
+        maskImage.setAttributeNS(null, "href", "assets/images/figure_marker_mask.png");
+        maskImage.setAttributeNS(null, "x", ((position.x * this.tileSize.width) + (this.tileSize.width / 2.0) - (maskSize.width / 2.0)) + "px");
+        maskImage.setAttributeNS(null, "y", ((position.y * this.tileSize.height) + (this.tileSize.height / 2.0) - (maskSize.height / 2.0)) + "px");
+        maskImage.setAttributeNS(null, "width", maskSize.width + "px");
+        maskImage.setAttributeNS(null, "height", maskSize.height + "px");
+        this.maskElement.appendChild(maskImage);
         useMask = true;
       }
     }
     if (!useMask) {
-      maskCircle = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-      maskCircle.setAttributeNS(null, "x", "0px");
-      maskCircle.setAttributeNS(null, "y", "0px");
-      maskCircle.setAttributeNS(null, "width", window.innerWidth + "px");
-      maskCircle.setAttributeNS(null, "height", window.innerHeight + "px");
-      maskCircle.setAttributeNS(null, "style", "fill: white");
-      return this.maskElement.appendChild(maskCircle);
+      maskRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      maskRect.setAttributeNS(null, "x", "0px");
+      maskRect.setAttributeNS(null, "y", "0px");
+      maskRect.setAttributeNS(null, "width", window.innerWidth + "px");
+      maskRect.setAttributeNS(null, "height", window.innerHeight + "px");
+      maskRect.setAttributeNS(null, "style", "fill: white");
+      return this.maskElement.appendChild(maskRect);
     }
   };
 
@@ -333,15 +346,17 @@ TensorflowBrickDetectionExample = (function() {
   };
 
   TensorflowBrickDetectionExample.prototype.takeScreenshot = function() {
-    var i, l, ref, screenshotTileSize, x1, x2, xmlText, y1, y2;
+    var filename, i, l, ref, screenshotTileSize, x1, x2, xmlText, y1, y2;
     if (!this.readyForScreenshot) {
       return;
     }
     this.readyForScreenshot = false;
+    filename = this.trainNumber % 10 < 9 ? this.outputFilenameTrain : this.outputFilenameEval;
+    filename = filename + "_" + this.trainNumber;
     this.markersDiv.style.opacity = '0';
     setTimeout((function(_this) {
       return function() {
-        return _this.client.takeScreenshot(_this.client.boardAreaId_fullBoard, [_this.screenshotSize.width, _this.screenshotSize.height], _this.outputFilename + ".jpg", function() {
+        return _this.client.takeScreenshot(_this.client.boardAreaId_fullBoard, [_this.screenshotSize.width, _this.screenshotSize.height], filename + ".jpg", function() {
           _this.flashDiv.style.transition = "opacity 0s";
           _this.flashDiv.style.opacity = 1.0;
           return setTimeout(function() {
@@ -361,7 +376,7 @@ TensorflowBrickDetectionExample = (function() {
     xmlText = "";
     xmlText += "<annotation>\n";
     xmlText += "    <folder>images</folder>\n";
-    xmlText += "    <filename>image_" + this.trainNumber + ".jpg</filename>\n";
+    xmlText += "    <filename>" + filename + ".jpg</filename>\n";
     xmlText += "    <size>\n";
     xmlText += "        <width>" + this.screenshotSize.width + "</width>\n";
     xmlText += "        <height>" + this.screenshotSize.height + "</height>\n";
@@ -392,7 +407,7 @@ TensorflowBrickDetectionExample = (function() {
       xmlText += "    </object>\n";
     }
     xmlText += "</annotation>\n";
-    return this.client.writeTextToFile(this.outputFilename + ".xml", xmlText, (function(_this) {
+    return this.client.writeTextToFile(filename + ".xml", xmlText, (function(_this) {
       return function() {
         return console.log("Wrote XML!");
       };

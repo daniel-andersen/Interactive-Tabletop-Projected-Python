@@ -61,11 +61,7 @@ MazeModel = (function() {
     this.calculateTileImageIndices();
     this.placePlayers(granularity);
     this.placeTreasure();
-    if (this.treasurePosition != null) {
-      return console.log("Treasure position: " + this.treasurePosition.x + ", " + this.treasurePosition.y);
-    } else {
-      return console.log("OH NO! No treasure!");
-    }
+    return console.log("Treasure position: " + this.treasurePosition.x + ", " + this.treasurePosition.y);
   };
 
   MazeModel.prototype.resetMaze = function() {

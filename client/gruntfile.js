@@ -48,7 +48,7 @@ module.exports = function(grunt) {
         projects: {
           "../content/examples/tensorflow_brick_detection": "default"
         }
-      },
+      },*/
       example_tensorflow_brick_training: {
         projects: {
           "../content/examples/tensorflow_brick_training": "default"
@@ -58,12 +58,12 @@ module.exports = function(grunt) {
         projects: {
           "../content/raspberry_pi_instructions": "default"
         }
-      },*/
+      },
       MAZE: {
         projects: {
           "../content/MAZE": "default"
         }
-      }
+      }*/
     },
     clean: ["target"],
     copy: {
@@ -104,7 +104,7 @@ module.exports = function(grunt) {
           {expand: true, cwd: "../content/examples/tensorflow_brick_detection/lib", src: "**", dest: "target/content/examples/tensorflow_brick_detection/lib"},
           {expand: true, cwd: "../content/examples/tensorflow_brick_detection/", src: "*.html", dest: "target/content/examples/tensorflow_brick_detection/"}
         ]
-      },
+      },*/
       example_tensorflow_brick_training: {
         files: [
           {expand: true, cwd: "../content/examples/tensorflow_brick_training/assets", src: "**", dest: "target/content/examples/tensorflow_brick_training/assets"},
@@ -120,7 +120,7 @@ module.exports = function(grunt) {
           {expand: true, cwd: "../content/raspberry_pi_instructions/lib", src: "**", dest: "target/content/raspberry_pi_instructions/lib"},
           {expand: true, cwd: "../content/raspberry_pi_instructions/", src: "*.html", dest: "target/content/raspberry_pi_instructions/"}
         ]
-      },*/
+      },
       MAZE: {
         files: [
           {expand: true, cwd: "../content/MAZE/assets", src: "**", dest: "target/content/MAZE/assets"},
@@ -128,7 +128,7 @@ module.exports = function(grunt) {
           {expand: true, cwd: "../content/MAZE/lib", src: "**", dest: "target/content/MAZE/lib"},
           {expand: true, cwd: "../content/MAZE/", src: "*.html", dest: "target/content/MAZE/"}
         ]
-      }
+      }*/
     }
   });
 

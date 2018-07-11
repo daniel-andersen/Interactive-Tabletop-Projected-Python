@@ -155,6 +155,51 @@ class TensorflowBrickDetectionExample
                     " *   ",
                     "     ",
                 ]
+            },
+            {
+                "filename": "tiles13.png",
+                "tilemap": [
+                    "         ",
+                    " ******* ",
+                    " ******* ",
+                    "         ",
+                ]
+            },
+            {
+                "filename": "tiles14.png",
+                "tilemap": [
+                    "       ",
+                    "    ** ",
+                    "     * ",
+                    "  **** ",
+                    "       ",
+                ]
+            },
+            {
+                "filename": "tiles15.png",
+                "tilemap": [
+                    "         ",
+                    "         ",
+                    "   *     ",
+                    "   **    ",
+                    "   *     ",
+                    " ******  ",
+                    " *       ",
+                    "         ",
+                    "         ",
+                ]
+            },
+            {
+                "filename": "tiles16.png",
+                "tilemap": [
+                    "         ",
+                    "         ",
+                    "       * ",
+                    "  ****** ",
+                    "     *   ",
+                    "     **  ",
+                    "         ",
+                ]
             }
         ]
 
@@ -170,7 +215,9 @@ class TensorflowBrickDetectionExample
 
         now = new Date()
         dateStr = now.getFullYear() + "" + @pad(now.getMonth(), 2) + "" + @pad(now.getDate(), 2) + "_" + @pad(now.getHours(), 2) + "" + @pad(now.getMinutes(), 2)
-        @outputFilename = "resources/tensorflow/images/image_" + dateStr + "_" + @trainNumber
+
+        @outputFilenameTrain = "resources/tensorflow/images/train/image_" + dateStr
+        @outputFilenameEval = "resources/tensorflow/images/eval/image_" + dateStr
 
     start: ->
         @client.connect(
@@ -408,11 +455,15 @@ class TensorflowBrickDetectionExample
 
         @readyForScreenshot = false
 
+        # Train or eval
+        filename = if @trainNumber % 10 < 9 then @outputFilenameTrain else @outputFilenameEval
+        filename = filename + "_" + @trainNumber
+
         # Take screenshot
         @markersDiv.style.opacity = '0'
 
         setTimeout(() =>
-            @client.takeScreenshot(@client.boardAreaId_fullBoard, [@screenshotSize.width, @screenshotSize.height], @outputFilename + ".jpg", () =>
+            @client.takeScreenshot(@client.boardAreaId_fullBoard, [@screenshotSize.width, @screenshotSize.height], filename + ".jpg", () =>
                 @flashDiv.style.transition = "opacity 0s"
                 @flashDiv.style.opacity = 1.0
 
@@ -435,7 +486,7 @@ class TensorflowBrickDetectionExample
         xmlText = ""
         xmlText += "<annotation>\n"
         xmlText += "    <folder>images</folder>\n"
-        xmlText += "    <filename>image_" + @trainNumber + ".jpg</filename>\n"
+        xmlText += "    <filename>" + filename + ".jpg</filename>\n"
         xmlText += "    <size>\n"
         xmlText += "        <width>" + @screenshotSize.width + "</width>\n"
         xmlText += "        <height>" + @screenshotSize.height + "</height>\n"
@@ -468,7 +519,7 @@ class TensorflowBrickDetectionExample
             xmlText += "    </object>\n"
         xmlText += "</annotation>\n"
 
-        @client.writeTextToFile(@outputFilename + ".xml", xmlText, () =>
+        @client.writeTextToFile(filename + ".xml", xmlText, () =>
             console.log("Wrote XML!")
         )
 
