@@ -47,10 +47,7 @@ class MazeModel
         # Place treasure
         @placeTreasure()
 
-        if @treasurePosition?
-            console.log("Treasure position: " + @treasurePosition.x + ", " + @treasurePosition.y)
-        else
-            console.log("OH NO! No treasure!")
+        console.log("Treasure position: " + @treasurePosition.x + ", " + @treasurePosition.y)
 
     resetMaze: ->
 
@@ -168,7 +165,6 @@ class MazeModel
 
                     p = new Position(tile.position.x - 1, tile.position.y)
                     if @isPositionValid(p) and @tileAtPosition(p).isPath() then tile.imageIndex += Wall.LEFT
-
 
     carvePathBetweenTiles: (tile1, tile2) ->
         if tile1.position.x < tile2.position.x
