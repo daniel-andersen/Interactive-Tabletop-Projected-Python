@@ -31,7 +31,7 @@ class ImageDetectionExample
         image.src = "assets/images/image_source.png"
 
     detectImages: ->
-        @client.setDebugCameraImageFilename("iassets/images/mage_detection.png", (action, payload) =>
+        @client.setDebugCameraImageFilename("assets/images/image_detection.png", (action, payload) =>
             @client.detectImages(@client.boardAreaId_fullBoard, 0, (action, payload) =>
                 console.log("Images detected!")
                 console.log(payload)

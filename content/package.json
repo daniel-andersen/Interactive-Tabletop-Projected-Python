@@ -4,7 +4,6 @@
     "gulp": "^4.0.0",
     "gulp-coffee": "2.3.4",
     "gulp-connect": "^5.5.0",
-    "gulp-submodule": "^0.1.3",
     "gulp-watch": "4.3.11"
   }
 }
