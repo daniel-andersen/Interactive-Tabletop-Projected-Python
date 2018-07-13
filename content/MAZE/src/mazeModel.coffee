@@ -4,14 +4,6 @@ Wall =
     DOWN: 4
     LEFT: 8
 
-Direction =
-    UP: 0
-    RIGHT: 1
-    DOWN: 2
-    LEFT: 3
-
-directionMovements = [[0, -1], [1, 0], [0, 1], [-1, 0]]
-
 
 class Tile
     constructor: (@position, @walls = [Wall.UP, Wall.RIGHT, Wall.DOWN, Wall.LEFT]) ->
@@ -62,12 +54,17 @@ class MazeModel
         @players[2].position = new Position(Math.floor(@width / granularity / 2) * granularity, Math.floor((@height - 1) / granularity) * granularity)
         @players[3].position = new Position(0, Math.floor(@height / granularity / 2) * granularity)
 
+        @players[0].addFootprintAtPosition(@players[0].position, Direction.DOWN)
+        @players[1].addFootprintAtPosition(@players[1].position, Direction.LEFT)
+        @players[2].addFootprintAtPosition(@players[2].position, Direction.UP)
+        @players[3].addFootprintAtPosition(@players[3].position, Direction.RIGHT)
+
     placeTreasure: ->
 
         # Calculate distance maps
         distanceMaps = []
         for player in @players
-            distanceMaps.push(@distanceMapForPlayer(player))
+            distanceMaps.push(@distanceMapFromPosition(player.position))
 
         # Calculate treasure position
         @treasurePosition = null
@@ -238,12 +235,31 @@ class MazeModel
     isPositionValid: (position) ->
         return position.x >= 0 and position.y >= 0 and position.x < @width and position.y < @height
 
-    distanceMapForPlayer: (player, granularity=1) ->
+    shortestPathBetweenPositions: (fromPosition, toPosition, granularity=1) ->
+        distanceMap = @distanceMapFromPosition(toPosition, granularity)
+        positions = [fromPosition]
+
+        while not fromPosition.equals(toPosition)
+            newPosition = undefined
+
+            for p in [fromPosition.left(), fromPosition.right(), fromPosition.up(), fromPosition.down()]
+                if @isPositionValid(p) and distanceMap[p.y][p.x] == distanceMap[fromPosition.y][fromPosition.x] - 1
+                    newPosition = p
+
+            if not newPosition?
+                break
+
+            fromPosition = newPosition
+            positions.push(fromPosition)
+
+        return positions
+
+    distanceMapFromPosition: (position, granularity=1) ->
         distanceMap = ((-1 for _ in [0...@width]) for _ in [0...@height])
-        distanceMap[player.position.y][player.position.x] = 0
+        distanceMap[position.y][position.x] = 0
 
         unvisitedTiles = []
-        unvisitedTiles.push(@tileAtPosition(player.position))
+        unvisitedTiles.push(@tileAtPosition(position))
 
         while unvisitedTiles.length > 0
             tile = unvisitedTiles.splice(0, 1)[0]
@@ -256,11 +272,40 @@ class MazeModel
 
         return distanceMap
 
-    positionsReachableByPlayer: (player, granularity=1) -> (tile.position for tile in @tilesReachableByPlayer(player, granularity))
+    distanceBetweenPositions: (fromPosition, toPosition, granularity=1) ->
+        distanceMap = @distanceMapFromPosition(fromPosition, granularity)
+        return distanceMap[toPosition.y][toPosition.x]
+
+    positionsViewableFromPosition: (position, maxDistance=1000, granularity=1) ->
+        viewablePositions = [position]
+
+        # Leftwards
+        p = new Position(position.x, position.y)
+        while @isPositionValid(p) and not @tileAtPosition(p).hasWall(Wall.LEFT) and position.distance(p) < maxDistance
+            p = p.left()
+            viewablePositions.push(p)
+
+        # Rightwards
+        p = new Position(position.x, position.y)
+        while @isPositionValid(p) and not @tileAtPosition(p).hasWall(Wall.RIGHT) and position.distance(p) < maxDistance
+            p = p.right()
+            viewablePositions.push(p)
+
+        # Upwards
+        p = new Position(position.x, position.y)
+        while @isPositionValid(p) and not @tileAtPosition(p).hasWall(Wall.UP) and position.distance(p) < maxDistance
+            p = p.up()
+            viewablePositions.push(p)
+
+        # Downwards
+        p = new Position(position.x, position.y)
+        while @isPositionValid(p) and not @tileAtPosition(p).hasWall(Wall.DOWN) and position.distance(p) < maxDistance
+            p = p.down()
+            viewablePositions.push(p)
+
+        return viewablePositions
 
     positionsReachableFromPosition: (position, maxDistance, granularity=1) -> (tile.position for tile in @tilesReachableFromPosition(position, maxDistance, granularity))
-
-    tilesReachableByPlayer: (player, granularity=1) -> @tilesReachableFromPosition(player.position, player.reachDistance, granularity)
 
     tilesReachableFromPosition: (position, maxDistance, granularity=1) ->
 
