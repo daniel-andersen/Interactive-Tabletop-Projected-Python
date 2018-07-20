@@ -32,7 +32,7 @@ v4l2-ctl -c focus_absolute=0
 # Start the browser
 export LD_LIBRARY_PATH=/home/infodisplay/Qt/5.10.0/gcc_64/lib:$LD_LIBRARY_PATH
 
-~/kiosk-browser/browser http://localhost:9002/index.html & browser_pid=$!
+~/kiosk-browser/browser http://localhost:9002/MAZE/index.html & browser_pid=$!
 
 # Hide mouse cursor when inactive
 sleep 2
