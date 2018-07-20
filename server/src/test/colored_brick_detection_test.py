@@ -41,14 +41,14 @@ class ColoredBrickDetectionTest(BaseTest):
                         {
                             "hue": [100, 130],
                             "saturation": [50, 255],
-                            "value": [0, 150]
+                            "value": [75, 150]
                         }
                     ],
                     [
                         {
                             "hue": [100, 130],
                             "saturation": [100, 255],
-                            "value": [0, 150]
+                            "value": [75, 150]
                         }
                     ],
                     [
@@ -79,14 +79,14 @@ class ColoredBrickDetectionTest(BaseTest):
                         {
                             "hue": [12, 30],
                             "saturation": [100, 255],
-                            "value": [100, 220]
+                            "value": [150, 220]
                         }
                     ],
                     [
                         {
                             "hue": [12, 30],
                             "saturation": [120, 255],
-                            "value": [200, 255]
+                            "value": [150, 255]
                         }
                     ]
                 ]
@@ -117,7 +117,6 @@ class ColoredBrickDetectionTest(BaseTest):
             {
                 "image": "test/resources/colored_brick_detection/test_2.jpg",
                 "bricks": [
-                    {"position": [0.0, 0.0], "class": "Red"},
                     {"position": [0.0, 0.0], "class": "Green"},
                     {"position": [0.0, 0.0], "class": "Black"},
                 ]
@@ -167,6 +166,39 @@ class ColoredBrickDetectionTest(BaseTest):
                     {"position": [0.0, 0.0], "class": "Yellow"},
                 ]
             },
+            {
+                "image": "test/resources/colored_brick_detection/test_9.jpg",
+                "bricks": [
+                    {"position": [0.0, 0.0], "class": "Green"},
+                    {"position": [0.0, 0.0], "class": "Red"},
+                    {"position": [0.0, 0.0], "class": "Black"},
+                ]
+            },
+            {
+                "image": "test/resources/colored_brick_detection/test_10.jpg",
+                "bricks": [
+                    {"position": [0.0, 0.0], "class": "Yellow"},
+                ]
+            },
+            {
+                "image": "test/resources/colored_brick_detection/test_11.jpg",
+                "bricks": [
+                    {"position": [0.0, 0.0], "class": "Yellow"},
+                    {"position": [0.0, 0.0], "class": "Red"},
+                    {"position": [0.0, 0.0], "class": "Green"},
+                    {"position": [0.0, 0.0], "class": "Black"},
+                ]
+            },
+            {
+                "image": "test/resources/colored_brick_detection/test_12.jpg",
+                "bricks": [
+                    {"position": [0.0, 0.0], "class": "Yellow"},
+                    {"position": [0.0, 0.0], "class": "Red"},
+                    {"position": [0.0, 0.0], "class": "Green"},
+                    {"position": [0.0, 0.0], "class": "Black"},
+                    {"position": [0.0, 0.0], "class": "Blue"},
+                ]
+            },
         ]
 
         # Run tests
@@ -177,28 +209,26 @@ class ColoredBrickDetectionTest(BaseTest):
         for test_dict in tests:
             self.print_number(current=i + 1, total=len(tests))
 
-            image = cv2.imread(test_dict["image"])
+            found_bricks = []
 
+            image = cv2.imread(test_dict["image"])
             image = cv2.normalize(image, image, 0, 255, cv2.NORM_MINMAX)
 
             output_image = image.copy()
 
             hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-            height, width = image.shape[:2]
+            image_height, image_width = image.shape[:2]
 
-            for brick_dict in test_dict["bricks"]:
-                class_name = brick_dict["class"]
-                class_dict = classes[class_name]
-
+            for class_name, class_dict in classes.items():
                 class_color = class_dict["color"]
 
-                #if class_name != "Black":
+                #if class_name != "Blue":
                 #    continue
 
                 for ranges in class_dict["ranges"]:
 
-                    mask = np.zeros((height, width, 1), np.uint8)
+                    mask = np.zeros((image_height, image_width, 1), np.uint8)
 
                     for a_range in ranges:
                         range_lower = np.array([a_range["hue"][0], a_range["saturation"][0], a_range["value"][0]])
@@ -216,10 +246,10 @@ class ColoredBrickDetectionTest(BaseTest):
 
                     if len(contours) == 0:
                         continue
-                    if len(contours) > 0 and not self.are_contour_properties_satisfied(contours[0]):
+                    if len(contours) > 0 and not self.are_contour_properties_satisfied(contours[0], image_width, image_height):
                         continue
                     if len(contours) > 1:
-                        if self.are_contour_properties_satisfied(contours[1]):
+                        if self.are_contour_properties_satisfied(contours[1], image_width, image_height):
                             continue
                         area1 = cv2.contourArea(contours[0])
                         area2 = cv2.contourArea(contours[1])
@@ -229,7 +259,21 @@ class ColoredBrickDetectionTest(BaseTest):
                     x, y, w, h = cv2.boundingRect(contours[0])
                     cv2.rectangle(output_image, (x - 2, y - 2), (x + w + 2, y + h + 2), class_color, 2)
 
+                    found_bricks.append(class_name)
+
                     break
+
+            for brick_dict in test_dict["bricks"]:
+                if brick_dict["class"] not in found_bricks:
+                    print("%s missing!" % brick_dict["class"])
+
+            for found_brick in found_bricks:
+                found = False
+                for brick_dict in test_dict["bricks"]:
+                    if found_brick == brick_dict["class"]:
+                        found = True
+                if not found:
+                    print("%s wrongly found!" % found_brick)
 
             cv2.imshow("Output", output_image)
             cv2.waitKey(0)
@@ -238,6 +282,6 @@ class ColoredBrickDetectionTest(BaseTest):
 
         return success_count, failed_count
 
-    def are_contour_properties_satisfied(self, contour):
+    def are_contour_properties_satisfied(self, contour, image_width, image_height):
         area = cv2.contourArea(contour)
-        return area >= 5 * 5 and area <= 50 * 50
+        return area >= (image_width * 0.015) * (image_height * 0.015) and area <= (image_width * 0.05) * (image_height * 0.05)
