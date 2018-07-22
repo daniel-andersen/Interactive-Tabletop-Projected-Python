@@ -2,6 +2,7 @@ from random import randint
 
 import cv2
 import numpy as np
+import json
 
 from test.base_test import BaseTest
 from tracking.board.board_descriptor import BoardDescriptor
@@ -31,6 +32,17 @@ class ColoredBrickDetectionTest(BaseTest):
                             "saturation": [150, 255],
                             "value": [0, 255]
                         }
+                    ],
+                    [
+                        {
+                            "hue": [0, 10],
+                            "saturation": [200, 255],
+                            "value": [75, 255]
+                        }, {
+                            "hue": [170, 180],
+                            "saturation": [200, 255],
+                            "value": [75, 255]
+                        }
                     ]
                 ]
             },
@@ -42,6 +54,13 @@ class ColoredBrickDetectionTest(BaseTest):
                             "hue": [100, 130],
                             "saturation": [50, 255],
                             "value": [75, 150]
+                        }
+                    ],
+                    [
+                        {
+                            "hue": [100, 130],
+                            "saturation": [50, 255],
+                            "value": [75, 250]
                         }
                     ],
                     [
@@ -69,6 +88,13 @@ class ColoredBrickDetectionTest(BaseTest):
                             "saturation": [50, 255],
                             "value": [0, 220]
                         }
+                    ],
+                    [
+                        {
+                            "hue": [50, 100],
+                            "saturation": [50, 255],
+                            "value": [50, 220]
+                        }
                     ]
                 ]
             },
@@ -88,6 +114,13 @@ class ColoredBrickDetectionTest(BaseTest):
                             "saturation": [120, 255],
                             "value": [150, 255]
                         }
+                    ],
+                    [
+                        {
+                            "hue": [12, 30],
+                            "saturation": [200, 255],
+                            "value": [150, 255]
+                        }
                     ]
                 ]
             },
@@ -104,102 +137,9 @@ class ColoredBrickDetectionTest(BaseTest):
                 ]
             }
         }
-        tests = [
-            {
-                "image": "test/resources/colored_brick_detection/test_1.jpg",
-                "bricks": [
-                    {"position": [0.0, 0.0], "class": "Red"},
-                    {"position": [0.0, 0.0], "class": "Blue"},
-                    {"position": [0.0, 0.0], "class": "Yellow"},
-                    {"position": [0.0, 0.0], "class": "Black"},
-                ]
-            },
-            {
-                "image": "test/resources/colored_brick_detection/test_2.jpg",
-                "bricks": [
-                    {"position": [0.0, 0.0], "class": "Green"},
-                    {"position": [0.0, 0.0], "class": "Black"},
-                ]
-            },
-            {
-                "image": "test/resources/colored_brick_detection/test_3.jpg",
-                "bricks": [
-                    {"position": [0.0, 0.0], "class": "Red"},
-                    {"position": [0.0, 0.0], "class": "Green"},
-                    {"position": [0.0, 0.0], "class": "Yellow"},
-                ]
-            },
-            {
-                "image": "test/resources/colored_brick_detection/test_4.jpg",
-                "bricks": [
-                    {"position": [0.0, 0.0], "class": "Red"},
-                    {"position": [0.0, 0.0], "class": "Yellow"},
-                ]
-            },
-            {
-                "image": "test/resources/colored_brick_detection/test_5.jpg",
-                "bricks": [
-                    {"position": [0.0, 0.0], "class": "Red"},
-                    {"position": [0.0, 0.0], "class": "Blue"},
-                    {"position": [0.0, 0.0], "class": "Green"},
-                    {"position": [0.0, 0.0], "class": "Black"},
-                ]
-            },
-            {
-                "image": "test/resources/colored_brick_detection/test_6.jpg",
-                "bricks": [
-                    {"position": [0.0, 0.0], "class": "Red"},
-                ]
-            },
-            {
-                "image": "test/resources/colored_brick_detection/test_7.jpg",
-                "bricks": [
-                    {"position": [0.0, 0.0], "class": "Yellow"},
-                ]
-            },
-            {
-                "image": "test/resources/colored_brick_detection/test_8.jpg",
-                "bricks": [
-                    {"position": [0.0, 0.0], "class": "Green"},
-                    {"position": [0.0, 0.0], "class": "Blue"},
-                    {"position": [0.0, 0.0], "class": "Red"},
-                    {"position": [0.0, 0.0], "class": "Yellow"},
-                ]
-            },
-            {
-                "image": "test/resources/colored_brick_detection/test_9.jpg",
-                "bricks": [
-                    {"position": [0.0, 0.0], "class": "Green"},
-                    {"position": [0.0, 0.0], "class": "Red"},
-                    {"position": [0.0, 0.0], "class": "Black"},
-                ]
-            },
-            {
-                "image": "test/resources/colored_brick_detection/test_10.jpg",
-                "bricks": [
-                    {"position": [0.0, 0.0], "class": "Yellow"},
-                ]
-            },
-            {
-                "image": "test/resources/colored_brick_detection/test_11.jpg",
-                "bricks": [
-                    {"position": [0.0, 0.0], "class": "Yellow"},
-                    {"position": [0.0, 0.0], "class": "Red"},
-                    {"position": [0.0, 0.0], "class": "Green"},
-                    {"position": [0.0, 0.0], "class": "Black"},
-                ]
-            },
-            {
-                "image": "test/resources/colored_brick_detection/test_12.jpg",
-                "bricks": [
-                    {"position": [0.0, 0.0], "class": "Yellow"},
-                    {"position": [0.0, 0.0], "class": "Red"},
-                    {"position": [0.0, 0.0], "class": "Green"},
-                    {"position": [0.0, 0.0], "class": "Black"},
-                    {"position": [0.0, 0.0], "class": "Blue"},
-                ]
-            },
-        ]
+
+        with open('test/resources/colored_brick_detection/tests.json') as f:
+            tests = json.load(f)
 
         # Run tests
         success_count = 0
@@ -212,9 +152,12 @@ class ColoredBrickDetectionTest(BaseTest):
             found_bricks = []
 
             image = cv2.imread(test_dict["image"])
+
+            image = cv2.resize(image, (320, int(320 * image.shape[:2][0] / image.shape[:2][1])))
             image = cv2.normalize(image, image, 0, 255, cv2.NORM_MINMAX)
 
-            output_image = image.copy()
+            if debug:
+                output_image = image.copy()
 
             hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
@@ -237,35 +180,50 @@ class ColoredBrickDetectionTest(BaseTest):
                         range_mask = cv2.inRange(hsv_image, range_lower, range_upper)
                         mask = cv2.bitwise_or(mask, range_mask)
 
-                    mask = cv2.bilateralFilter(mask.copy(), 11, 17, 17)
+                    mask = cv2.erode(mask, (5, 5), iterations=1)
+                    mask = cv2.dilate(mask, (5, 5), iterations=1)
+                    #mask = cv2.bilateralFilter(mask.copy(), 11, 17, 17)
 
-                    #cv2.imshow("Mask", mask)
+                    if debug:
+                        cv2.imshow("Mask", mask)
 
                     _, contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-                    contours = sorted(contours, key = cv2.contourArea, reverse = True)[:2]
+                    contours = sorted(contours, key=cv2.contourArea, reverse=True)
 
-                    if len(contours) == 0:
+                    if class_name != "Black" and not self.is_mask_valid(contours, image_width, image_height):
                         continue
-                    if len(contours) > 0 and not self.are_contour_properties_satisfied(contours[0], image_width, image_height):
+
+                    first_valid_contour_index = self.get_first_valid_contour_index(contours, hierarchy, image_width, image_height)
+                    if first_valid_contour_index >= len(contours):
                         continue
-                    if len(contours) > 1:
-                        if self.are_contour_properties_satisfied(contours[1], image_width, image_height):
+
+                    if not self.are_contour_properties_satisfied(contours, hierarchy, first_valid_contour_index, image_width, image_height):
+                        continue
+
+                    if first_valid_contour_index + 1 < len(contours):
+                        if self.are_contour_properties_satisfied(contours, hierarchy, first_valid_contour_index + 1, image_width, image_height):
                             continue
-                        area1 = cv2.contourArea(contours[0])
-                        area2 = cv2.contourArea(contours[1])
+
+                        area1 = cv2.contourArea(contours[first_valid_contour_index])
+                        area2 = cv2.contourArea(contours[first_valid_contour_index + 1])
                         if area2 > area1 / 2:
                             continue
 
-                    x, y, w, h = cv2.boundingRect(contours[0])
-                    cv2.rectangle(output_image, (x - 2, y - 2), (x + w + 2, y + h + 2), class_color, 2)
+                    if debug:
+                        x, y, w, h = cv2.boundingRect(contours[first_valid_contour_index])
+                        cv2.rectangle(output_image, (x - 2, y - 2), (x + w + 2, y + h + 2), class_color, 2)
 
                     found_bricks.append(class_name)
 
                     break
 
+            success = True
+
             for brick_dict in test_dict["bricks"]:
                 if brick_dict["class"] not in found_bricks:
-                    print("%s missing!" % brick_dict["class"])
+                    success = False
+                    if debug:
+                        print("%s missing!" % brick_dict["class"])
 
             for found_brick in found_bricks:
                 found = False
@@ -273,15 +231,85 @@ class ColoredBrickDetectionTest(BaseTest):
                     if found_brick == brick_dict["class"]:
                         found = True
                 if not found:
-                    print("%s wrongly found!" % found_brick)
+                    success = False
+                    if debug:
+                        print("%s wrongly found!" % found_brick)
 
-            cv2.imshow("Output", output_image)
-            cv2.waitKey(0)
+            if success:
+                success_count += 1
+            else:
+                failed_count += 1
+
+            if debug and not success:
+                cv2.imshow("Output", output_image)
+                cv2.waitKey(0)
 
             i += 1
 
         return success_count, failed_count
 
-    def are_contour_properties_satisfied(self, contour, image_width, image_height):
+    def is_mask_valid(self, contours, image_width, image_height):
+        if len(contours) == 0:
+            return False
+
+        area = cv2.contourArea(contours[0])
+        if area > self.contour_max_area(image_width, image_height):
+            return False
+
+        return True
+
+    def get_first_valid_contour_index(self, contours, hierarchy, image_width, image_height):
+
+        # Skip to first valid contour, if any
+        index = 0
+        while index < len(contours):
+            if cv2.contourArea(contours[index]) < self.contour_min_area(image_width, image_height):
+                break
+            if self.are_contour_properties_satisfied(contours, hierarchy, index, image_width, image_height):
+                break
+
+            index += 1
+
+        return index
+
+    def are_contour_properties_satisfied(self, contours, hierarchy, contour_index, image_width, image_height):
+
+        contour = contours[contour_index]
+
+        # Can not have no parent
+        if hierarchy[0][contour_index][3] != -1:
+            return False
+
+        # Check area
         area = cv2.contourArea(contour)
-        return area >= (image_width * 0.015) * (image_height * 0.015) and area <= (image_width * 0.05) * (image_height * 0.05)
+        if area < self.contour_min_area(image_width, image_height) or area > self.contour_max_area(image_width, image_height):
+            return False
+
+        # Check bounding box size
+        x, y, w, h = cv2.boundingRect(contour)
+        if w > self.contour_max_width(image_width) or h > self.contour_max_height(image_height):
+            return False
+
+        # Check area compared to contour bounding box
+        if area < (w * 0.5) * (h * 0.5):
+            return False
+
+        return True
+
+    def contour_min_area(self, image_width, image_height):
+        return self.contour_min_width(image_width) * self.contour_min_height(image_height)
+
+    def contour_max_area(self, image_width, image_height):
+        return self.contour_max_width(image_width) * self.contour_max_height(image_height)
+
+    def contour_min_width(self, image_width):
+        return image_width * 0.015
+
+    def contour_min_height(self, image_height):
+        return image_height * 0.015
+
+    def contour_max_width(self, image_width):
+        return image_width * 0.075
+
+    def contour_max_height(self, image_height):
+        return image_height * 0.075

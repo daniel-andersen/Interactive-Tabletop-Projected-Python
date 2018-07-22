@@ -1,0 +1,123 @@
+[
+    {
+        "image": "test/resources/colored_brick_detection/test_1.jpg",
+        "bricks": [
+            {"position": [0.0, 0.0], "class": "Red"},
+            {"position": [0.0, 0.0], "class": "Blue"},
+            {"position": [0.0, 0.0], "class": "Yellow"},
+            {"position": [0.0, 0.0], "class": "Black"}
+        ]
+    },
+    {
+        "image": "test/resources/colored_brick_detection/test_2.jpg",
+        "bricks": [
+            {"position": [0.0, 0.0], "class": "Green"},
+            {"position": [0.0, 0.0], "class": "Black"}
+        ]
+    },
+    {
+        "image": "test/resources/colored_brick_detection/test_3.jpg",
+        "bricks": [
+            {"position": [0.0, 0.0], "class": "Red"},
+            {"position": [0.0, 0.0], "class": "Green"},
+            {"position": [0.0, 0.0], "class": "Yellow"}
+        ]
+    },
+    {
+        "image": "test/resources/colored_brick_detection/test_4.jpg",
+        "bricks": [
+            {"position": [0.0, 0.0], "class": "Red"},
+            {"position": [0.0, 0.0], "class": "Yellow"}
+        ]
+    },
+    {
+        "image": "test/resources/colored_brick_detection/test_5.jpg",
+        "bricks": [
+            {"position": [0.0, 0.0], "class": "Red"},
+            {"position": [0.0, 0.0], "class": "Blue"},
+            {"position": [0.0, 0.0], "class": "Green"},
+            {"position": [0.0, 0.0], "class": "Black"}
+        ]
+    },
+    {
+        "image": "test/resources/colored_brick_detection/test_6.jpg",
+        "bricks": [
+            {"position": [0.0, 0.0], "class": "Red"}
+        ]
+    },
+    {
+        "image": "test/resources/colored_brick_detection/test_7.jpg",
+        "bricks": [
+            {"position": [0.0, 0.0], "class": "Yellow"}
+        ]
+    },
+    {
+        "image": "test/resources/colored_brick_detection/test_8.jpg",
+        "bricks": [
+            {"position": [0.0, 0.0], "class": "Green"},
+            {"position": [0.0, 0.0], "class": "Blue"},
+            {"position": [0.0, 0.0], "class": "Red"},
+            {"position": [0.0, 0.0], "class": "Yellow"}
+        ]
+    },
+    {
+        "image": "test/resources/colored_brick_detection/test_9.jpg",
+        "bricks": [
+            {"position": [0.0, 0.0], "class": "Green"},
+            {"position": [0.0, 0.0], "class": "Red"},
+            {"position": [0.0, 0.0], "class": "Black"}
+        ]
+    },
+    {
+        "image": "test/resources/colored_brick_detection/test_10.jpg",
+        "bricks": [
+            {"position": [0.0, 0.0], "class": "Yellow"}
+        ]
+    },
+    {
+        "image": "test/resources/colored_brick_detection/test_11.jpg",
+        "bricks": [
+            {"position": [0.0, 0.0], "class": "Yellow"},
+            {"position": [0.0, 0.0], "class": "Red"},
+            {"position": [0.0, 0.0], "class": "Green"},
+            {"position": [0.0, 0.0], "class": "Black"}
+        ]
+    },
+    {
+        "image": "test/resources/colored_brick_detection/test_12.jpg",
+        "bricks": [
+            {"position": [0.0, 0.0], "class": "Yellow"},
+            {"position": [0.0, 0.0], "class": "Red"},
+            {"position": [0.0, 0.0], "class": "Green"},
+            {"position": [0.0, 0.0], "class": "Black"},
+            {"position": [0.0, 0.0], "class": "Blue"}
+        ]
+    },
+    {
+        "image": "test/resources/colored_brick_detection/test_13.jpg",
+        "bricks": [
+            {"position": [0.0, 0.0], "class": "Yellow"},
+            {"position": [0.0, 0.0], "class": "Red"},
+            {"position": [0.0, 0.0], "class": "Green"},
+            {"position": [0.0, 0.0], "class": "Black"},
+            {"position": [0.0, 0.0], "class": "Blue"}
+        ]
+    },
+    {
+        "image": "test/resources/colored_brick_detection/test_14.jpg",
+        "bricks": [
+            {"position": [0.0, 0.0], "class": "Yellow"},
+            {"position": [0.0, 0.0], "class": "Blue"}
+        ]
+    },
+    {
+        "image": "test/resources/colored_brick_detection/test_15.jpg",
+        "bricks": [
+            {"position": [0.0, 0.0], "class": "Yellow"},
+            {"position": [0.0, 0.0], "class": "Red"},
+            {"position": [0.0, 0.0], "class": "Green"},
+            {"position": [0.0, 0.0], "class": "Black"},
+            {"position": [0.0, 0.0], "class": "Blue"}
+        ]
+    }
+]
