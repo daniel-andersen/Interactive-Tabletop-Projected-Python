@@ -39,6 +39,8 @@ class TiledBrickDetectionTest(BaseTest):
 
             # Create board area
             tiled_board_area = TiledBoardArea(0, tile_count, tile_padding, board_descriptor)
+
+            # Create detector
             tiled_brick_detector = TiledBrickDetector(tiled_board_area)
 
             # Detect board

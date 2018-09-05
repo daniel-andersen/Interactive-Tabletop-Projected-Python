@@ -1,5 +1,15 @@
 [
     {
+        "image": "test/resources/colored_brick_detection/test_17.jpg",
+        "bricks": [
+            {"position": [0.0, 0.0], "class": "Yellow"},
+            {"position": [0.0, 0.0], "class": "Red"},
+            {"position": [0.0, 0.0], "class": "Green"},
+            {"position": [0.0, 0.0], "class": "Black"},
+            {"position": [0.0, 0.0], "class": "Blue"}
+        ]
+    },
+    {
         "image": "test/resources/colored_brick_detection/test_1.jpg",
         "bricks": [
             {"position": [0.0, 0.0], "class": "Red"},
@@ -116,6 +126,14 @@
             {"position": [0.0, 0.0], "class": "Yellow"},
             {"position": [0.0, 0.0], "class": "Red"},
             {"position": [0.0, 0.0], "class": "Green"},
+            {"position": [0.0, 0.0], "class": "Black"},
+            {"position": [0.0, 0.0], "class": "Blue"}
+        ]
+    },
+    {
+        "image": "test/resources/colored_brick_detection/test_16.jpg",
+        "bricks": [
+            {"position": [0.0, 0.0], "class": "Red"},
             {"position": [0.0, 0.0], "class": "Black"},
             {"position": [0.0, 0.0], "class": "Blue"}
         ]
