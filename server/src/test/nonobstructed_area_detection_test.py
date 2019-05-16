@@ -34,20 +34,20 @@ class NonobstructedAreaDetectionTest(BaseTest):
             result = nonobstructed_area_detector.detect(test_image)
             if result is None and expected_result["shouldFindArea"]:
                 failed_count += 1
-                print('%s FAILED. Did not find nonobstructed area!' % image_filename)
+                self.error(i, '%s FAILED. Did not find nonobstructed area!' % image_filename)
                 continue
 
             # Verify result
             matches = result["matches"]
             if len(matches) != 1:
                 failed_count += 1
-                print('%s FAILED. Did not find single nonobstructed area, but found %s' % (image_filename, len(matches)))
+                self.error(i, '%s FAILED. Did not find single nonobstructed area, but found %s' % (image_filename, len(matches)))
                 continue
 
             match = matches[0]
             if misc_math.distance(match["center"], expected_result["center"]) > 0.1:
                 failed_count += 1
-                print('%s FAILED. Found nonobstructed area at unexpected position: (%f, %f). Distance: %f' % (image_filename, match["center"][0], match["center"][1], misc_math.distance(match["center"], expected_result["center"])))
+                self.error(i, '%s FAILED. Found nonobstructed area at unexpected position: (%f, %f). Distance: %f' % (image_filename, match["center"][0], match["center"][1], misc_math.distance(match["center"], expected_result["center"])))
                 continue
 
 

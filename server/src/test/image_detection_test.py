@@ -45,26 +45,26 @@ class ImageDetectionTest(BaseTest):
             # Verify result
             if matches_count != len(expected_matches):
                 failed_count += 1
-                print('%s FAILED. %i images out of %i not detected!' % (image_filename, len(expected_matches) - matches_count, len(expected_matches) - matches_count))
+                self.error(i, '%s FAILED. %i images out of %i not detected!' % (image_filename, len(expected_matches) - matches_count, len(expected_matches) - matches_count))
                 continue
 
-            for i in range(0, matches_count):
-                actual_match = matches[i]
-                expected_match = expected_matches[i]
+            for j in range(0, matches_count):
+                actual_match = matches[j]
+                expected_match = expected_matches[j]
 
                 if abs(actual_match["x"] - expected_match["x"]) > 0.01 or abs(actual_match["y"] - expected_match["y"]) > 0.01:
                     failed_count += 1
-                    print('%s FAILED. Incorrect position: (%s, %s). Should be (%s, %s).' % (image_filename, actual_match["x"], actual_match["y"], expected_match["x"], expected_match["y"]))
+                    self.error(i, '%s FAILED. Incorrect position: (%s, %s). Should be (%s, %s).' % (image_filename, actual_match["x"], actual_match["y"], expected_match["x"], expected_match["y"]))
                     continue
 
                 if abs(actual_match["width"] - expected_match["width"]) > 0.01 or abs(actual_match["height"] - expected_match["height"]) > 0.01:
                     failed_count += 1
-                    print('%s FAILED. Incorrect size: (%s, %s). Should be (%s, %s).' % (image_filename, actual_match["width"], actual_match["height"], expected_match["width"], expected_match["height"]))
+                    self.error(i, '%s FAILED. Incorrect size: (%s, %s). Should be (%s, %s).' % (image_filename, actual_match["width"], actual_match["height"], expected_match["width"], expected_match["height"]))
                     continue
 
                 if abs(actual_match["angle"] - expected_match["angle"]) > 3.0:
                     failed_count += 1
-                    print('%s FAILED. Incorrect angle: %s. Should be %s.' % (image_filename, actual_match["angle"], expected_match["angle"]))
+                    self.error(i, '%s FAILED. Incorrect angle: %s. Should be %s.' % (image_filename, actual_match["angle"], expected_match["angle"]))
                     continue
 
             # Success

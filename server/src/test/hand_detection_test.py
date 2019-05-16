@@ -48,12 +48,12 @@ class HandDetectionTest(BaseTest):
 
             if thresholds is None and board_calibration_success:
                 failed_count += 1
-                print('%s FAILED. Could not calibrate hand' % image_filename)
+                self.error(i, '%s FAILED. Could not calibrate hand' % image_filename)
                 continue
 
             if thresholds is not None and not board_calibration_success:
                 failed_count += 1
-                print('%s FAILED. Hand calibration mistakely found hand!' % image_filename)
+                self.error(i, '%s FAILED. Hand calibration mistakely found hand!' % image_filename)
                 continue
 
             # Update board descriptor with calibrator image

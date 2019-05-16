@@ -37,6 +37,6 @@ class BoardDetectionTest(BaseTest):
                 success_count += 1
             else:
                 failed_count += 1
-                print('%s FAILED. Should be %s but was %s!' % (image_filename, 'DETECTED' if expected_state == State.DETECTED else 'NOT DETECTED', 'NOT DETECTED' if expected_state == State.DETECTED else 'DETECTED'))
+                self.error(i, '%s FAILED. Should be %s but was %s!' % (image_filename, 'DETECTED' if expected_state == State.DETECTED else 'NOT DETECTED', 'NOT DETECTED' if expected_state == State.DETECTED else 'DETECTED'))
 
         return success_count, failed_count

@@ -45,6 +45,11 @@ class BaseTest(object):
     def get_tests(self):
         return []
 
+    def error(self, test_number, message):
+        if test_number == 0:
+            print('')
+        print(message)
+
     def print_number(self, current, total):
         if self.current_test_output_string is not None:
             print(('\b' * len(self.current_test_output_string)), end='')

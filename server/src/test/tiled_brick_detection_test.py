@@ -7,6 +7,7 @@ from tracking.board.board_descriptor import BoardDescriptor
 from tracking.board.tiled_board_area import TiledBoardArea
 from tracking.calibrators.board_calibrator import BoardCalibrator, State
 from tracking.detectors.tiled_brick_detector import TiledBrickDetector
+from tracking.detectors.tiled_brick_detector import BrickColor
 
 
 class TiledBrickDetectionTest(BaseTest):
@@ -16,9 +17,12 @@ class TiledBrickDetectionTest(BaseTest):
         ]
 
     def detection_test(self, debug=False):
-        tests = [  # [Filename prefix, [tile count x, tile count y], [padding horizontal, padding vertical], [(expected x, expected y), ...]]
-            ['test/resources/tiled_brick_detection/brick_detection_1', [32, 20], [0.1, 0.1], [(1, 1), (10, 7), (15, 5), (29, 17)]],
-            ['test/resources/tiled_brick_detection/brick_detection_2', [32, 20], [0.2, 0.2], [(1, 7), (14, 8), (20, 12), (24, 18), (30, 1)]],
+        tests = [  # [Filename prefix, [tile count x, tile count y], [padding horizontal, padding vertical], [((expected x, expected y), brick color), ...]]
+            #['test/resources/tiled_brick_detection/brick_detection_1', [32, 20], [0.1, 0.1], [((1, 1), BrickColor.BLACK), ((10, 7), BrickColor.BLACK), ((15, 5), BrickColor.BLACK), ((29, 17), BrickColor.BLACK)]],
+            #['test/resources/tiled_brick_detection/brick_detection_2', [32, 20], [0.2, 0.2], [((1, 7), BrickColor.BLACK), ((14, 8), BrickColor.BLACK), ((20, 12), BrickColor.BLACK), ((24, 18), BrickColor.BLACK), ((30, 1), BrickColor.BLACK)]],
+            #['test/resources/tiled_brick_detection/brick_detection_3', [32, 20], [0.1, 0.1], [((13, 12), BrickColor.RED), ((25, 15), BrickColor.YELLOW), ((26, 15), BrickColor.BLUE), ((27, 16), BrickColor.BLACK)]],
+            #['test/resources/tiled_brick_detection/brick_detection_4', [32, 20], [0.1, 0.1], [((6, 0), BrickColor.GREEN), ((7, 4), BrickColor.BLUE), ((7, 13), BrickColor.RED), ((26, 19), BrickColor.YELLOW)]],
+            ['test/resources/tiled_brick_detection/brick_detection_5', [32, 20], [0.1, 0.1], [((0, 13), BrickColor.GREEN), ((3, 10), BrickColor.BLACK), ((10, 4), BrickColor.YELLOW), ((11, 9), BrickColor.RED), ((22, 0), BrickColor.BLUE)]],
         ]
 
         # Initial board detection
@@ -31,7 +35,7 @@ class TiledBrickDetectionTest(BaseTest):
         success_count = 0
         failed_count = 0
 
-        for i, (image_filename, tile_count, tile_padding, expected_positions) in enumerate(tests):
+        for i, (image_filename, tile_count, tile_padding, bricks) in enumerate(tests):
             self.print_number(current=i + 1, total=len(tests))
 
             board_filename = "%s_board.png" % image_filename
@@ -48,7 +52,7 @@ class TiledBrickDetectionTest(BaseTest):
             corners = board_descriptor.get_board_calibrator().detect(board_image)
             if corners is None:
                 failed_count += 1
-                print('%s FAILED. Could not detect board' % image_filename)
+                self.error(0, '%s FAILED. Could not detect board' % image_filename)
                 continue
 
             # Force update board descriptor to recognize board immediately
@@ -62,7 +66,11 @@ class TiledBrickDetectionTest(BaseTest):
             # Detect bricks
             detected_count = 0
 
-            for expected_position in expected_positions:
+            expected_positions = [position for position, color in bricks]
+
+            for j, brick in enumerate(bricks):
+                expected_position = brick[0]
+                brick_color = brick[1]
 
                 # Find all positions with no expected bricks
                 no_brick_positions = []
@@ -83,20 +91,45 @@ class TiledBrickDetectionTest(BaseTest):
                 expected_index = randint(0, len(positions) - 1)
                 positions.insert(expected_index, expected_position)
 
-                # Detect brick
-                detected_position = tiled_brick_detector.find_brick_among_tiles(positions, debug)
-                detected_position = detected_position[0] if detected_position is not None else None
+                error = False
 
-                if detected_position == expected_position:
-                    detected_count += 1
+                # Detect brick with specific color
+                result = tiled_brick_detector.find_brick_among_tiles(positions, brick_color, debug)
+                if result is not None:
+                    detected_position, detected_color = result
                 else:
-                    print('Brick supposed to be at %s but was found at %s!' % (expected_position, detected_position))
+                    detected_position, detected_color = None, None
+
+                if detected_position != expected_position:
+                    self.error(j, 'Brick with color %s supposed to be at %s but was found at %s!' % (BrickColor.names[brick_color], expected_position, detected_position))
+                    error = True
+
+                # Find brick color
+                result = tiled_brick_detector.find_brick_among_tiles(positions, color=None, debug=debug)
+                if result is not None:
+                    detected_position, detected_color = result
+                else:
+                    detected_position, detected_color = None, None
+
+                if detected_position != expected_position:
+                    self.error(j, 'Brick with color %s supposed to be at %s but was found at %s!' % (BrickColor.names[brick_color], expected_position, detected_position))
+                    error = True
+                if detected_position == expected_position and detected_color != brick_color:
+                    self.error(j, 'Found wrong color for brick at position %s. Expected %s but found %s!' % (expected_position, BrickColor.names[brick_color], BrickColor.names[detected_color]))
+                    error = True
+
+                # Check success
+                if not error:
+                    detected_count += 1
+
+                if error and debug:
+                    cv2.waitKey(0)
 
             # Print result
             if detected_count == len(expected_positions):
                 success_count += 1
             else:
                 failed_count += 1
-                print('%s FAILED. %i bricks out of %i not detected!' % (image_filename, len(expected_positions) - detected_count, len(expected_positions) - detected_count))
+                self.error(-1, '%s FAILED. %i bricks out of %i not detected!' % (image_filename, len(expected_positions) - detected_count, len(expected_positions)))
 
         return success_count, failed_count
