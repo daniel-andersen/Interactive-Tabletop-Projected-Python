@@ -59,6 +59,7 @@ class TiledBrickDetector(object):
         # Black brick
         if color == BrickColor.BLACK and black_brick is not None:
             if colored_brick is not None and colored_brick[0] == black_brick[0]:  # There must be no colored brick detected at same position!
+                print("Different positions 2: %s vs %s" % (colored_brick[0], black_brick[0]))
                 return None
             return black_brick
 
@@ -74,6 +75,7 @@ class TiledBrickDetector(object):
 
                 # Cannot have different positions
                 if colored_brick[0] != black_brick[0]:
+                    print("Different positions: %s vs %s" % (colored_brick[0], black_brick[0]))
                     return None
 
                 # Return colored brick if same position
@@ -181,6 +183,7 @@ class TiledBrickDetector(object):
             max_median, second_max_median = heapq.nlargest(2, medians)[:2]
             min_median, second_min_median = heapq.nsmallest(2, medians)[:2]
             if debug:
+                print("Medians: %s" % medians)
                 print("Max median: %f - second max median: %f - delta: %f" % (max_median, second_max_median, max_median - second_max_median))
                 print("Min median: %f - max median: %f - delta: %f" % (min_median, max_median, max_median - min_median))
 
